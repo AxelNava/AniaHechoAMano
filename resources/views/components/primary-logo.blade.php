@@ -1,6 +1,6 @@
 <div class="grid justify-items-start @if($isMainTitle) flex justify-center @endif" @if($isMainTitle) id="title-complete" @endif>
     <svg version="1.0" xmlns="http://www.w3.org/2000/svg"  id="ania-logo" {{$attributes->merge(['class'])}} @class(['animation-title' => $isMainTitle])
-         width="592.000000pt" @if($isMainTitle) height="307.000000pt" @endif viewBox="0 0 592.000000 307.000000"
+         width="500.000000pt" @if($isMainTitle) height="250.000000pt" @endif viewBox="0 0 592.000000 307.000000"
          preserveAspectRatio="xMidYMid meet">
 
         <g transform="translate(0.000000,307.000000) scale(0.100000,-0.100000)">

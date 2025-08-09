@@ -7,8 +7,7 @@
     <title>Laravel</title>
 
     <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet"/>
+    <!-- Local fonts are loaded via CSS -->
 
     <!-- Styles / Scripts -->
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
@@ -16,19 +15,9 @@
     @endif
 </head>
 <body class="grid grid-rows-[auto_2fr_auto]">
-<header>
-    <ul>
-        <li><a href="">HOla</a></li>
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-    </ul>
-</header>
-<main class="min-h-[60dvh]">
-    <p>hola como estas</p>
+<x-navigation_header></x-navigation_header>
+<main class="min-h-[60dvh] bg-secondary">
+{{--    <x-primary-logo is-main-title="true"></x-primary-logo>--}}
 </main>
 <x-footer></x-footer>
 </body>
