@@ -8,7 +8,7 @@ use Illuminate\View\Component;
 
 final class footer extends Component
 {
-    const SLOGAN = "Creaciones artesanales únicas, hechas con amor y dedicación para hacer de tus momentos especiales algo inolvidable.";
+    const string SLOGAN = "Creaciones artesanales únicas, hechas con amor y dedicación para hacer de tus momentos especiales algo inolvidable.";
     /**
      * Create a new component instance.
      */

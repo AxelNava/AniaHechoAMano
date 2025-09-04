@@ -2,18 +2,26 @@
 
 namespace App\Models;
 
+use Database\Factories\CategoriaFactory;
+use Eloquent;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
+ * @property int $id
  * @property string $nombre_categoria
- * @property string $id
- * @mixin Builder
+ * @method static CategoriaFactory factory($count = null, $state = [])
+ * @method static Builder<static>|Categoria newModelQuery()
+ * @method static Builder<static>|Categoria newQuery()
+ * @method static Builder<static>|Categoria query()
+ * @method static Builder<static>|Categoria whereId($value)
+ * @method static Builder<static>|Categoria whereNombreCategoria($value)
+ * @mixin Eloquent
  */
 final class Categoria extends Model
 {
-    /** @use HasFactory<\Database\Factories\CategoriaFactory> */
+    /** @use HasFactory<CategoriaFactory> */
     use HasFactory;
 
     protected $casts = [

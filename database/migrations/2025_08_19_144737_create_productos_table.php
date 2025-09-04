@@ -15,6 +15,7 @@ return new class extends Migration
             $table->charset("utf8mb4");
             $table->id();
             $table->char("nombre", 50)->nullable(false);
+            $table->enum('is_active', ['yes','no']);
             $table->time("tiempo_promedio_requerido")->nullable(false);
             $table->decimal("costo_promedio", 8,2)->nullable(false);
             $table->foreignId("categoria_id")->constrained()->onUpdate('cascade');

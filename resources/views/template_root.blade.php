@@ -19,7 +19,7 @@
 </head>
 
 <body>
-<main class="grid-rows-3">
+<main >
 
 </main>
 </body>

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Laravel</title>
+    <title>Ania - Hecho a Mano</title>
 
     <!-- Fonts -->
     <!-- Local fonts are loaded via CSS -->
@@ -17,8 +17,9 @@
 <body class="grid grid-rows-[auto_2fr_auto]">
 <x-navigation_header></x-navigation_header>
 <main class="min-h-[60dvh] bg-secondary">
-{{--    <x-primary-logo is-main-title="true"></x-primary-logo>--}}
+    <x-primary-logo is-main-title="true"></x-primary-logo>
 </main>
 <x-footer></x-footer>
 </body>
+
 </html>

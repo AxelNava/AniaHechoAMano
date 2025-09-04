@@ -18,6 +18,7 @@ return new class extends Migration
             $table->datetime("fecha");
             $table->decimal("precio_final");
             $table->string("nombre_producto", 80);
+            $table->foreignId('categoria_id')->constrained();
         });
     }
 

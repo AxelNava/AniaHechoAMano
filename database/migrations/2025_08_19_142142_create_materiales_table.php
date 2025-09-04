@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('componentes', function (Blueprint $table) {
+        Schema::create('materiales', static function (Blueprint $table) {
             $table->charset("utf8mb4");
             $table->id();
             $table->string("nombre");
@@ -19,6 +19,8 @@ return new class extends Migration
             $table->decimal('precio_mas_bajo');
             $table->decimal('precio_mas_alto');
             $table->decimal('precio_actual');
+            $table->json('dimensiones');
+            $table->json('detalles_adicionales');
         });
     }
 
@@ -27,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('componentes');
+        Schema::dropIfExists('materiales');
     }
 };

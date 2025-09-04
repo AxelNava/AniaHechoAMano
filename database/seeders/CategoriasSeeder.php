@@ -2,8 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Categoria;
-use Database\Factories\CategoriaFactory;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
