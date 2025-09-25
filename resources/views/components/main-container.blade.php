@@ -11,7 +11,7 @@
 
     <!-- Styles / Scripts -->
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @vite(['resources/css/app.css', 'resources/js/app.jsx'])
     @endif
 </head>
 <body class="bg-[hsl(268_80_90)] grid md:grid-rows-[auto_1fr_1fr]">

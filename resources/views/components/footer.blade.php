@@ -37,7 +37,7 @@
             <h3 class="text-white font-bold text-xl">Contacto</h3>
             <ul class="mt-3 *:my-2 normal-text">
                 <li><a href="">Facebook</a></li>
-                <li><a href="">Atliaca, Gro.</a></li>
+                <li><a href="">Guerrero, México</a></li>
             </ul>
         </article>
         <article>

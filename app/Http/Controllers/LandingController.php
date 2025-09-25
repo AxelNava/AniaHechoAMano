@@ -9,8 +9,6 @@ final class LandingController extends Controller
 {
     public function show(): Response
     {
-        return Inertia::render('welcome', [
-
-        ]);
+        return Inertia::render('Welcome');
     }
 }

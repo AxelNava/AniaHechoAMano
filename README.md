@@ -1,61 +1,94 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Proyecto Ania
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Este es un proyecto de una tienda en línea para vender arreglos florales hechos a mano, como rosas eternas. La aplicación está construida con Laravel y utiliza un stack de tecnología moderno para el frontend.
 
-## About Laravel
+## Sobre el Proyecto
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+El objetivo de este proyecto es crear una plataforma de comercio electrónico para mostrar y vender productos artesanales. La página de inicio muestra los productos, y hay funcionalidades para buscar y ver detalles de los productos.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Tecnologías Utilizadas
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+*   **Backend:** [Laravel](https://laravel.com/)
+*   **Frontend:** [React](https://reactjs.org/) con [Vite](https://vitejs.dev/)
+*   **Framework Full-Stack:** [Inertia.js](https://inertiajs.com/)
+*   **Estilos CSS:** [Tailwind CSS](https://tailwindcss.com/)
+*   **Base de Datos:** Compatible con MySQL, PostgreSQL, SQLite.
 
-## Learning Laravel
+## Primeros Pasos
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Sigue estas instrucciones para tener una copia del proyecto funcionando en tu máquina local para desarrollo y pruebas.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### Prerrequisitos
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Asegúrate de tener instalado lo siguiente en tu sistema:
 
-## Laravel Sponsors
+*   PHP >= 8.4
+*   Composer
+*   Node.js
+*   pnpm (o npm/yarn)
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Instalación
 
-### Premium Partners
+1.  **Clona el repositorio:**
+    ```sh
+    git clone <URL_DEL_REPOSITORIO>
+    cd proyecto-laravel
+    ```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development/)**
-- **[Active Logic](https://activelogic.com)**
+2.  **Instala las dependencias de Composer:**
+    ```sh
+    composer install
+    ```
 
-## Contributing
+3.  **Crea tu archivo de configuración de entorno:**
+    Copia el archivo de ejemplo y configura tus variables de entorno, especialmente la conexión a la base de datos.
+    ```sh
+    cp .env.example .env
+    ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+4.  **Genera la clave de la aplicación:**
+    ```sh
+    php artisan key:generate
+    ```
 
-## Code of Conduct
+5.  **Instala las dependencias de Node.js:**
+    Se recomienda usar `pnpm` debido a la presencia de un archivo `pnpm-lock.yaml`.
+    ```sh
+    pnpm install
+    ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+6.  **Ejecuta las migraciones y los seeders:**
+    Esto creará la estructura de la base de datos y la llenará con datos de ejemplo.
+    ```sh
+    php artisan migrate --seed
+    ```
 
-## Security Vulnerabilities
+7.  **Inicia los servidores de desarrollo:**
+    *   Inicia el servidor de desarrollo de Laravel.
+    *   Inicia el servidor de Vite para compilar los assets del frontend.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+    Puedes ejecutar ambos con los siguientes comandos en terminales separadas:
+    ```sh
+    # Terminal 1: Servidor de Laravel
+    php artisan serve
+    ```
+    ```sh
+    # Terminal 2: Servidor de Vite
+    pnpm run dev
+    ```
 
-## License
+    Ahora puedes acceder a la aplicación en `http://localhost:8000`.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Ejecución de Pruebas
+
+Para ejecutar la suite de pruebas automatizadas, utiliza el siguiente comando de Artisan:
+
+```sh
+php artisan test
+```
+
+Esto ejecutará las pruebas unitarias y de características definidas en el directorio `tests/`.
+
+## Licencia
+
+Este proyecto está bajo la Licencia MIT. Consulta el archivo [LICENSE](LICENSE) para más detalles.
