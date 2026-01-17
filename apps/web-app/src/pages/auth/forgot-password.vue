@@ -3,26 +3,29 @@ import InputError from '@/components/input-error.vue'
 import TextLink from '@/components/text-link.vue'
 import { Button, Input, Label } from '@/components/ui'
 import AuthLayout from '@/layouts/AuthLayout.vue'
-import { Head, useForm } from '@inertiajs/vue3'
 import { LoaderCircle } from 'lucide-vue-next'
+import { ref } from 'vue'
 
 defineProps<{
   status?: string
 }>()
 
-const form = useForm({
-  email: '',
-})
+const email = ref('')
+const errors = ref<{ email?: string }>({})
+const processing = ref(false)
 
 const submit = () => {
-  form.post('/forgot-password')
+  processing.value = true
+  errors.value = {}
+  
+  setTimeout(() => {
+    processing.value = false
+  }, 1000)
 }
 </script>
 
 <template>
   <AuthLayout title="Forgot password" description="Enter your email to receive a password reset link">
-    <Head title="Forgot password" />
-
     <div v-if="status" class="mb-4 text-center text-sm font-medium text-green-600">
       {{ status }}
     </div>
@@ -34,17 +37,17 @@ const submit = () => {
           <Input
             id="email"
             type="email"
-            v-model="form.email"
+            v-model="email"
             required
             autofocus
             placeholder="email@example.com"
           />
-          <InputError :message="form.errors.email" />
+          <InputError :message="errors.email" />
         </div>
 
         <div class="my-6 flex items-center justify-start">
-          <Button class="w-full" :disabled="form.processing">
-            <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
+          <Button class="w-full" :disabled="processing">
+            <LoaderCircle v-if="processing" class="h-4 w-4 animate-spin" />
             Email password reset link
           </Button>
         </div>

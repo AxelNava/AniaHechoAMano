@@ -4,16 +4,16 @@ import AppShell from '@/components/app-shell.vue'
 import AppSidebar from '@/components/app-sidebar.vue'
 import AppSidebarHeader from '@/components/app-sidebar-header.vue'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
-import type { BreadcrumbItem, SharedData } from '@/types'
-import { usePage } from '@inertiajs/vue3'
+import type { BreadcrumbItem } from '@/types'
 import { computed } from 'vue'
+import { useAppStore } from '@/stores/appStore'
 
 defineProps<{
   breadcrumbs?: BreadcrumbItem[]
 }>()
 
-const page = usePage<SharedData>()
-const sidebarOpen = computed(() => page.props.sidebarOpen)
+const appStore = useAppStore()
+const sidebarOpen = computed(() => appStore.sidebarOpen)
 </script>
 
 <template>

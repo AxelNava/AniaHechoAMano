@@ -1,18 +1,11 @@
 <script setup lang="ts">
-import { usePage } from '@inertiajs/vue3'
-import { computed } from 'vue'
-
 interface Props {
   variant?: 'header' | 'sidebar'
 }
 
-const props = withDefaults(defineProps<Props>(), {
+const { variant } = withDefaults(defineProps<Props>(), {
   variant: 'header',
 })
-
-const page = usePage()
-// @ts-ignore
-const isOpen = computed(() => page.props.sidebarOpen)
 </script>
 
 <template>

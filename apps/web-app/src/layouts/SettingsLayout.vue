@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import Heading from '@/components/heading.vue'
 import { Button, Separator } from '@/components/ui'
-import { Link, usePage } from '@inertiajs/vue3'
+import { RouterLink, useRoute } from 'vue-router'
 import { computed } from 'vue'
 
-const page = usePage()
-const currentPath = computed(() => page.url)
+const route = useRoute()
+const currentPath = computed(() => route.path)
 
 const sidebarNavItems = [
   {
@@ -40,9 +40,9 @@ const sidebarNavItems = [
               currentPath === item.href ? 'bg-muted' : ''
             ]"
           >
-            <Link :href="item.href">
+            <RouterLink :to="item.href">
               {{ item.title }}
-            </Link>
+            </RouterLink>
           </Button>
         </nav>
       </aside>

@@ -8,7 +8,6 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types'
-import { Link } from '@inertiajs/vue3'
 
 defineProps<{
   breadcrumbs: BreadcrumbItemType[]
@@ -24,9 +23,9 @@ defineProps<{
             {{ item.title }}
           </BreadcrumbPage>
           <BreadcrumbLink v-else :as-child="true">
-            <Link :href="item.href">
+            <a :href="item.href">
               {{ item.title }}
-            </Link>
+            </a>
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator v-if="index < breadcrumbs.length - 1" />

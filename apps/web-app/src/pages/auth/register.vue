@@ -3,29 +3,28 @@ import InputError from '@/components/input-error.vue'
 import TextLink from '@/components/text-link.vue'
 import { Button, Input, Label } from '@/components/ui'
 import AuthLayout from '@/layouts/AuthLayout.vue'
-import { Head, useForm } from '@inertiajs/vue3'
 import { LoaderCircle } from 'lucide-vue-next'
+import { ref } from 'vue'
 
-const form = useForm({
-  name: '',
-  email: '',
-  password: '',
-  password_confirmation: '',
-})
+const name = ref('')
+const email = ref('')
+const password = ref('')
+const password_confirmation = ref('')
+const errors = ref<{ name?: string; email?: string; password?: string; password_confirmation?: string }>({})
+const processing = ref(false)
 
 const submit = () => {
-  form.post('/register', {
-    onFinish: () => {
-      form.reset('password', 'password_confirmation')
-    },
-  })
+  processing.value = true
+  errors.value = {}
+  
+  setTimeout(() => {
+    processing.value = false
+  }, 1000)
 }
 </script>
 
 <template>
   <AuthLayout title="Create an account" description="Enter your details below to create your account">
-    <Head title="Register" />
-
     <form @submit.prevent="submit" class="flex flex-col gap-6">
       <div class="grid gap-6">
         <div class="grid gap-2">
@@ -33,14 +32,14 @@ const submit = () => {
           <Input
             id="name"
             type="text"
-            v-model="form.name"
+            v-model="name"
             required
             autofocus
             tabindex="1"
             autocomplete="name"
             placeholder="Full name"
           />
-          <InputError :message="form.errors.name" />
+          <InputError :message="errors.name" />
         </div>
 
         <div class="grid gap-2">
@@ -48,13 +47,13 @@ const submit = () => {
           <Input
             id="email"
             type="email"
-            v-model="form.email"
+            v-model="email"
             required
             tabindex="2"
             autocomplete="email"
             placeholder="email@example.com"
           />
-          <InputError :message="form.errors.email" />
+          <InputError :message="errors.email" />
         </div>
 
         <div class="grid gap-2">
@@ -62,13 +61,13 @@ const submit = () => {
           <Input
             id="password"
             type="password"
-            v-model="form.password"
+            v-model="password"
             required
             tabindex="3"
             autocomplete="new-password"
             placeholder="Password"
           />
-          <InputError :message="form.errors.password" />
+          <InputError :message="errors.password" />
         </div>
 
         <div class="grid gap-2">
@@ -76,17 +75,17 @@ const submit = () => {
           <Input
             id="password_confirmation"
             type="password"
-            v-model="form.password_confirmation"
+            v-model="password_confirmation"
             required
             tabindex="4"
             autocomplete="new-password"
             placeholder="Confirm password"
           />
-          <InputError :message="form.errors.password_confirmation" />
+          <InputError :message="errors.password_confirmation" />
         </div>
 
-        <Button type="submit" class="mt-2 w-full" tabindex="5" :disabled="form.processing">
-          <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
+        <Button type="submit" class="mt-2 w-full" tabindex="5" :disabled="processing">
+          <LoaderCircle v-if="processing" class="h-4 w-4 animate-spin" />
           Create account
         </Button>
       </div>
