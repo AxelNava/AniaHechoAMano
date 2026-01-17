@@ -15,8 +15,8 @@ onMounted(() => {
   <div class="flex min-h-screen flex-col items-center justify-center bg-[#FDFDFC] p-6 text-[#1b1b18] dark:bg-[#0a0a0a] dark:text-[#EDEDEC]">
     <main class="flex w-full max-w-lg flex-col items-center gap-8">
       <div class="flex flex-col items-center gap-4 text-center">
-        <h1 class="text-4xl font-bold tracking-tight">Ania</h1>
-        <p class="text-lg text-muted-foreground">Welcome to Ania, your new favorite app.</p>
+        <h1 class="text-4xl font-bold tracking-tight">Artisan</h1>
+        <p class="text-lg text-muted-foreground">Welcome to Artisan, your handcrafted marketplace.</p>
       </div>
 
       <div class="flex gap-4">

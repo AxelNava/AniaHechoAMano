@@ -14,7 +14,6 @@
 .env.backup
 .env.production
 bun.lock
-.turbo
 .phpactor.json
 .phpunit.result.cache
 Homestead.json
@@ -27,6 +26,9 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+*dist
+.output.txt
+.turbo/*
 
 **/caddy
 frankenphp
