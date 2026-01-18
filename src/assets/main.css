@@ -1,0 +1,206 @@
+@import 'tailwindcss';
+
+@font-face {
+  font-family: 'Chilanka';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/Chilanka.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter var';
+  font-weight: 100 900;
+  font-display: swap;
+  font-style: normal;
+  src: url('/fonts/Inter/Inter.var.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Delius';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/Delius-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Antaresia';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/Antaresia.woff') format('woff2');
+}
+
+@font-face {
+  font-family: 'amanda';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/amanda.woff') format('woff2');
+}
+
+@font-face {
+  font-family: 'Kalam';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/Kalam-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Dancing Script';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/DancingScript-Regular.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    url('/fonts/InstrumentSans-Regular.woff2') format('woff2'),
+    url('/fonts/InstrumentSans-Regular.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 400;
+  src:
+    url('/fonts/InstrumentSans-Italic.woff2') format('woff2'),
+    url('/fonts/InstrumentSans-Italic.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src:
+    url('/fonts/InstrumentSans-Medium.woff2') format('woff2'),
+    url('/fonts/InstrumentSans-Medium.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 500;
+  src:
+    url('/fonts/InstrumentSans-MediumItalic.woff2') format('woff2'),
+    url('/fonts/InstrumentSans-MediumItalic.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Instrument Sans';
+  font-display: swap;
+  font-style: normal;
+  font-weight: 600;
+  src:
+    url('/fonts/InstrumentSans-SemiBold.woff2') format('woff2'),
+    url('/fonts/InstrumentSans-SemiBold.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 600;
+  src:
+    url('/fonts/InstrumentSans-SemiBoldItalic.woff2') format('woff2'),
+    url('/fonts/InstrumentSans-SemiBoldItalic.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src:
+    url('/fonts/InstrumentSans-Bold.woff2') format('woff2'),
+    url('/fonts/InstrumentSans-Bold.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 700;
+  src:
+    url('/fonts/InstrumentSans-BoldItalic.woff2') format('woff2'),
+    url('/fonts/InstrumentSans-BoldItalic.woff') format('woff');
+}
+
+@theme {
+  --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-sans-serif: sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
+  --font-chilanka: 'Chilanka', cursive;
+  --font-delius: 'Delius', cursive;
+  --font-antaresia: 'Antaresia', cursive;
+  --font-amanda: 'amanda', cursive;
+  --font-inter-var: 'Inter Var', ui-sans-serif, sans-serif;
+  --font-kalam: 'Kalam', cursive;
+  --font-dancing: 'Dancing Script', cursive;
+  --color-text-page: #701548;
+  --color-text-page2: #745674;
+  --color-secondary: #ead8ea;
+  --color-primary: #ead9ea;
+  --color-mask: hsl(from var(--color-primary) calc(h - 1) calc(s - 23) l);
+  --breakpoint-xs: 30rem;
+}
+
+img {
+  font-style: italic;
+}
+
+#ania-logo {
+  stroke: var(--color-text-page);
+  fill: var(--color-text-page);
+}
+
+@keyframes grow-title {
+  0% {
+    scale: 0;
+    opacity: 0;
+  }
+
+  100% {
+    scale: 1;
+  }
+}
+
+@keyframes draw-title {
+  0% {
+    stroke-dashoffset: 11000;
+    fill-opacity: 0;
+  }
+  50% {
+    opacity: 60;
+  }
+  80% {
+    fill-opacity: 0;
+  }
+  100% {
+    opacity: 100;
+    stroke-dashoffset: 0;
+    fill-opacity: 1;
+  }
+}
+
+@keyframes pop-button {
+  100% {
+    transform: translateY(30px);
+  }
+}
+
+.normal-text {
+  font-size: 0.9rem;
+  opacity: 80%;
+}

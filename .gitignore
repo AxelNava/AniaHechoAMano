@@ -1,35 +1,93 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+/coverage
+/test-results
+/playwright-report
+/playwright/.cache
+
+# Production
+/dist
+/dist-ssr
+/.turbo
+
+# Build outputs (monorepo apps)
+apps/*/dist/
+apps/*/dist-ssr/
+
+# Package managers
+/bun.lock
+bun.lockb
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# IDEs and Editors
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+*.icloud
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+turbo_*.log
+
+# Temporary and Cache files
+*.tmp
+.cache/
+.eslintcache
+.stylelintcache
+.prettiercache
+.vitest-results/
+.vite-inspect/
+.parcel-cache/
+.next/
+.nuxt/
+
+# Project specific
+.output.txt
+frankenphp
+frankenphp-worker.php
 /.phpunit.cache
 /bootstrap/ssr
-/node_modules
 /public/build
 /public/hot
 /public/storage
-/resources/js/actions
-/resources/js/routes
-/resources/js/wayfinder
+/vendor
 /storage/*.key
 /storage/pail
-/vendor
-.env
-.env.backup
-.env.production
-bun.lock
 .phpactor.json
 .phpunit.result.cache
 Homestead.json
 Homestead.yaml
-npm-debug.log
-yarn-error.log
 /auth.json
 /.fleet
-/.idea
 /.nova
-/.vscode
 /.zed
-*dist
-.output.txt
-.turbo/*
-
-**/caddy
-frankenphp
-frankenphp-worker.php

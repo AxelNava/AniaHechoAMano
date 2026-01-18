@@ -53,6 +53,23 @@
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
+
+    /* From vue branch */
+    --font-sans-serif: sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+      'Noto Color Emoji';
+    --font-chilanka: 'Chilanka', cursive;
+    --font-delius: 'Delius', cursive;
+    --font-antaresia: 'Antaresia', cursive;
+    --font-amanda: 'amanda', cursive;
+    --font-inter-var: 'Inter Var', ui-sans-serif, sans-serif;
+    --font-kalam: 'Kalam', cursive;
+    --font-dancing: 'Dancing Script', cursive;
+    --color-text-page: #701548;
+    --color-text-page2: #745674;
+    --color-secondary-vue: #ead8ea;
+    --color-primary-vue: #ead9ea;
+    --color-mask: hsl(from var(--color-primary-vue) calc(h - 1) calc(s - 23) l);
+    --breakpoint-xs: 30rem;
 }
 
 :root {
@@ -133,4 +150,110 @@
     body {
         @apply bg-background text-foreground;
     }
+}
+
+/* From vue branch */
+@font-face {
+  font-family: 'Chilanka';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/Chilanka.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter var';
+  font-weight: 100 900;
+  font-display: swap;
+  font-style: normal;
+  src: url('/fonts/Inter/Inter.var.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Delius';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/Delius-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Antaresia';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/Antaresia.woff') format('woff2');
+}
+
+@font-face {
+  font-family: 'amanda';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/amanda.woff') format('woff2');
+}
+
+@font-face {
+  font-family: 'Kalam';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/Kalam-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Dancing Script';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/DancingScript-Regular.woff') format('woff');
+}
+
+img {
+  font-style: italic;
+}
+
+#ania-logo {
+  stroke: var(--color-text-page);
+  fill: var(--color-text-page);
+}
+
+@keyframes grow-title {
+  0% {
+    scale: 0;
+    opacity: 0;
+  }
+
+  100% {
+    scale: 1;
+  }
+}
+
+@keyframes draw-title {
+  0% {
+    stroke-dashoffset: 11000;
+    fill-opacity: 0;
+  }
+  50% {
+    opacity: 60;
+  }
+  80% {
+    fill-opacity: 0;
+  }
+  100% {
+    opacity: 100;
+    stroke-dashoffset: 0;
+    fill-opacity: 1;
+  }
+}
+
+@keyframes pop-button {
+  100% {
+    transform: translateY(30px);
+  }
+}
+
+.normal-text {
+  font-size: 0.9rem;
+  opacity: 80%;
 }

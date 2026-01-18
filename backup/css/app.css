@@ -1,0 +1,212 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@font-face {
+    font-family: 'Chilanka';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 400;
+    src: url('/public/fonts/Chilanka.woff2') format('woff2');
+}
+
+
+@font-face {
+    font-family: 'Inter var';
+    font-weight: 100 900;
+    font-display: swap;
+    font-style: normal;
+    src: url("/resources/fonts/Inter/Inter.var.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: 'Delius';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 400;
+    src: url('/public/fonts/Delius-Regular.woff2') format('woff2');
+}
+
+
+@font-face {
+    font-family: 'Antaresia';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 400;
+    src: url('/public/fonts/Antaresia.woff') format('woff2');
+}
+
+@font-face {
+    font-family: 'amanda';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/public/fonts/amanda.woff') format('woff2');
+}
+
+@font-face {
+    font-family: 'Kalam';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 400;
+    src: url('/public/fonts/Kalam-Regular.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Dancing Script';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/public/fonts/DancingScript-Regular.woff') format('woff');
+}
+
+@font-face {
+    font-family: 'Instrument Sans';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/public/fonts/InstrumentSans-Regular.woff2') format('woff2'),
+    url('/public/fonts/InstrumentSans-Regular.woff') format('woff');
+}
+
+@font-face {
+    font-family: 'Instrument Sans';
+    font-style: italic;
+    font-display: swap;
+    font-weight: 400;
+    src: url('/public/fonts/InstrumentSans-Italic.woff2') format('woff2'),
+    url('/public/fonts/InstrumentSans-Italic.woff') format('woff');
+}
+
+@font-face {
+    font-family: 'Instrument Sans';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 500;
+    src: url('/public/fonts/InstrumentSans-Medium.woff2') format('woff2'),
+    url('/public/fonts/InstrumentSans-Medium.woff') format('woff');
+}
+
+@font-face {
+    font-family: 'Instrument Sans';
+    font-style: italic;
+    font-display: swap;
+    font-weight: 500;
+    src: url('/public/fonts/InstrumentSans-MediumItalic.woff2') format('woff2'),
+    url('/public/fonts/InstrumentSans-MediumItalic.woff') format('woff');
+}
+
+@font-face {
+    font-family: 'Instrument Sans';
+    font-display: swap;
+    font-style: normal;
+    font-weight: 600;
+    src: url('/public/fonts/InstrumentSans-SemiBold.woff2') format('woff2'),
+    url('/public/fonts/InstrumentSans-SemiBold.woff') format('woff');
+}
+
+@font-face {
+    font-family: 'Instrument Sans';
+    font-style: italic;
+    font-display: swap;
+    font-weight: 600;
+    src: url('/public/fonts/InstrumentSans-SemiBoldItalic.woff2') format('woff2'),
+    url('/public/fonts/InstrumentSans-SemiBoldItalic.woff') format('woff');
+}
+
+@font-face {
+    font-family: 'Instrument Sans';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 700;
+    src: url('/public/fonts/InstrumentSans-Bold.woff2') format('woff2'),
+    url('/public/fonts/InstrumentSans-Bold.woff') format('woff');
+}
+
+@font-face {
+    font-family: 'Instrument Sans';
+    font-style: italic;
+    font-display: swap;
+    font-weight: 700;
+    src: url('/public/fonts/InstrumentSans-BoldItalic.woff2') format('woff2'),
+    url('/public/fonts/InstrumentSans-BoldItalic.woff') format('woff');
+}
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans-serif: sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-chilanka: 'Chilanka', cursive;
+    --font-delius: 'Delius', cursive;
+    --font-antaresia: 'Antaresia', cursive;
+    --font-amanda: 'amanda', cursive;
+    --font-inter-var: 'Inter Var', ui-sans-serif, sans-serif;
+    --font-kalam: 'Kalam', cursive;
+    --font-dancing: 'Dancing Script', cursive;
+    --color-text-page: #701548;
+    --color-text-page2: #745674;
+    --color-secondary: #ead8ea;
+    --color-primary: #ead9ea;
+    --color-mask: hsl(from var(--color-primary) calc(h - 1) calc(s - 23) l);
+    --breakpoint-xs: 30rem;
+}
+
+img {
+    font-style: italic;
+}
+
+#ania-logo {
+    stroke: var(--color-text-page);
+    fill: var(--color-text-page);
+}
+
+/*.animation-title {*/
+/*    stroke-width: 25;*/
+/*    stroke-dasharray: 11000;*/
+/*    animation: draw-title 3s cubic-bezier(.55, .09, .68, .53), grow-title 4.5s ease-out forwards;*/
+/*}*/
+
+/*cubic-bezier(.39,.58,.57,1) */
+@keyframes grow-title {
+    0% {
+        scale: 0;
+        opacity: 0;
+    }
+
+    100% {
+        scale: 1;
+    }
+}
+
+@keyframes draw-title {
+    0% {
+        stroke-dashoffset: 11000;
+        fill-opacity: 0;
+    }
+    50% {
+        opacity: 60;
+    }
+    80% {
+        fill-opacity: 0;
+    }
+    100% {
+        opacity: 100;
+        stroke-dashoffset: 0;
+        fill-opacity: 1;
+    }
+}
+
+@keyframes pop-button {
+    100% {
+        transform: translateY(30px);
+    }
+}
+
+.normal-text {
+    font-size: 0.9rem;
+    opacity: 80%;
+}
