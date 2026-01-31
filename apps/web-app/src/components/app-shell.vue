@@ -1,11 +1,7 @@
 <script setup lang="ts">
-interface Props {
+const { variant = 'header' } = defineProps<{
   variant?: 'header' | 'sidebar'
-}
-
-const { variant } = withDefaults(defineProps<Props>(), {
-  variant: 'header',
-})
+}>()
 </script>
 
 <template>

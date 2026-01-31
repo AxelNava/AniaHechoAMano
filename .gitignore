@@ -73,21 +73,6 @@ turbo_*.log
 
 # Project specific
 .output.txt
-frankenphp
-frankenphp-worker.php
-/.phpunit.cache
-/bootstrap/ssr
-/public/build
-/public/hot
-/public/storage
-/vendor
-/storage/*.key
-/storage/pail
-.phpactor.json
-.phpunit.result.cache
-Homestead.json
-Homestead.yaml
-/auth.json
 /.fleet
 /.nova
 /.zed
