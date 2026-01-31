@@ -29,7 +29,7 @@ const toggleOthers = () => {
     <!-- Desktop Layout -->
     <div class="hidden md:flex items-center justify-between px-8 h-20 max-w-7xl mx-auto">
       <div class="flex gap-8 items-center flex-1 justify-end">
-        <a v-for="s in services.slice(0, 3)" :key="s.name" :href="s.href" class="text-[#701548] font-medium hover:opacity-70 transition-opacity">
+        <a v-for="s in services.slice(0, 3)" :key="s.name" :href="s.href" class="text-text-page font-medium hover:opacity-70 transition-opacity">
           {{ s.name }}
         </a>
       </div>
@@ -56,7 +56,7 @@ const toggleOthers = () => {
       </div>
 
       <div class="flex gap-8 items-center flex-1 justify-start">
-        <a v-for="s in services.slice(3)" :key="s.name" :href="s.href" class="text-[#701548] font-medium hover:opacity-70 transition-opacity">
+        <a v-for="s in services.slice(3)" :key="s.name" :href="s.href" class="text-text-page font-medium hover:opacity-70 transition-opacity">
           {{ s.name }}
         </a>
       </div>
@@ -87,10 +87,10 @@ const toggleOthers = () => {
           </svg>
         </div>
         <div class="flex flex-wrap gap-x-4 gap-y-2 justify-end flex-1">
-          <a v-for="s in visibleServicesMobile" :key="s.name" :href="s.href" class="text-[#701548] font-medium text-sm whitespace-nowrap">
+          <a v-for="s in visibleServicesMobile" :key="s.name" :href="s.href" class="text-text-page font-medium text-sm whitespace-nowrap">
             {{ s.name }}
           </a>
-          <button @click="toggleOthers" class="text-[#701548] font-bold text-sm underline decoration-2 underline-offset-4 whitespace-nowrap">
+          <button @click="toggleOthers" class="text-text-page font-bold text-sm underline decoration-2 underline-offset-4 whitespace-nowrap">
             {{ showAll ? 'Menos' : 'Otros' }}
           </button>
         </div>

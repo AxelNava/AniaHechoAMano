@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 
-const props = defineProps<{
+defineProps<{
   isMainTitle?: boolean
 }>()
 
@@ -35,7 +35,7 @@ function animateCharacter(paths: (SVGPathElement | undefined)[]) {
       path.style.strokeDashoffset = '0'
 
       setTimeout(() => {
-        path.style.fill = '#701548'
+        path.style.fill = 'var(--color-text-page, #701548)'
         path.style.stroke = 'transparent'
       }, 400)
     }
@@ -50,7 +50,7 @@ function animateBrushStroke(paths: (SVGPathElement | undefined)[]) {
       path.style.strokeDashoffset = '0'
 
       setTimeout(() => {
-        path.style.fill = '#701548'
+        path.style.fill = 'var(--color-text-page, #701548)'
         path.style.stroke = 'transparent'
       }, 800)
     }
@@ -116,7 +116,7 @@ onMounted(() => {
     const length = path.getTotalLength()
     path.style.strokeDasharray = `${length}`
     path.style.strokeDashoffset = `${length}`
-    path.style.stroke = '#701548'
+    path.style.stroke = 'var(--color-text-page, #701548)'
     path.style.strokeWidth = '2'
     path.style.fill = 'transparent'
   })
@@ -216,9 +216,9 @@ onMounted(() => {
 
 <style scoped>
 :root {
-  --primary-color: #701548;
-  --secondary-color: #d4b5d4;
-  --background-color: #e8d5e8;
+  --primary-color: var(--color-text-page, #701548);
+  --secondary-color: var(--color-secondary, #d4b5d4);
+  --background-color: var(--color-primary, #e8d5e8);
   --text-dark: #2d1b2d;
   --text-light: #6b4c6b;
   --white: #ffffff;

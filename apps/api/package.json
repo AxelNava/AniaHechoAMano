@@ -1,5 +1,5 @@
 {
-  "name": "@artisan/api",
+  "name": "@back/api",
   "version": "0.0.1",
   "description": "Artisan Store API - NestJS + Prisma",
   "author": "",
