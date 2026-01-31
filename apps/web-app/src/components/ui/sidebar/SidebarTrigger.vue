@@ -3,12 +3,13 @@ import { inject, type HTMLAttributes } from 'vue'
 import { PanelLeft } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import type { SidebarContext } from './SidebarProvider.vue'
 
 const props = defineProps<{
   class?: HTMLAttributes['class']
 }>()
 
-const sidebar = inject<any>('sidebar')
+const sidebar = inject<SidebarContext>('sidebar')
 
 if (!sidebar) {
   throw new Error('SidebarTrigger must be used within a SidebarProvider')

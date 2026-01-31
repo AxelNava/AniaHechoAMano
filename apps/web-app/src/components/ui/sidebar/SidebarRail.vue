@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { inject, type HTMLAttributes } from 'vue'
 import { cn } from '@/lib/utils'
+import type { SidebarContext } from './SidebarProvider.vue'
 
 const props = defineProps<{
   class?: HTMLAttributes['class']
 }>()
 
-const sidebar = inject<any>('sidebar')
+const sidebar = inject<SidebarContext>('sidebar')
 
 function toggleSidebar() {
   sidebar?.toggleSidebar()

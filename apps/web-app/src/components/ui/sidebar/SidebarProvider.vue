@@ -1,7 +1,17 @@
 <script setup lang="ts">
-import { ref, provide, computed, type HTMLAttributes } from 'vue'
+import { ref, provide, computed, type HTMLAttributes, type ComputedRef, type Ref } from 'vue'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils'
+
+export interface SidebarContext {
+  state: ComputedRef<'expanded' | 'collapsed'>
+  open: Ref<boolean>
+  setOpen: (value: boolean) => void
+  openMobile: Ref<boolean>
+  setOpenMobile: (value: boolean) => void
+  isMobile: Ref<boolean>
+  toggleSidebar: () => void
+}
 
 const props = withDefaults(defineProps<{
   defaultOpen?: boolean

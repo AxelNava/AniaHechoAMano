@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { SVGAttributes } from 'vue'
 
 defineProps<{
   class?: string

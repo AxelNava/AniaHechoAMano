@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { inject, type HTMLAttributes } from 'vue'
 import { cn } from '@/lib/utils'
+import type { SidebarContext } from './SidebarProvider.vue'
 
 const props = withDefaults(defineProps<{
   side?: 'left' | 'right'
@@ -13,7 +14,7 @@ const props = withDefaults(defineProps<{
   collapsible: 'offcanvas',
 })
 
-const sidebar = inject<any>('sidebar')
+const sidebar = inject<SidebarContext>('sidebar')
 
 if (!sidebar) {
   throw new Error('Sidebar must be used within a SidebarProvider')

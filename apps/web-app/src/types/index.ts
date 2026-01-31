@@ -1,3 +1,5 @@
+import type { Component } from 'vue';
+
 export interface Auth {
     user: User;
 }
@@ -15,7 +17,7 @@ export interface NavGroup {
 export interface NavItem {
     title: string;
     href: string;
-    icon?: any;
+    icon?: Component;
     isActive?: boolean;
 }
 

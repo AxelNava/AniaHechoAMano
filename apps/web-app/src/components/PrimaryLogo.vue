@@ -1,3 +1,4 @@
+<!--suppress CssUnusedSymbol -->
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 
@@ -135,7 +136,6 @@ onMounted(() => {
   >
     <svg
       ref="logoRef"
-      version="1.0"
       xmlns="http://www.w3.org/2000/svg"
       id="ania-logo"
       class="animated-logo"
@@ -228,9 +228,6 @@ onMounted(() => {
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.hero-text {
-  opacity: 0;
-}
 
 @media (max-width: 768px) {
   .animated-logo {
@@ -271,7 +268,4 @@ onMounted(() => {
   animation: fadeInUp 0.8s ease-out forwards;
 }
 
-.animate-scale {
-  animation: scaleIn 0.6s ease-out forwards;
-}
 </style>
