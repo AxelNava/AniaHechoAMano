@@ -16,7 +16,9 @@ export default defineConfig({
         },
       },
     }),
-    vueDevTools(),
+    vueDevTools({
+      launchEditor: "webstorm"
+    }),
     tailwindcss(),
   ],
   resolve: {

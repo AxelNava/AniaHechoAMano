@@ -9,6 +9,7 @@ const services = [
   { name: 'Adornos de fiesta', href: '#' },
   { name: 'Papelería creativa', href: '#' },
   { name: 'Postres', href: '#' },
+  { name: 'Sublimación', href: '#' },
 ]
 
 // En móvil mostramos los primeros 2 y el botón "Otros"
