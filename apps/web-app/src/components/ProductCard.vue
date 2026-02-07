@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { RouterLink } from 'vue-router'
 
 const props = defineProps<{
   title: string
@@ -15,14 +16,14 @@ const tagsArray = computed(() => Object.values(props.tags))
 
 <template>
   <div
-    class="rounded-2xl relative shadow-[0_0_30px_20px_rgb(0_0_0/_0.1),0_0px_10px_-6px_rgb(0_0_0/_0.1)] grid grid-rows-subgrid hover:shadow-primary hover:cursor-pointer hover:[&>div>span]:-translate-y-10 hover:[&>div>span]:underline hover:[&>div>span]:opacity-100 hover:[&>div>img]:blur-[1px] hover:[&_h3>a]:underline transition-[color,box-shadow,background-color] duration-300"
+    class="rounded-2xl overflow-hidden relative shadow-[0_0_30px_20px_rgb(0_0_0/_0.1),0_0px_10px_-6px_rgb(0_0_0/_0.1)] grid grid-rows-[auto_auto] md:grid-rows-subgrid hover:shadow-primary hover:cursor-pointer hover:[&>div>span]:-translate-y-10 hover:[&>div>span]:underline hover:[&>div>span]:opacity-100 hover:[&>div>img]:blur-[1px] hover:[&_h3>a]:underline transition-[color,box-shadow,background-color] duration-300"
     :class="className"
   >
     <div class="overflow-hidden relative aspect-video rounded-t-2xl">
       <img
         :src="imageSrc"
         alt=""
-        class="bg-purple-300 ease-in-out transition-[filter] duration-200"
+        class="bg-purple-300 ease-in-out transition-[filter] duration-200 w-full h-full object-cover"
         :class="classNameImg"
       />
       <span
@@ -34,17 +35,25 @@ const tagsArray = computed(() => Object.values(props.tags))
     </div>
     <div class="px-8 h-min container pb-4">
       <h3
-        class="text-[1.3cqi] font-inter-var text-text-page font-[600]"
+        class="text-xl md:text-[1.3rem] font-inter-var text-text-page font-[600]"
         :id="'my-id-' + title"
       >
+        <RouterLink
+          v-if="urlTarget"
+          :to="urlTarget"
+          class="after:absolute after:inset-0 after:content-[''] after:z-10"
+        >
+          {{ title }}
+        </RouterLink>
         <a
-          :href="urlTarget || '#'"
+          v-else
+          href="#"
           class="after:absolute after:inset-0 after:content-[''] after:z-10"
         >
           {{ title }}
         </a>
       </h3>
-      <span class="hidden font-inter-var text-text-page2 max-md:inline text-sm leading-10 opacity-90">
+      <span class="hidden font-inter-var text-text-page font-[600] max-md:inline text-sm leading-10">
         Ver detalles ->
       </span>
       <p class="text-text-page2 my-4 text-base font-inter-var">

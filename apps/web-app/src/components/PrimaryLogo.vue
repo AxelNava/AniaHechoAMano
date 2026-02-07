@@ -1,6 +1,9 @@
 <!--suppress CssUnusedSymbol -->
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useAppStore } from '@/stores/appStore'
+
+const appStore = useAppStore()
 
 defineProps<{
   isMainTitle?: boolean
@@ -106,6 +109,15 @@ onMounted(() => {
   const logo = logoRef.value
   if (!logo) return
 
+  const shouldAnimate = appStore.animationFlag && appStore.isFirstVisit
+
+  if (!shouldAnimate) {
+    logo.style.opacity = '1'
+    logo.style.transform = 'scale(1)'
+    if (appStore.isFirstVisit) appStore.setVisited()
+    return
+  }
+
   const paths = logo.querySelectorAll<SVGPathElement>('.logo-path')
 
   logo.style.opacity = '0'
@@ -124,6 +136,7 @@ onMounted(() => {
 
   setTimeout(() => {
     animateLogo(logo, characterGroups)
+    appStore.setVisited()
   }, 500)
 })
 </script>
@@ -143,6 +156,7 @@ onMounted(() => {
       :height="isMainTitle ? '250.000000pt' : ''"
       viewBox="0 0 592.000000 307.000000"
       preserveAspectRatio="xMidYMid meet"
+      style="view-transition-name: main-logo"
     >
       <g transform="translate(0.000000,307.000000) scale(0.100000,-0.100000)">
         <path

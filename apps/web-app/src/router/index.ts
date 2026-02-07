@@ -15,6 +15,16 @@ const router = createRouter({
       component: () => import('../views/HomeView.vue'),
     },
     {
+      path: '/products',
+      name: 'products',
+      component: () => import('../views/ProductsView.vue'),
+    },
+    {
+      path: '/detalles/:category/:id',
+      name: 'product-detail',
+      component: () => import('../views/ProductDetailView.vue'),
+    },
+    {
       path: '/about',
       name: 'about',
       component: () => import('../views/AboutView.vue'),
@@ -45,6 +55,17 @@ const router = createRouter({
       component: () => import('../pages/settings/profile.vue'),
     },
   ],
+})
+
+router.beforeEach((to, from, next) => {
+  if (!(document as any).startViewTransition || to.path === from.path) {
+    next()
+    return
+  }
+
+  ;(document as any).startViewTransition(async () => {
+    next()
+  })
 })
 
 export default router

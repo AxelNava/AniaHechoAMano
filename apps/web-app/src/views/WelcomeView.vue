@@ -45,6 +45,7 @@ const someTags = {
             class-name="row-span-2 md:col-span-2"
             :tags="someTags"
             :image-src="defaultImage"
+            url-target="/detalles/adornos/1"
           >
             Decoración perfecta para celebrar el logro académico con estilo y elegancia.
           </ProductCard>
@@ -53,6 +54,7 @@ const someTags = {
             class-name="row-span-2"
             :tags="someTags"
             image-src=""
+            url-target="/detalles/adornos/1"
           >
             Decoración perfecta para celebrar el logro académico con estilo y elegancia.
           </ProductCard>
@@ -61,6 +63,7 @@ const someTags = {
             class-name="row-span-2"
             :tags="someTags"
             image-src=""
+            url-target="/detalles/adornos/1"
           >
             Decoración perfecta para celebrar el logro académico con estilo y elegancia.
           </ProductCard>
@@ -69,6 +72,7 @@ const someTags = {
             class-name="row-span-2"
             :tags="someTags"
             image-src=""
+            url-target="/detalles/adornos/1"
           >
             Decoración perfecta para celebrar el logro académico con estilo y elegancia.
           </ProductCard>
@@ -77,6 +81,7 @@ const someTags = {
             class-name="row-span-2"
             :tags="someTags"
             image-src=""
+            url-target="/detalles/adornos/1"
           >
             Decoración perfecta para celebrar el logro académico con estilo y elegancia.
           </ProductCard>
