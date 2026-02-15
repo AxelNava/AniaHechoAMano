@@ -58,12 +58,16 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  if (!(document as any).startViewTransition || to.path === from.path) {
+  const doc = document as Document & {
+    startViewTransition?: (callback: () => Promise<void> | void) => void
+  }
+
+  if (!doc.startViewTransition || to.path === from.path) {
     next()
     return
   }
 
-  ;(document as any).startViewTransition(async () => {
+  doc.startViewTransition(async () => {
     next()
   })
 })
