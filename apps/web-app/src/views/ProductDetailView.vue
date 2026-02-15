@@ -54,7 +54,7 @@ const selectImage = (index: number) => {
       <!-- Carousel -->
       <div class="w-full md:w-1/2">
         <div
-          class="relative overflow-hidden rounded-2xl shadow-lg aspect-[4/3] bg-gray-100"
+          class="relative overflow-hidden rounded-2xl shadow-lg aspect-4/3 bg-gray-100"
           :style="{ viewTransitionName: 'product-card-' + product.id }"
         >
           <Transition :name="slideDirection">
@@ -102,6 +102,7 @@ const selectImage = (index: number) => {
           </button>
 
           <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+            <!--suppress JSUnusedLocalSymbols -->
             <button
               v-for="(_, index) in product.images"
               :key="index"
@@ -119,7 +120,7 @@ const selectImage = (index: number) => {
             v-for="(img, index) in product.images"
             :key="index"
             @click="selectImage(index)"
-            class="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors cursor-pointer"
+            class="shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors cursor-pointer"
             :class="currentImageIndex === index ? 'border-primary' : 'border-transparent'"
           >
             <img :src="img" class="w-full h-full object-cover" :alt="`miniatura ${index + 1} de ${product.title}`">
@@ -166,26 +167,6 @@ const selectImage = (index: number) => {
 
 <style scoped>
 /* Animaciones de deslizamiento */
-.slide-next-enter-active,
-.slide-next-leave-active,
-.slide-prev-enter-active,
-.slide-prev-leave-active {
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.slide-next-enter-from {
-  transform: translateX(100%);
-}
-.slide-next-leave-to {
-  transform: translateX(-100%);
-}
-
-.slide-prev-enter-from {
-  transform: translateX(-100%);
-}
-.slide-prev-leave-to {
-  transform: translateX(100%);
-}
 
 img {
   backface-visibility: hidden;

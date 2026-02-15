@@ -28,6 +28,7 @@ export default defineConfigWithVueTs(
           caughtErrorsIgnorePattern: '^_',
         },
       ],
+      'vue/no-unused-vars': ['error', { ignorePattern: '^_' }],
     },
   },
 )
