@@ -1,10 +1,11 @@
 generator client {
-  provider = "prisma-client-js"
+  provider     = "prisma-client-js"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -22,7 +23,7 @@ model User {
 }
 
 model PasswordResetToken {
-  email     String   @id
+  email     String    @id
   token     String
   createdAt DateTime? @map("created_at")
 
@@ -30,13 +31,13 @@ model PasswordResetToken {
 }
 
 model Session {
-  id           String   @id
-  userId       Int?     @map("user_id")
-  ipAddress    String?  @map("ip_address") @db.VarChar(45)
-  userAgent    String?  @map("user_agent")
+  id           String  @id
+  userId       Int?    @map("user_id")
+  ipAddress    String? @map("ip_address") @db.VarChar(45)
+  userAgent    String? @map("user_agent")
   payload      String
-  lastActivity Int      @map("last_activity")
-  user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastActivity Int     @map("last_activity")
+  user         User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([lastActivity])
