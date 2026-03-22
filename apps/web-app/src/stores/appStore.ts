@@ -7,7 +7,14 @@ export const useAppStore = defineStore('app', () => {
   const sidebarOpen = ref(true)
   const processing = ref(false)
   const animationFlag = ref(true) // La flag mencionada en el requerimiento
-  const isFirstVisit = ref(localStorage.getItem('ania_visited') === null)
+  const lastVisitTimestamp = ref(localStorage.getItem('ania_last_visit'))
+  
+  const isFirstVisit = computed(() => {
+    if (!lastVisitTimestamp.value) return true
+    const lastVisitTime = parseInt(lastVisitTimestamp.value, 10)
+    const thirtyMinutes = 30 * 60 * 1000
+    return Date.now() - lastVisitTime > thirtyMinutes
+  })
 
   const isLoggedIn = computed(() => !!user.value)
 
@@ -28,8 +35,9 @@ export const useAppStore = defineStore('app', () => {
   }
 
   function setVisited() {
-    localStorage.setItem('ania_visited', 'true')
-    isFirstVisit.value = false
+    const now = Date.now().toString()
+    localStorage.setItem('ania_last_visit', now)
+    lastVisitTimestamp.value = now
   }
 
   return {

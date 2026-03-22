@@ -10,20 +10,15 @@ const router = createRouter({
       component: WelcomePage,
     },
     {
-      path: '/home',
-      name: 'home',
-      component: () => import('../views/HomeView.vue'),
+      path: '/componentes/create',
+      name: 'componente-create',
+      component: () => import('../views/ComponenteCreateView.vue'),
     },
-    {
-      path: '/products',
-      name: 'products',
-      component: () => import('../views/ProductsView.vue'),
-    },
-    {
-      path: '/detalles/:category/:id',
-      name: 'product-detail',
-      component: () => import('../views/ProductDetailView.vue'),
-    },
+    // {
+    //   path: '/detalles/:category/:id',
+    //   name: 'product-detail',
+    //   component: () => import('../views/ProductDetailView.vue'),
+    // },
     {
       path: '/about',
       name: 'about',
