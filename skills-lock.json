@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "skills": {
+    "turborepo-monorepo": {
+      "source": "giuseppe-trisciuoglio/developer-kit",
+      "sourceType": "github",
+      "computedHash": "551759a936ebfc6c4dc8a36e9603f84b79969df057e47a6e56be58736b0d0824"
+    },
+    "vue-best-practices": {
+      "source": "hyf0/vue-skills",
+      "sourceType": "github",
+      "computedHash": "3df585ad31aec78fe55c56c1411262737e6b231677a3153dec512a882fde80cd"
+    }
+  }
+}
