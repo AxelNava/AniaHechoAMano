@@ -4,6 +4,9 @@
     "build": {
       "outputs": ["dist/**"]
     },
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
     "check-types": {
       "dependsOn": ["^check-types"]
     },
