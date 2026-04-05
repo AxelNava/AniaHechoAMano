@@ -1,4 +1,0 @@
-[install]
-# Deshabilitar la ejecución de scripts del ciclo de vida (postinstall, preinstall, etc.)
-# Esto previene la ejecución de código por paquetes maliciosos durante la instalación (ataques de cadena de suministro)
-ignoreScripts = true

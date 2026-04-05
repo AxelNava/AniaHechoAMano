@@ -1,8 +1,0 @@
-export * from './button'
-export * from './input'
-export * from './label'
-export * from './card'
-export * from './breadcrumb'
-export * from './checkbox'
-export * from './separator'
-export { default as PlaceholderPattern } from './placeholder-pattern.vue'

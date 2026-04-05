@@ -1,4 +1,4 @@
-# ania-hecho-a-mano
+# web-app
 
 This template should help get you started developing with Vue 3 in Vite.
 
@@ -9,7 +9,7 @@ This template should help get you started developing with Vue 3 in Vite.
 ## Recommended Browser Setup
 
 - Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd) 
+  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
   - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
 - Firefox:
   - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
@@ -26,48 +26,23 @@ See [Vite Configuration Reference](https://vite.dev/config/).
 ## Project Setup
 
 ```sh
-pnpm install
+bun install
 ```
 
 ### Compile and Hot-Reload for Development
 
 ```sh
-pnpm dev
+bun dev
 ```
 
 ### Type-Check, Compile and Minify for Production
 
 ```sh
-pnpm build
-```
-
-### Run Unit Tests with [Vitest](https://vitest.dev/)
-
-```sh
-pnpm test:unit
-```
-
-### Run End-to-End Tests with [Playwright](https://playwright.dev)
-
-```sh
-# Install browsers for the first run
-npx playwright install
-
-# When testing on CI, must build the project first
-pnpm build
-
-# Runs the end-to-end tests
-pnpm test:e2e
-# Runs the tests only on Chromium
-pnpm test:e2e --project=chromium
-# Runs the tests of a specific file
-pnpm test:e2e tests/example.spec.ts
-# Runs the tests in debug mode
-pnpm test:e2e --debug
+bun run build
 ```
 
 ### Lint with [ESLint](https://eslint.org/)
 
 ```sh
-pnpm lint
+bun lint
 ```
