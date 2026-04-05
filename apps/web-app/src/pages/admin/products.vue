@@ -1,20 +1,30 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 const product = ref({
   name: '',
   description: '',
   price: 0,
-  category: '',
+  categoryId: '',
   images: [] as File[],
 })
 
-const categories = ref([
-  // Dummy categories para empezar, después se pueden cargar de la API
-  { id: 1, name: 'Amigurumis' },
-  { id: 2, name: 'Llaveros' },
-  { id: 3, name: 'Personalizados' },
-])
+const categories = ref<Array<{ id: number, nombre: string }>>([])
+
+const fetchCategories = async () => {
+  try {
+    const res = await fetch('http://localhost:3000/categories')
+    if (res.ok) {
+      categories.value = await res.json()
+    }
+  } catch (error) {
+    console.error('Error fetching categories:', error)
+  }
+}
+
+onMounted(() => {
+  fetchCategories()
+})
 
 const handleFileUpload = (event: Event) => {
   const target = event.target as HTMLInputElement
@@ -24,9 +34,36 @@ const handleFileUpload = (event: Event) => {
 }
 
 const submitForm = async () => {
-  // TODO: Conectar con el backend usando fetch o axios (con Bun como entorno en el backend)
-  console.log('Registrando producto:', product.value)
-  alert('Producto registrado (simulación)')
+  try {
+    const payload = {
+      name: product.value.name,
+      description: product.value.description,
+      price: product.value.price,
+      categoryId: Number(product.value.categoryId)
+    }
+    
+    const res = await fetch('http://localhost:3000/products/new', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    })
+    
+    if (res.ok) {
+      alert('Producto registrado con éxito')
+      product.value.name = ''
+      product.value.description = ''
+      product.value.price = 0
+      product.value.categoryId = ''
+      product.value.images = []
+    } else {
+      alert('Error registrando producto')
+    }
+  } catch (error) {
+    console.error('Error:', error)
+    alert('Error conectando al servidor')
+  }
 }
 </script>
 
@@ -75,13 +112,13 @@ const submitForm = async () => {
         <label for="category" class="block text-sm font-medium text-gray-700">Categoría</label>
         <select 
           id="category" 
-          v-model="product.category" 
+          v-model="product.categoryId" 
           required 
           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
         >
           <option value="" disabled>Seleccione una categoría</option>
           <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-            {{ cat.name }}
+            {{ cat.nombre }}
           </option>
         </select>
       </div>

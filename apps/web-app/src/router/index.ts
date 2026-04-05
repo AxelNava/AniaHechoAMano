@@ -53,6 +53,15 @@ const router = createRouter({
       path: '/admin/products',
       name: 'admin-products',
       component: () => import('../pages/admin/products.vue'),
+      beforeEnter: (to, from, next) => {
+        // TODO: Lógica de validación de administrador real
+        const isAdmin = true
+        if (isAdmin) {
+          next()
+        } else {
+          next('/')
+        }
+      },
     },
   ],
 })
