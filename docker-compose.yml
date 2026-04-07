@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres
+    restart: always
+    shm_size: 128mb
+    container_name: ania-postgres
+    environment:
+      POSTGRES_USER: user_admin
+      POSTGRES_PASSWORD: secret_password
+      POSTGRES_DB: artisan_store
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  adminer:
+      image: adminer
+      restart: always
+      ports:
+          - "8088:8080"
+
+  n8n:
+    image: n8nio/n8n
+    container_name: artisan-n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  postgres_data:
+  n8n_data:
