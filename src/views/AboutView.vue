@@ -1,15 +1,22 @@
+<script setup lang="ts">
+import DarkModeToggle from "@/components/DarkModeToggle.vue";
+</script>
+
 <template>
-  <div class="about">
-    <h1>This is an about page</h1>
+  <div class="about min-h-screen bg-background dark:bg-gray-900">
+    <div class="absolute right-4 top-4">
+      <DarkModeToggle />
+    </div>
+    <h1 class="text-foreground dark:text-white">This is an about page</h1>
   </div>
 </template>
 
-<style>
-@media (min-width: 1024px) {
-  .about {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-  }
+<style scoped>
+.about {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
 }
 </style>

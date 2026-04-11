@@ -1,52 +1,50 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { mockApi } from "@/services/mockApi";
 
-const router = useRouter()
+const router = useRouter();
 
 const componente = ref({
-  nombre: '',
-  tipo: 'MATERIAL',
-  descripcion: '',
-  unidadMedida: '',
-  requierePedidoPrevio: false
-})
+  nombre: "",
+  tipo: "MATERIAL",
+  descripcion: "",
+  unidadMedida: "",
+  requierePedidoPrevio: false,
+});
 
-const loading = ref(false)
-const error = ref('')
+const loading = ref(false);
+const error = ref("");
 
-const tipos = ['MATERIAL', 'ELEMENTO_ELABORADO', 'SERVICIO']
+const tipos = ["MATERIAL", "ELEMENTO_ELABORADO", "SERVICIO"];
 
 const submitComponente = async () => {
-  loading.value = true
-  error.value = ''
+  loading.value = true;
+  error.value = "";
 
   try {
-    const res = await fetch('http://localhost:3000/componentes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(componente.value)
-    })
+    await mockApi.createComponente({
+      nombre: componente.value.nombre,
+      tipo: componente.value.tipo,
+      descripcion: componente.value.descripcion,
+      unidadMedida: componente.value.unidadMedida,
+      requierePedidoPrevio: componente.value.requierePedidoPrevio,
+    });
 
-    if (res.ok) {
-      alert('Componente creado exitosamente')
-      componente.value = {
-        nombre: '',
-        tipo: 'MATERIAL',
-        descripcion: '',
-        unidadMedida: '',
-        requierePedidoPrevio: false
-      }
-    } else {
-      const data = await res.json()
-      error.value = data.message || 'Error al crear componente'
-    }
+    alert("Componente creado exitosamente");
+    componente.value = {
+      nombre: "",
+      tipo: "MATERIAL",
+      descripcion: "",
+      unidadMedida: "",
+      requierePedidoPrevio: false,
+    };
   } catch (e) {
-    error.value = 'Error de red'
+    error.value = "Error al crear componente";
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 </script>
 
 <template>
@@ -56,38 +54,68 @@ const submitComponente = async () => {
     <form @submit.prevent="submitComponente" class="space-y-6">
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-        <input v-model="componente.nombre" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+        <input
+          v-model="componente.nombre"
+          required
+          class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        />
       </div>
 
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-        <select v-model="componente.tipo" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        <select
+          v-model="componente.tipo"
+          class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        >
           <option v-for="t in tipos" :key="t" :value="t">{{ t }}</option>
         </select>
       </div>
 
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-        <textarea v-model="componente.descripcion" rows="3" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+        <textarea
+          v-model="componente.descripcion"
+          rows="3"
+          class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        ></textarea>
       </div>
 
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Unidad de Medida</label>
-        <input v-model="componente.unidadMedida" required placeholder="ej. unidad, kg, metros" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+        <input
+          v-model="componente.unidadMedida"
+          required
+          placeholder="ej. unidad, kg, metros"
+          class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        />
       </div>
 
       <div class="flex items-center">
-        <input type="checkbox" v-model="componente.requierePedidoPrevio" id="pedidoPrevio" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
-        <label for="pedidoPrevio" class="ml-2 block text-sm text-gray-900">Requiere Pedido Previo</label>
+        <input
+          type="checkbox"
+          v-model="componente.requierePedidoPrevio"
+          id="pedidoPrevio"
+          class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+        />
+        <label for="pedidoPrevio" class="ml-2 block text-sm text-gray-900"
+          >Requiere Pedido Previo</label
+        >
       </div>
 
-      <div v-if="error" class="p-3 bg-red-100 text-red-700 rounded-md text-sm border border-red-200">
+      <div
+        v-if="error"
+        class="p-3 bg-red-100 text-red-700 rounded-md text-sm border border-red-200"
+      >
         {{ error }}
       </div>
 
       <div class="flex justify-end pt-4">
-        <button type="submit" :disabled="loading" class="bg-blue-600 text-white py-2 px-6 rounded-md font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm">
-          {{ loading ? 'Guardando...' : 'Crear Componente' }}
+        <button
+          type="submit"
+          :disabled="loading"
+          class="bg-blue-600 text-white py-2 px-6 rounded-md font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm"
+        >
+          {{ loading ? "Guardando..." : "Crear Componente" }}
         </button>
       </div>
     </form>
