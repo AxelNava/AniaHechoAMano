@@ -6,7 +6,16 @@ import ListProductsFilter from "@/components/dashboard/list-products-filter.vue"
 
 const router = useRouter();
 
-const products = ref<any[]>([]);
+interface Product {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  precio_base: number;
+  activo: boolean;
+  categoria_id: number;
+}
+
+const products = ref<Product[]>([]);
 const categories = ref<Array<{ id: number; nombre: string }>>([]);
 const loading = ref(true);
 

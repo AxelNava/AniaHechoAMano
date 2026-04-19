@@ -1,31 +1,23 @@
 <script setup lang="ts">
 import AppContent from '@/components/app-content.vue'
 import AppShell from '@/components/app-shell.vue'
-import AppSidebar from '@/components/app-sidebar.vue'
-import AppSidebarHeader from '@/components/app-sidebar-header.vue'
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import AdminHeader from '@/components/AdminHeader.vue'
+import BreadCrumbs from '@/components/BreadCrumbs.vue'
 import type { BreadcrumbItem } from '@/types'
-import { computed } from 'vue'
-import { useAppStore } from '@/stores/appStore'
 
 defineProps<{
   breadcrumbs?: BreadcrumbItem[]
 }>()
-
-const appStore = useAppStore()
-const sidebarOpen = computed(() => appStore.sidebarOpen)
 </script>
 
 <template>
-  <SidebarProvider :default-open="sidebarOpen">
-    <AppShell variant="sidebar">
-      <AppSidebar />
-      <SidebarInset>
-        <AppContent variant="sidebar" class="overflow-x-hidden">
-          <AppSidebarHeader :breadcrumbs="breadcrumbs" />
-          <slot />
-        </AppContent>
-      </SidebarInset>
-    </AppShell>
-  </SidebarProvider>
+  <AppShell variant="header">
+    <AdminHeader />
+    <AppContent variant="header" class="overflow-x-hidden flex-1 bg-white dark:bg-gray-950 pt-6">
+      <div v-if="breadcrumbs && breadcrumbs.length > 0" class="px-4 mb-4">
+        <BreadCrumbs :breadcrumbs="breadcrumbs" />
+      </div>
+      <slot />
+    </AppContent>
+  </AppShell>
 </template>

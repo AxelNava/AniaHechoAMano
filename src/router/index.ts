@@ -10,9 +10,43 @@ const router = createRouter({
       component: WelcomePage,
     },
     {
-      path: "/componentes/create",
-      name: "componente-create",
+      path: "/admin/components",
+      name: "admin-components",
+      component: () => import("@/pages/admin/components.vue"),
+      beforeEnter: (to, from, next) => {
+        const isAdmin = true;
+        if (isAdmin) {
+          next();
+        } else {
+          next("/");
+        }
+      },
+    },
+    {
+      path: "/admin/components/new",
+      name: "admin-components-new",
       component: () => import("@/views/ComponenteCreateView.vue"),
+      beforeEnter: (to, from, next) => {
+        const isAdmin = true;
+        if (isAdmin) {
+          next();
+        } else {
+          next("/");
+        }
+      },
+    },
+    {
+      path: "/admin/components/edit/:id",
+      name: "admin-components-edit",
+      component: () => import("@/views/ComponentEditView.vue"),
+      beforeEnter: (to, from, next) => {
+        const isAdmin = true;
+        if (isAdmin) {
+          next();
+        } else {
+          next("/");
+        }
+      },
     },
     {
       path: "/about",

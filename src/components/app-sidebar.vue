@@ -9,7 +9,22 @@ import { Sidebar, SidebarContent, SidebarHeader, SidebarRail } from '@/component
        <div class="p-4 font-bold">Ania</div>
     </SidebarHeader>
     <SidebarContent>
-      <!-- Nav items here -->
+      <nav class="flex flex-col gap-2 p-4">
+        <router-link
+          to="/admin/dashboard"
+          class="flex items-center gap-2 p-2 rounded-md hover:bg-gray-100 text-gray-700 font-medium transition-colors"
+          active-class="bg-gray-100 text-blue-600"
+        >
+          <span>Dashboard</span>
+        </router-link>
+        <router-link
+          to="/admin/components"
+          class="flex items-center gap-2 p-2 rounded-md hover:bg-gray-100 text-gray-700 font-medium transition-colors"
+          active-class="bg-gray-100 text-blue-600"
+        >
+          <span>Componentes</span>
+        </router-link>
+      </nav>
     </SidebarContent>
     <SidebarRail />
   </Sidebar>

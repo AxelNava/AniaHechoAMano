@@ -7,10 +7,24 @@ const route = useRoute();
 const loading = ref(true);
 const error = ref("");
 
-const product = ref<any>(null);
-const pedidos = ref<any[]>([]);
+interface Componente {
+  id: number;
+  nombre: string;
+  cantidad: number;
+  unidad_medida: string;
+  costo_unitario_congelado: number | null;
+  [key: string]: unknown;
+}
 
-const productId = computed(() => Number(route.params.id));
+interface Articulo {
+  id: number;
+  descripcion_cliente: string;
+  precio_estimado_ia: number | null;
+  precio_fijado_admin: number | null;
+  tiempo_total_estimado_minutos: number | null;
+  foto_referencia_url: string | null;
+  componentes: Componente[];
+}
 
 interface Pedido {
   id: number;
@@ -21,19 +35,24 @@ interface Pedido {
   precio_final_total: number | null;
   anticipo_pagado: number;
   notas_admin: string | null;
+  cliente?: { nombre: string };
   cliente_nombre?: string;
-  articulos: any[];
+  articulos: Articulo[];
 }
 
-interface Articulo {
+interface Product {
   id: number;
-  descripcion_cliente: string;
-  precio_estimado_ia: number | null;
-  precio_fijado_admin: number | null;
-  tiempo_total_estimado_minutos: number | null;
-  foto_referencia_url: string | null;
-  componentes: any[];
+  nombre: string;
+  descripcion?: string;
+  precio_base: number;
+  activo: boolean;
+  categoria_id: number;
 }
+
+const product = ref<Product | null>(null);
+const pedidos = ref<Pedido[]>([]);
+
+const productId = computed(() => Number(route.params.id));
 
 const fetchProductAndOrders = async () => {
   loading.value = true;
@@ -41,7 +60,7 @@ const fetchProductAndOrders = async () => {
   try {
     product.value = await mockApi.getProduct(productId.value);
     pedidos.value = await mockApi.getOrdersByProduct(productId.value);
-  } catch (e) {
+  } catch (_) {
     error.value = "Error al cargar los datos";
   } finally {
     loading.value = false;

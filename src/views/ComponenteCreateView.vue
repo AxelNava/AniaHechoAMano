@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { useRouter } from "vue-router";
 import { mockApi } from "@/services/mockApi";
-
-const router = useRouter();
 
 const componente = ref({
   nombre: "",
@@ -39,7 +36,7 @@ const submitComponente = async () => {
       unidadMedida: "",
       requierePedidoPrevio: false,
     };
-  } catch (e) {
+  } catch (_) {
     error.value = "Error al crear componente";
   } finally {
     loading.value = false;

@@ -2,9 +2,12 @@
 import { ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { mockApi } from "@/services/mockApi";
+import { CategoriesApi } from "@/services/categories/categoriesApi";
 
 const router = useRouter();
 const route = useRoute();
+
+const categoriesApi = new CategoriesApi();
 
 const loading = ref(false);
 const saving = ref(false);
@@ -33,7 +36,7 @@ const fetchProduct = async (id: number) => {
       categoryId: data.categoria_id,
       activo: data.activo,
     };
-  } catch (e) {
+  } catch (_) {
     error.value = "Producto no encontrado";
   } finally {
     loading.value = false;
@@ -42,9 +45,9 @@ const fetchProduct = async (id: number) => {
 
 const fetchCategories = async () => {
   try {
-    categories.value = await mockApi.getCategories();
-  } catch (e) {
-    console.error(e);
+    categories.value = await categoriesApi.getCategories();
+  } catch (_) {
+    console.error("Error fetching categories");
   }
 };
 
@@ -56,11 +59,11 @@ const updateProduct = async () => {
       nombre: product.value.name,
       descripcion: product.value.description,
       precio_base: product.value.price,
-      categoria_id: product.value.categoryId,
+      categoria_id: product.value.categoryId as number,
       activo: product.value.activo,
     });
     router.push("/admin/products");
-  } catch (e) {
+  } catch (_) {
     error.value = "Error al actualizar";
   } finally {
     saving.value = false;

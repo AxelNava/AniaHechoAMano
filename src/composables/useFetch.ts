@@ -1,6 +1,10 @@
 const apiBackend = import.meta.env.VITE_VUE_APP_DOMAIN || "http://localhost:5001";
 const api = `${apiBackend}/api`;
 
+function defaultErrorHandler(reason: unknown) {
+  console.error("Error fetching data:", reason);
+}
+
 export async function useFetch<T>(
   routeApi: string,
   fetchOptions?: RequestInit,
@@ -11,7 +15,7 @@ export async function useFetch<T>(
   const defaultOptions: RequestInit = {
     headers: {
       "Content-Type": "application/json",
-      ...(fetchOptions?.headers || {}),
+      ...fetchOptions?.headers,
     },
     ...fetchOptions,
   };
@@ -21,6 +25,7 @@ export async function useFetch<T>(
     return (await response.json()) as T;
   } catch (e) {
     if (errorFn) errorFn(e);
+    else defaultErrorHandler(e);
     return null;
   }
 }
