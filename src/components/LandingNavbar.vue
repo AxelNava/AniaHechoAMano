@@ -139,7 +139,7 @@ const toggleOthers = () => {
         </RouterLink>
         <RouterLink
           v-if="isAdmin"
-          to="/admin/dashboard"
+          to="/admin/products"
           class="px-4 py-2 bg-primary-600 font-medium rounded-lg hover:bg-primary-700 transition-colors"
         >
           Admin

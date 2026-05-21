@@ -10,43 +10,51 @@ const router = createRouter({
       component: WelcomePage,
     },
     {
-      path: "/admin/components",
-      name: "admin-components",
-      component: () => import("@/pages/admin/components.vue"),
-      beforeEnter: (to, from, next) => {
-        const isAdmin = true;
-        if (isAdmin) {
-          next();
-        } else {
-          next("/");
-        }
-      },
-    },
-    {
-      path: "/admin/components/new",
-      name: "admin-components-new",
-      component: () => import("@/views/ComponenteCreateView.vue"),
-      beforeEnter: (to, from, next) => {
-        const isAdmin = true;
-        if (isAdmin) {
-          next();
-        } else {
-          next("/");
-        }
-      },
-    },
-    {
-      path: "/admin/components/edit/:id",
-      name: "admin-components-edit",
-      component: () => import("@/views/ComponentEditView.vue"),
-      beforeEnter: (to, from, next) => {
-        const isAdmin = true;
-        if (isAdmin) {
-          next();
-        } else {
-          next("/");
-        }
-      },
+      path: "/admin",
+      name: "admin",
+      component: () => import("@/pages/admin/AdminDashboardLayout.vue"),
+      redirect: "/admin/products",
+      children: [
+        {
+          path: "",
+          redirect: "/admin/products",
+        },
+        {
+          path: "products",
+          name: "admin-products",
+          component: () => import("@/components/dashboard/list-products.vue"),
+        },
+        {
+          path: "products/edit/:id",
+          name: "admin-product-edit",
+          component: () => import("@/views/ProductEditView.vue"),
+        },
+        {
+          path: "products/new",
+          name: "admin-products-new",
+          component: () => import("@/views/ProductCreateView.vue"),
+        },
+        {
+          path: "products/:id/orders",
+          name: "admin-product-orders",
+          component: () => import("@/views/ProductOrderHistoryView.vue"),
+        },
+        {
+          path: "components",
+          name: "admin-components",
+          component: () => import("@/pages/admin/components.vue"),
+        },
+        {
+          path: "components/new",
+          name: "admin-components-new",
+          component: () => import("@/views/ComponenteCreateView.vue"),
+        },
+        {
+          path: "components/edit/:id",
+          name: "admin-components-edit",
+          component: () => import("@/views/ComponentEditView.vue"),
+        },
+      ],
     },
     {
       path: "/about",
@@ -77,58 +85,6 @@ const router = createRouter({
       path: "/settings/profile",
       name: "profile",
       component: () => import("@/pages/settings/profile.vue"),
-    },
-    {
-      path: "/admin/products",
-      name: "admin-products",
-      component: () => import("@/pages/admin/products.vue"),
-      beforeEnter: (to, from, next) => {
-        const isAdmin = true;
-        if (isAdmin) {
-          next();
-        } else {
-          next("/");
-        }
-      },
-    },
-    {
-      path: "/admin/products/edit/:id",
-      name: "admin-product-edit",
-      component: () => import("@/views/ProductEditView.vue"),
-      beforeEnter: (to, from, next) => {
-        const isAdmin = true;
-        if (isAdmin) {
-          next();
-        } else {
-          next("/");
-        }
-      },
-    },
-    {
-      path: "/admin/products/new",
-      name: "admin-products-new",
-      component: () => import("@/views/ProductCreateView.vue"),
-      beforeEnter: (to, from, next) => {
-        const isAdmin = true;
-        if (isAdmin) {
-          next();
-        } else {
-          next("/");
-        }
-      },
-    },
-    {
-      path: "/admin/products/:id/orders",
-      name: "admin-product-orders",
-      component: () => import("@/views/ProductOrderHistoryView.vue"),
-      beforeEnter: (to, from, next) => {
-        const isAdmin = true;
-        if (isAdmin) {
-          next();
-        } else {
-          next("/");
-        }
-      },
     },
   ],
 });

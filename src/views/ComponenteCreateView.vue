@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { mockApi } from "@/services/mockApi";
+import { useLoadingButton } from "@/composables/useLoadingButton";
+import { LoadingButton } from "@/components/ui/loading-button";
 
 const componente = ref({
   nombre: "",
@@ -10,16 +12,15 @@ const componente = ref({
   requierePedidoPrevio: false,
 });
 
-const loading = ref(false);
-const error = ref("");
-
 const tipos = ["MATERIAL", "ELEMENTO_ELABORADO", "SERVICIO"];
 
-const submitComponente = async () => {
-  loading.value = true;
-  error.value = "";
+const { status, message, execute } = useLoadingButton({
+  errorDuration: 5000,
+  successDuration: 3000,
+});
 
-  try {
+const submitComponente = async () => {
+  await execute(async () => {
     await mockApi.createComponente({
       nombre: componente.value.nombre,
       tipo: componente.value.tipo,
@@ -28,7 +29,6 @@ const submitComponente = async () => {
       requierePedidoPrevio: componente.value.requierePedidoPrevio,
     });
 
-    alert("Componente creado exitosamente");
     componente.value = {
       nombre: "",
       tipo: "MATERIAL",
@@ -36,11 +36,7 @@ const submitComponente = async () => {
       unidadMedida: "",
       requierePedidoPrevio: false,
     };
-  } catch (_) {
-    error.value = "Error al crear componente";
-  } finally {
-    loading.value = false;
-  }
+  });
 };
 </script>
 
@@ -48,7 +44,7 @@ const submitComponente = async () => {
   <div class="max-w-2xl mx-auto p-6 bg-white rounded shadow mt-10">
     <h1 class="text-2xl font-bold mb-6 text-gray-800">Crear Nuevo Componente</h1>
 
-    <form @submit.prevent="submitComponente" class="space-y-6">
+    <form @submit.prevent class="space-y-6">
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
         <input
@@ -99,21 +95,15 @@ const submitComponente = async () => {
         >
       </div>
 
-      <div
-        v-if="error"
-        class="p-3 bg-red-100 text-red-700 rounded-md text-sm border border-red-200"
-      >
-        {{ error }}
-      </div>
-
       <div class="flex justify-end pt-4">
-        <button
-          type="submit"
-          :disabled="loading"
-          class="bg-blue-600 text-white py-2 px-6 rounded-md font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm"
+        <LoadingButton
+          :loading="status === 'loading'"
+          :status="status"
+          :message="message"
+          @click="submitComponente"
         >
-          {{ loading ? "Guardando..." : "Crear Componente" }}
-        </button>
+          Crear Componente
+        </LoadingButton>
       </div>
     </form>
   </div>

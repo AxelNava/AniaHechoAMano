@@ -4,18 +4,27 @@ import { useFetch } from "@/composables/useFetch";
 
 export class ProductApi implements IProductApi {
   public async getProducts(): Promise<ProductDto[]> {
-    return [];
+    const result = await useFetch<ProductDto[]>("productos/all", {
+      method: "GET",
+    });
+    return result || [];
   }
+
   public async createProduct(product: ProductDto): Promise<ProductDto | null> {
-    console.log(JSON.stringify(product));
-    const response = useFetch<ProductDto>("productos/new", {
+    return useFetch<ProductDto>("productos/new", {
       method: "POST",
       body: JSON.stringify(product),
     });
-    console.log(response);
-    return response;
   }
+
   public async updateProduct(product: ProductDto): Promise<ProductDto | null> {
-    return product;
+    if (!product.id) {
+      throw new Error("El producto debe incluir un id para actualizarse");
+    }
+
+    return useFetch<ProductDto>(`productos/${product.id}`, {
+      method: "PUT",
+      body: JSON.stringify(product),
+    });
   }
 }
