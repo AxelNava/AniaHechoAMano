@@ -1,6 +1,4 @@
-import {useState} from 'react'
-
-export default function Card({title, tags, className, classNameImg, urlTarget, imageSrc, children}) {
+export default function Card({title, tags, className, classNameImg, _urlTarget, imageSrc, children}) {
 
     let tagsElements = (tagsE) => {
         let arrayTags = Object.values(tagsE)
@@ -24,7 +22,7 @@ export default function Card({title, tags, className, classNameImg, urlTarget, i
                      className={`bg-purple-300  ease-in-out transition-[filter] duration-200  ${classNameImg || ''}`}/>
                 <span
                     className={"opacity-0 absolute transition-all top-1/2 inset-x-2/8 text-center bg-text-page text-white rounded-2xl p-2"}
-                    aria-describedby={'my-id-' + title}>Ver detalles -></span>
+                    aria-describedby={'my-id-' + title}>Ver detalles -&gt;</span>
             </div>
             <div className="px-8 h-min container pb-4">
                 <h3 className={"text-[1.3cqi] font-inter-var text-text-page font-[600]"}
@@ -32,7 +30,7 @@ export default function Card({title, tags, className, classNameImg, urlTarget, i
                     <a href=""
                        className={"after:absolute after:inset-0 after:content-[''] after:z-10"}
                     >{title}</a></h3>
-                <span className={"hidden font-inter-var text-text-page2 max-md:inline text-sm leading-10 opacity-90 "}>Ver detalles -></span>
+                <span className={"hidden font-inter-var text-text-page2 max-md:inline text-sm leading-10 opacity-90 "}>Ver detalles -&gt;</span>
                 <p className={"text-text-page2 my-4 text-base font-inter-var"}>{children}</p>
                 <div className={" flex flex-wrap flex-row gap-2"}>{tagsElements(tags)}</div>
             </div>

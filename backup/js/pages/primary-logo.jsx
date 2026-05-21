@@ -138,7 +138,7 @@ function animateBrushStroke(paths) {
 }
 
 export default function PrimaryLogo({isMainTitle}) {
-    let className = isMainTitle ? 'animation-title' : '';
+    let _className = isMainTitle ? 'animation-title' : '';
 
     useEffect(setupAnimations, []);
 
