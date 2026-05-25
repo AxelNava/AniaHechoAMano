@@ -50,8 +50,15 @@ onMounted(() => {
   <div v-if="loading" class="text-center py-8 text-gray-500">Cargando productos...</div>
   <div v-else>
     <section v-if="products.length > 0" class="bg-white rounded-lg shadow mb-8">
-      <section class="px-4 py-3 border-b bg-gray-50">
+      <section class="px-4 py-3 border-b bg-gray-50 flex items-center justify-between gap-3">
         <h2 class="font-semibold text-gray-700">Lista de Productos</h2>
+        <router-link
+          to="/admin/products/new"
+          class="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+          style="view-transition-name: add-product-cta"
+        >
+          Añadir producto
+        </router-link>
       </section>
       <article class="divide-y">
         <div
