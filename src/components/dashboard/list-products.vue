@@ -1,27 +1,27 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { mockApi } from "@/services/mockApi";
 import ListProductsFilter from "@/components/dashboard/list-products-filter.vue";
+import { ProductApi } from "@/services/products/productApi";
+import { CategoriesApi } from "@/services/categories/categoriesApi";
+import { ProductDto } from "@/types/products/ProductDto";
 
 const router = useRouter();
 
-interface Product {
-  id: number;
-  nombre: string;
-  descripcion?: string;
-  precio_base: number;
-  activo: boolean;
-  categoria_id: number;
-}
-
-const products = ref<Product[]>([]);
+const products = ref<ProductDto[]>([]);
 const categories = ref<Array<{ id: number; nombre: string }>>([]);
 const loading = ref(true);
+const refreshing = ref(false);
+const productApi = new ProductApi();
+const categoriesApi = new CategoriesApi();
 
 const fetchProducts = async () => {
   try {
-    products.value = await mockApi.getProducts();
+    const response = await productApi.getProductsPaginated({
+      page: 1,
+      limit: 50,
+    });
+    products.value = response.data;
   } catch (error) {
     console.error("Error fetching products:", error);
   }
@@ -29,16 +29,27 @@ const fetchProducts = async () => {
 
 const fetchCategories = async () => {
   try {
-    categories.value = await mockApi.getCategories();
+    categories.value = await categoriesApi.getCategories();
   } catch (error) {
     console.error("Error fetching categories:", error);
   }
 };
 
-onMounted(() => {
-  fetchCategories();
-  fetchProducts();
-  loading.value = false;
+const refreshTable = async () => {
+  try {
+    refreshing.value = true;
+    await Promise.all([fetchCategories(), fetchProducts()]);
+  } finally {
+    refreshing.value = false;
+  }
+};
+
+onMounted(async () => {
+  try {
+    await Promise.all([fetchCategories(), fetchProducts()]);
+  } finally {
+    loading.value = false;
+  }
 });
 </script>
 
@@ -52,13 +63,23 @@ onMounted(() => {
     <section v-if="products.length > 0" class="bg-white rounded-lg shadow mb-8">
       <section class="px-4 py-3 border-b bg-gray-50 flex items-center justify-between gap-3">
         <h2 class="font-semibold text-gray-700">Lista de Productos</h2>
-        <router-link
-          to="/admin/products/new"
-          class="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
-          style="view-transition-name: add-product-cta"
-        >
-          Añadir producto
-        </router-link>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            :disabled="refreshing"
+            @click="refreshTable"
+            class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {{ refreshing ? "Actualizando..." : "Actualizar" }}
+          </button>
+          <router-link
+            to="/admin/products/new"
+            class="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+            style="view-transition-name: add-product-cta"
+          >
+            Añadir producto
+          </router-link>
+        </div>
       </section>
       <article class="divide-y">
         <div
