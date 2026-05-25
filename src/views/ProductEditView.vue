@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import { mockApi } from "@/services/mockApi";
 import { CategoriesApi } from "@/services/categories/categoriesApi";
+import { ProductApi } from "@/services/products/productApi";
 
 const router = useRouter();
 const route = useRoute();
 
 const categoriesApi = new CategoriesApi();
+const productApi = new ProductApi();
 
 const loading = ref(false);
 const saving = ref(false);
@@ -28,13 +29,17 @@ const fetchProduct = async (id: number) => {
   loading.value = true;
   error.value = "";
   try {
-    const data = await mockApi.getProduct(id);
+    const data = await productApi.getProductById(id);
+    if (!data) {
+      throw new Error("Producto no encontrado");
+    }
+
     product.value = {
       name: data.nombre,
       description: data.descripcion || "",
       price: Number(data.precio_base),
       categoryId: data.categoria_id,
-      activo: data.activo,
+      activo: data.activo ?? true,
     };
   } catch (_) {
     error.value = "Producto no encontrado";
@@ -55,13 +60,20 @@ const updateProduct = async () => {
   saving.value = true;
   error.value = "";
   try {
-    await mockApi.updateProduct(productId.value, {
+    const result = await productApi.updateProduct({
+      id: productId.value,
       nombre: product.value.name,
       descripcion: product.value.description,
       precio_base: product.value.price,
       categoria_id: product.value.categoryId as number,
       activo: product.value.activo,
+      componentes: [],
     });
+
+    if (!result) {
+      throw new Error("Error al actualizar");
+    }
+
     router.push("/admin/products");
   } catch (_) {
     error.value = "Error al actualizar";

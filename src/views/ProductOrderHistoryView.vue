@@ -1,11 +1,17 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
-import { mockApi } from "@/services/mockApi";
+import { ProductApi } from "@/services/products/productApi";
+import {
+  ProductHistoryApi,
+} from "@/services/history/productHistoryApi";
+import type { PedidoHistorialListItemDto } from "@/types/orders/orderHistoryDto";
 
 const route = useRoute();
 const loading = ref(true);
 const error = ref("");
+const productApi = new ProductApi();
+const productHistoryApi = new ProductHistoryApi();
 
 interface Componente {
   id: number;
@@ -16,7 +22,7 @@ interface Componente {
   [key: string]: unknown;
 }
 
-interface Articulo {
+interface ProductoPedido {
   id: number;
   descripcion_cliente: string;
   precio_estimado_ia: number | null;
@@ -26,18 +32,8 @@ interface Articulo {
   componentes: Componente[];
 }
 
-interface Pedido {
-  id: number;
-  cliente_id: number;
-  fecha_solicitud: string;
-  fecha_entrega_acordada: string;
-  estado: string;
-  precio_final_total: number | null;
-  anticipo_pagado: number;
-  notas_admin: string | null;
-  cliente?: { nombre: string };
-  cliente_nombre?: string;
-  articulos: Articulo[];
+interface Pedido extends Omit<PedidoHistorialListItemDto, "productos"> {
+  productos: ProductoPedido[];
 }
 
 interface Product {
@@ -45,7 +41,7 @@ interface Product {
   nombre: string;
   descripcion?: string;
   precio_base: number;
-  activo: boolean;
+  activo?: boolean;
   categoria_id: number;
 }
 
@@ -58,8 +54,16 @@ const fetchProductAndOrders = async () => {
   loading.value = true;
   error.value = "";
   try {
-    product.value = await mockApi.getProduct(productId.value);
-    pedidos.value = await mockApi.getOrdersByProduct(productId.value);
+    product.value = await productApi.getProductById(productId.value);
+    if (!product.value) {
+      throw new Error("Producto no encontrado");
+    }
+    const historyResponse = await productHistoryApi.getOrdersByProduct(productId.value, {
+      page: 1,
+      limit: 50,
+      sort: "fecha_solicitud_desc",
+    });
+    pedidos.value = historyResponse.data;
   } catch (_) {
     error.value = "Error al cargar los datos";
   } finally {
@@ -164,29 +168,29 @@ onMounted(fetchProductAndOrders);
               </div>
             </div>
 
-            <div v-if="pedido.articulos?.length" class="border-t pt-4">
-              <h3 class="text-sm font-semibold text-gray-700 mb-3">Artículos del Pedido</h3>
+            <div v-if="pedido.productos?.length" class="border-t pt-4">
+              <h3 class="text-sm font-semibold text-gray-700 mb-3">Productos del Pedido</h3>
               <div class="space-y-3">
                 <div
-                  v-for="articulo in pedido.articulos"
-                  :key="articulo.id"
+                  v-for="productoPedido in pedido.productos"
+                  :key="productoPedido.id"
                   class="bg-gray-50 rounded p-3"
                 >
                   <div class="flex flex-wrap gap-4">
                     <div class="flex-1 min-w-[200px]">
                       <p class="text-xs text-gray-500">Descripción del Cliente</p>
-                      <p class="text-sm">{{ articulo.descripcion_cliente }}</p>
+                      <p class="text-sm">{{ productoPedido.descripcion_cliente }}</p>
                     </div>
                     <div class="text-right">
                       <p class="text-xs text-gray-500">Precio Fijado</p>
                       <p class="text-sm font-medium">
-                        {{ formatCurrency(articulo.precio_fijado_admin) }}
+                        {{ formatCurrency(productoPedido.precio_fijado_admin) }}
                       </p>
                     </div>
-                    <div v-if="articulo.foto_referencia_url" class="w-20 h-20">
+                    <div v-if="productoPedido.foto_referencia_url" class="w-20 h-20">
                       <p class="text-xs text-gray-500 mb-1">Foto</p>
                       <img
-                        :src="articulo.foto_referencia_url"
+                        :src="productoPedido.foto_referencia_url"
                         class="w-full h-full object-cover rounded"
                         alt="Referencia"
                       />
@@ -194,13 +198,13 @@ onMounted(fetchProductAndOrders);
                   </div>
 
                   <div
-                    v-if="articulo.componentes?.length"
+                    v-if="productoPedido.componentes?.length"
                     class="mt-3 pl-3 border-l-2 border-gray-200"
                   >
                     <p class="text-xs text-gray-500 mb-2">Componentes utilizados:</p>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
                       <div
-                        v-for="comp in articulo.componentes"
+                        v-for="comp in productoPedido.componentes"
                         :key="comp.id"
                         class="bg-white rounded p-2 text-xs"
                       >

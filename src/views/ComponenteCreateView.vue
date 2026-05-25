@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { mockApi } from "@/services/mockApi";
 import { useLoadingButton } from "@/composables/useLoadingButton";
 import { LoadingButton } from "@/components/ui/loading-button";
+import { ComponentsApi } from "@/services/products/componentsApi";
 
 const componente = ref({
   nombre: "",
@@ -13,6 +13,7 @@ const componente = ref({
 });
 
 const tipos = ["MATERIAL", "ELEMENTO_ELABORADO", "SERVICIO"];
+const componentsApi = new ComponentsApi();
 
 const { status, message, execute } = useLoadingButton({
   errorDuration: 5000,
@@ -21,12 +22,13 @@ const { status, message, execute } = useLoadingButton({
 
 const submitComponente = async () => {
   await execute(async () => {
-    await mockApi.createComponente({
+    await componentsApi.createComponentes({
       nombre: componente.value.nombre,
       tipo: componente.value.tipo,
       descripcion: componente.value.descripcion,
-      unidadMedida: componente.value.unidadMedida,
-      requierePedidoPrevio: componente.value.requierePedidoPrevio,
+      unidad_medida: componente.value.unidadMedida,
+      requiere_pedido_previo: componente.value.requierePedidoPrevio,
+      activo: true,
     });
 
     componente.value = {
