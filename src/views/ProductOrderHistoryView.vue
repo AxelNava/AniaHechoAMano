@@ -2,9 +2,7 @@
 import { ref, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
 import { ProductApi } from "@/services/products/productApi";
-import {
-  ProductHistoryApi,
-} from "@/services/history/productHistoryApi";
+import { ProductHistoryApi } from "@/services/history/productHistoryApi";
 import type { PedidoHistorialListItemDto } from "@/types/orders/orderHistoryDto";
 import type { ProductDto } from "@/types/products/ProductDto";
 
@@ -25,7 +23,7 @@ const fetchProductAndOrders = async () => {
   try {
     product.value = await productApi.getProductById(productId.value);
     if (!product.value) {
-      throw new Error("Producto no encontrado");
+      error.value = "Producto no encontrado";
     }
     const historyResponse = await productHistoryApi.getOrdersByProduct(productId.value, {
       page: 1,
@@ -146,7 +144,7 @@ onMounted(fetchProductAndOrders);
                   class="bg-gray-50 rounded p-3"
                 >
                   <div class="flex flex-wrap gap-4">
-                    <div class="flex-1 min-w-[200px]">
+                    <div class="flex-1 min-w-50">
                       <p class="text-xs text-gray-500">Descripción del Cliente</p>
                       <p class="text-sm">{{ productoPedido.descripcion_cliente }}</p>
                     </div>
