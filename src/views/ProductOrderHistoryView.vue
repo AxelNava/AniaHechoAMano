@@ -6,6 +6,7 @@ import {
   ProductHistoryApi,
 } from "@/services/history/productHistoryApi";
 import type { PedidoHistorialListItemDto } from "@/types/orders/orderHistoryDto";
+import type { ProductDto } from "@/types/products/ProductDto";
 
 const route = useRoute();
 const loading = ref(true);
@@ -13,40 +14,8 @@ const error = ref("");
 const productApi = new ProductApi();
 const productHistoryApi = new ProductHistoryApi();
 
-interface Componente {
-  id: number;
-  nombre: string;
-  cantidad: number;
-  unidad_medida: string;
-  costo_unitario_congelado: number | null;
-  [key: string]: unknown;
-}
-
-interface ProductoPedido {
-  id: number;
-  descripcion_cliente: string;
-  precio_estimado_ia: number | null;
-  precio_fijado_admin: number | null;
-  tiempo_total_estimado_minutos: number | null;
-  foto_referencia_url: string | null;
-  componentes: Componente[];
-}
-
-interface Pedido extends Omit<PedidoHistorialListItemDto, "productos"> {
-  productos: ProductoPedido[];
-}
-
-interface Product {
-  id: number;
-  nombre: string;
-  descripcion?: string;
-  precio_base: number;
-  activo?: boolean;
-  categoria_id: number;
-}
-
-const product = ref<Product | null>(null);
-const pedidos = ref<Pedido[]>([]);
+const product = ref<ProductDto | null>(null);
+const pedidos = ref<PedidoHistorialListItemDto[]>([]);
 
 const productId = computed(() => Number(route.params.id));
 

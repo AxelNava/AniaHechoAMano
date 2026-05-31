@@ -7,10 +7,15 @@ import {
   type PedidoProductoComponenteSnapshotDto,
 } from "@/types/orders/orderHistoryDto";
 
-const toQueryString = (query: Record<string, string | number | boolean | undefined>) => {
+const toQueryString = (query: Record<string, unknown>) => {
   const params = new URLSearchParams();
   Object.entries(query).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
+    if (
+      value !== undefined &&
+      value !== null &&
+      value !== "" &&
+      (typeof value === "string" || typeof value === "number" || typeof value === "boolean")
+    ) {
       params.append(key, String(value));
     }
   });
@@ -23,7 +28,7 @@ export class ProductHistoryApi {
     productId: number,
     query: PedidoHistorialQueryDto = {},
   ): Promise<PaginatedResponseDto<PedidoHistorialListItemDto>> {
-    const queryString = toQueryString(query);
+    const queryString = toQueryString(query as Record<string, unknown>);
     const result = await useFetch<
       PaginatedResponseDto<PedidoHistorialListItemDto> | PedidoHistorialListItemDto[]
     >(`productos/${productId}/pedidos/historial${queryString}`, { method: "GET" });

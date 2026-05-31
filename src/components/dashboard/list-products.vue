@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
 import ListProductsFilter from "@/components/dashboard/list-products-filter.vue";
+import { DataTable, DataTableColumn } from "@/components/ui";
+import ProductActionsCell from "@/components/dashboard/product-table-cells/ProductActionsCell.vue";
+import ProductNameCell from "@/components/dashboard/product-table-cells/ProductNameCell.vue";
+import ProductPriceCell from "@/components/dashboard/product-table-cells/ProductPriceCell.vue";
+import ProductStatusCell from "@/components/dashboard/product-table-cells/ProductStatusCell.vue";
 import { ProductApi } from "@/services/products/productApi";
 import { CategoriesApi } from "@/services/categories/categoriesApi";
 import { ProductDto } from "@/types/products/ProductDto";
-
-const router = useRouter();
 
 const products = ref<ProductDto[]>([]);
 const categories = ref<Array<{ id: number; nombre: string }>>([]);
@@ -56,7 +58,7 @@ onMounted(async () => {
 <template>
   <section>
     <span>Filtros</span>
-    <list-products-filter />
+    <ListProductsFilter />
   </section>
   <div v-if="loading" class="text-center py-8 text-gray-500">Cargando productos...</div>
   <div v-else>
@@ -81,43 +83,29 @@ onMounted(async () => {
           </router-link>
         </div>
       </section>
-      <article class="divide-y">
-        <div
-          v-for="prod in products"
-          :key="prod.id"
-          class="p-4 flex flex-wrap items-center justify-between gap-4 hover:bg-gray-50"
-        >
-          <div class="flex-1 min-w-50">
-            <p class="font-medium text-gray-800">{{ prod.nombre }}</p>
-            <p class="text-sm text-gray-500">{{ prod.descripcion || "Sin descripción" }}</p>
-          </div>
-          <div class="flex items-center gap-4">
-            <span class="text-sm font-medium text-green-600">${{ prod.precio_base }}</span>
-            <span
-              :class="[
-                'px-2 py-1 rounded-full text-xs',
-                prod.activo ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600',
-              ]"
-            >
-              {{ prod.activo ? "Activo" : "Inactivo" }}
-            </span>
-            <div class="flex gap-2">
-              <button
-                @click="router.push(`/admin/products/edit/${prod.id}`)"
-                class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
-              >
-                Editar
-              </button>
-              <button
-                @click="router.push(`/admin/products/${prod.id}/orders`)"
-                class="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded hover:bg-purple-200"
-              >
-                Historial
-              </button>
-            </div>
-          </div>
-        </div>
-      </article>
+      <DataTable :rows="products" :row-key="(row) => row.id">
+        <DataTableColumn
+          label="Producto"
+          prop="nombre"
+          cell-class="min-w-72"
+          :cell-component="ProductNameCell"
+        />
+        <DataTableColumn
+          label="Precio"
+          prop="precio_base"
+          header-class="text-right"
+          cell-class="text-right"
+          :cell-component="ProductPriceCell"
+        />
+        <DataTableColumn label="Estado" prop="activo" :cell-component="ProductStatusCell" />
+        <DataTableColumn
+          label="Acciones"
+          :accessor="(row) => row.id"
+          header-class="text-right"
+          cell-class="text-right"
+          :cell-component="ProductActionsCell"
+        />
+      </DataTable>
     </section>
   </div>
 </template>

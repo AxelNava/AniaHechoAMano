@@ -6,10 +6,15 @@ import {
   type ProductListQueryDto,
 } from "@/types/orders/orderHistoryDto";
 
-const toQueryString = (query: Record<string, string | number | boolean | undefined>) => {
+const toQueryString = (query: Record<string, unknown>) => {
   const params = new URLSearchParams();
   Object.entries(query).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
+    if (
+      value !== undefined &&
+      value !== null &&
+      value !== "" &&
+      (typeof value === "string" || typeof value === "number" || typeof value === "boolean")
+    ) {
       params.append(key, String(value));
     }
   });
@@ -28,7 +33,7 @@ export class ProductApi implements IProductApi {
   public async getProductsPaginated(
     query: ProductListQueryDto = {},
   ): Promise<PaginatedResponseDto<ProductDto>> {
-    const queryString = toQueryString(query);
+    const queryString = toQueryString(query as Record<string, unknown>);
     const result = await useFetch<PaginatedResponseDto<ProductDto> | ProductDto[]>(
       `productos${queryString}`,
       { method: "GET" },
