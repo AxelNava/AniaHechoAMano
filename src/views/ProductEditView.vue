@@ -3,6 +3,9 @@ import { ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { CategoriesApi } from "@/services/categories/categoriesApi";
 import { ProductApi } from "@/services/products/productApi";
+import ProductImagesManager from "@/components/dashboard/products/ProductImagesManager.vue";
+import type { ProductImageItem } from "@/types/products/ProductDto";
+import { normalizeProductImages } from "@/composables/products/useProductImages";
 
 const router = useRouter();
 const route = useRoute();
@@ -14,6 +17,8 @@ const loading = ref(false);
 const saving = ref(false);
 const error = ref("");
 const productId = ref<number>(0);
+const productImages = ref<ProductImageItem[]>([]);
+const originalImageIds = ref<number[]>([]);
 
 const product = ref({
   name: "",
@@ -41,6 +46,21 @@ const fetchProduct = async (id: number) => {
       categoryId: data.categoria_id,
       activo: data.activo ?? true,
     };
+    productImages.value = normalizeProductImages(
+      [...(data.imagenes || [])]
+        .sort((first, second) => first.orden - second.orden)
+        .map((image) => ({
+          id: image.id ? String(image.id) : image.url,
+          previewUrl: image.url,
+          existingUrl: image.url,
+          alt: image.alt,
+          orden: image.orden,
+          isPrimary: image.orden === 0,
+        })),
+    );
+    originalImageIds.value = (data.imagenes || [])
+      .map((image) => image.id)
+      .filter((id): id is number => typeof id === "number");
   } catch (_) {
     error.value = "Producto no encontrado";
   } finally {
@@ -60,15 +80,38 @@ const updateProduct = async () => {
   saving.value = true;
   error.value = "";
   try {
-    const result = await productApi.updateProduct({
-      id: productId.value,
-      nombre: product.value.name,
-      descripcion: product.value.description,
-      precio_base: product.value.price,
-      categoria_id: product.value.categoryId as number,
-      activo: product.value.activo,
-      componentes: [],
+    const formData = new FormData();
+    formData.append("nombre", product.value.name);
+    formData.append("descripcion", product.value.description);
+    formData.append("precio_base", String(product.value.price));
+    formData.append("categoria_id", String(product.value.categoryId));
+    formData.append("activo", String(product.value.activo));
+    formData.append("componentes", JSON.stringify([]));
+
+    const existingImages = productImages.value
+      .filter((image) => image.existingUrl && !image.file)
+      .map((image, index) => ({
+        id: Number.isNaN(Number(image.id)) ? undefined : Number(image.id),
+        url: image.existingUrl,
+        alt: image.alt,
+        orden: index,
+      }));
+    const currentExistingIds = new Set(existingImages.map((image) => image.id).filter(Boolean));
+    const deletedImageIds = originalImageIds.value.filter((id) => !currentExistingIds.has(id));
+
+    formData.append("imagenes_existentes", JSON.stringify(existingImages));
+    deletedImageIds.forEach((id) => {
+      formData.append("imagenes_eliminadas", String(id));
     });
+
+    productImages.value.forEach((image, index) => {
+      if (image.file) {
+        formData.append("imagenes", image.file);
+        formData.append("imagenes_orden", String(index));
+      }
+    });
+
+    const result = await productApi.updateProductWithImages(productId.value, formData);
 
     if (!result) {
       throw new Error("Error al actualizar");
@@ -90,7 +133,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto p-6 bg-white rounded shadow mt-10">
+  <div class="mx-auto mt-10 max-w-7xl p-6">
     <h1 class="text-2xl font-bold mb-6 text-gray-800">Editar Producto</h1>
 
     <div v-if="loading" class="text-center py-8 text-gray-500">Cargando...</div>
@@ -99,7 +142,8 @@ onMounted(() => {
       {{ error }}
     </div>
 
-    <form v-else @submit.prevent="updateProduct" class="space-y-6">
+    <form v-else @submit.prevent="updateProduct" class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(360px,420px)]">
+      <div class="space-y-6 rounded-xl bg-white p-6 shadow">
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
         <input
@@ -174,6 +218,11 @@ onMounted(() => {
           {{ saving ? "Guardando..." : "Guardar Cambios" }}
         </button>
       </div>
+      </div>
+
+      <aside class="lg:sticky lg:top-6 lg:self-start">
+        <ProductImagesManager v-model="productImages" :disabled="saving" />
+      </aside>
     </form>
   </div>
 </template>

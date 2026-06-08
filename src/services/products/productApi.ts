@@ -6,6 +6,19 @@ import {
   type ProductListQueryDto,
 } from "@/types/orders/orderHistoryDto";
 
+const apiBackend = import.meta.env.VITE_VUE_APP_DOMAIN || "http://localhost:5001";
+const api = `${apiBackend}/api`;
+
+const parseMultipartResponse = async (response: Response): Promise<ProductDto | null> => {
+  const payload = (await response.json().catch(() => null)) as ProductDto | null;
+
+  if (!response.ok) {
+    throw new Error(`Error ${response.status} al consumir productos`);
+  }
+
+  return payload;
+};
+
 const toQueryString = (query: Record<string, unknown>) => {
   const params = new URLSearchParams();
   Object.entries(query).forEach(([key, value]) => {
@@ -74,6 +87,20 @@ export class ProductApi implements IProductApi {
     });
   }
 
+  public async createProductWithImages(formData: FormData): Promise<ProductDto | null> {
+    try {
+      const response = await fetch(`${api}/productos/new`, {
+        method: "POST",
+        body: formData,
+      });
+
+      return parseMultipartResponse(response);
+    } catch (error) {
+      console.error("Error creating product with images:", error);
+      return null;
+    }
+  }
+
   public async updateProduct(product: ProductDto): Promise<ProductDto | null> {
     if (!product.id) {
       throw new Error("El producto debe incluir un id para actualizarse");
@@ -83,5 +110,19 @@ export class ProductApi implements IProductApi {
       method: "PUT",
       body: JSON.stringify(product),
     });
+  }
+
+  public async updateProductWithImages(id: number, formData: FormData): Promise<ProductDto | null> {
+    try {
+      const response = await fetch(`${api}/productos/${id}`, {
+        method: "PATCH",
+        body: formData,
+      });
+
+      return parseMultipartResponse(response);
+    } catch (error) {
+      console.error("Error updating product with images:", error);
+      return null;
+    }
   }
 }

@@ -4,10 +4,12 @@ import { useRouter } from "vue-router";
 import { ProductApi } from "@/services/products/productApi";
 import { CategoriesApi } from "@/services/categories/categoriesApi";
 import { ComponentsApi } from "@/services/products/componentsApi";
+import ProductImagesManager from "@/components/dashboard/products/ProductImagesManager.vue";
 import { useCategoriesStore } from "@/stores/categoriesStore";
 import { useComponentsStore } from "@/stores/componentsStore";
 import { storeToRefs } from "pinia";
 import { toast } from "vue-sonner";
+import type { ProductImageItem } from "@/types/products/ProductDto";
 
 const router = useRouter();
 const categoriesStore = useCategoriesStore();
@@ -20,8 +22,8 @@ const product = ref({
   description: "",
   price: 0,
   categoryId: null as number | null,
-  images: [] as File[],
 });
+const productImages = ref<ProductImageItem[]>([]);
 const productApi = new ProductApi();
 const categoriesApi = new CategoriesApi();
 const componentsApi = new ComponentsApi();
@@ -144,14 +146,22 @@ const submitProduct = async () => {
       .filter((c) => c.componente_id !== null && c.cantidad > 0)
       .map((c) => ({ componente_id: c.componente_id as number, cantidad: c.cantidad }));
 
-    const result = await productApi.createProduct({
-      nombre: product.value.name,
-      descripcion: product.value.description,
-      precio_base: Number(product.value.price),
-      categoria_id: catId,
-      activo: true,
-      componentes: validComponents,
+    const formData = new FormData();
+    formData.append("nombre", product.value.name);
+    formData.append("descripcion", product.value.description);
+    formData.append("precio_base", String(Number(product.value.price)));
+    formData.append("categoria_id", String(catId));
+    formData.append("activo", "true");
+    formData.append("componentes", JSON.stringify(validComponents));
+
+    productImages.value.forEach((image, index) => {
+      if (image.file) {
+        formData.append("imagenes", image.file);
+        formData.append("imagenes_orden", String(index));
+      }
     });
+
+    const result = await productApi.createProductWithImages(formData);
     if (result) {
       toast.success("Producto creado exitosamente", {
         style: { background: "#111827", color: "#ffffff", border: "1px solid #374151" },
@@ -161,8 +171,8 @@ const submitProduct = async () => {
         description: "",
         price: 0,
         categoryId: null as number | null,
-        images: [] as File[],
       };
+      productImages.value = [];
       productComponents.value = [];
       newCategoryName.value = "";
     } else {
@@ -180,12 +190,13 @@ onMounted(fetchData);
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto p-6 bg-white rounded shadow mt-10">
+  <div class="mx-auto mt-10 max-w-7xl p-6">
     <h1 class="text-2xl font-bold mb-6 text-gray-800" style="view-transition-name: add-product-cta">
       Crear nuevo producto
     </h1>
 
-    <form @submit.prevent="submitProduct" class="space-y-6">
+    <form @submit.prevent="submitProduct" class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(360px,420px)]">
+      <div class="space-y-6 rounded-xl bg-white p-6 shadow">
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
         <input
@@ -336,6 +347,11 @@ onMounted(fetchData);
           {{ loading ? "Guardando..." : "Crear producto" }}
         </button>
       </div>
+      </div>
+
+      <aside class="lg:sticky lg:top-6 lg:self-start">
+        <ProductImagesManager v-model="productImages" :disabled="loading" />
+      </aside>
     </form>
   </div>
 
