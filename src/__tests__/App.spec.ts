@@ -5,7 +5,15 @@ import App from "../App.vue";
 
 describe("App", () => {
   it("mounts renders properly", () => {
-    const wrapper = mount(App);
-    expect(wrapper.text()).toContain("You did it!");
+    const wrapper = mount(App, {
+      global: {
+        stubs: {
+          RouterView: true,
+          Toaster: true,
+        },
+      },
+    });
+
+    expect(wrapper.findComponent({ name: "RouterView" }).exists()).toBe(true);
   });
 });

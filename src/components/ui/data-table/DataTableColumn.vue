@@ -12,4 +12,6 @@ defineSlots<{
 }>();
 </script>
 
-<template></template>
+<template>
+  <span v-if="false" />
+</template>

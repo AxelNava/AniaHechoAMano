@@ -15,13 +15,14 @@ const props = withDefaults(
     tableClass?: string;
   }>(),
   {
-    emptyMessage: "No hay registros disponibles",
+    emptyMessage: "No hay dato",
     tableClass: "",
   }
 );
 
 const slots = defineSlots<{
   default?: () => VNode[];
+  toolbar?: () => unknown;
 }>();
 
 const resolveRowKey = (row: TRow): string | number => {
@@ -147,6 +148,12 @@ const hasRows = computed(() => props.rows.length > 0);
     <slot />
   </div>
   <div class="overflow-x-auto">
+    <div
+      v-if="$slots.toolbar"
+      class="flex items-center justify-end gap-2 border-b border-gray-200 bg-gray-50 px-4 py-3"
+    >
+      <slot name="toolbar" />
+    </div>
     <table :class="['min-w-full divide-y divide-gray-200', tableClass]">
       <thead class="bg-gray-50">
         <tr>
@@ -154,7 +161,7 @@ const hasRows = computed(() => props.rows.length > 0);
             v-for="column in resolvedColumns"
             :key="column.id"
             :class="[
-              'px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600',
+              'px-4 py-3 text-left text-sm font-medium tracking-normal text-gray-600',
               column.headerClass,
             ]"
           >
