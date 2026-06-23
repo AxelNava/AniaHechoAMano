@@ -40,6 +40,26 @@ const router = createRouter({
           component: () => import("@/views/ProductOrderHistoryView.vue"),
         },
         {
+          path: "products/:id/orders/new",
+          name: "admin-product-order-create",
+          component: () => import("@/views/OrderCreateView.vue"),
+        },
+        {
+          path: "products/:id/orders/:pedidoId",
+          name: "admin-product-order-detail",
+          component: () => import("@/views/OrderDetailView.vue"),
+        },
+        {
+          path: "orders",
+          name: "admin-orders",
+          component: () => import("@/views/OrdersHistoryView.vue"),
+        },
+        {
+          path: "orders/:pedidoId",
+          name: "admin-order-detail",
+          component: () => import("@/views/OrderDetailView.vue"),
+        },
+        {
           path: "components",
           name: "admin-components",
           component: () => import("@/pages/admin/components.vue"),

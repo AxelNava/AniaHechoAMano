@@ -5,9 +5,20 @@ import {
   type PaginatedResponseDto,
   type ProductListQueryDto,
 } from "@/types/orders/orderHistoryDto";
+import type { ProductoInfoPedidoDto } from "@/types/orders/createOrderDto";
 
 const apiBackend = import.meta.env.VITE_VUE_APP_DOMAIN || "http://localhost:5001";
 const api = `${apiBackend}/api`;
+
+export const resolveProductImageUrl = (url: string) => {
+  if (!url) return url;
+  if (/^(blob:|data:|https?:\/\/)/.test(url)) return url;
+
+  return `${apiBackend}${url.startsWith("/") ? "" : "/"}${url}`;
+};
+
+export const getProductImageBinaryUrl = (imageId: number | string) =>
+  `${api}/productos/imagenes/${imageId}/binary`;
 
 const parseMultipartResponse = async (response: Response): Promise<ProductDto | null> => {
   const payload = (await response.json().catch(() => null)) as ProductDto | null;
@@ -74,6 +85,12 @@ export class ProductApi implements IProductApi {
 
   public async getProductById(id: number): Promise<ProductDto | null> {
     return useFetch<ProductDto>(`productos/${id}`, {
+      method: "GET",
+    });
+  }
+
+  public async getProductOrderInfo(id: number): Promise<ProductoInfoPedidoDto | null> {
+    return useFetch<ProductoInfoPedidoDto>(`productos/${id}/info-pedido`, {
       method: "GET",
     });
   }

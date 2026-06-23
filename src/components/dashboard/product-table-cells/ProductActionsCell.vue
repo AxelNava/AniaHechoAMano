@@ -24,5 +24,11 @@ const router = useRouter();
     >
       Historial
     </button>
+    <button
+      @click="router.push(`/admin/products/${row.id}/orders/new`)"
+      class="px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200"
+    >
+      Registrar Pedido
+    </button>
   </div>
 </template>

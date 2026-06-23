@@ -5,8 +5,10 @@ import DarkModeToggle from "@/components/DarkModeToggle.vue";
 const route = useRoute();
 
 const menuItems = [
+  { name: "Inicio", href: "/" },
   { name: "Productos", href: "/admin/products" },
   { name: "Componentes", href: "/admin/components" },
+  { name: "Historial de Pedidos", href: "/admin/orders" },
 ];
 </script>
 

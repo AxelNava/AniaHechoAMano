@@ -7,9 +7,19 @@ import { Search } from "lucide-vue-next";
 
 const router = useRouter();
 const componentsStore = useComponentsStore();
-const { components, isLoading } = storeToRefs(componentsStore);
+const { components, isLoading, isFetched } = storeToRefs(componentsStore);
 
 const searchQuery = ref("");
+const refreshing = ref(false);
+
+const refreshComponents = async () => {
+  refreshing.value = true;
+  try {
+    await componentsStore.fetchComponents(true);
+  } finally {
+    refreshing.value = false;
+  }
+};
 
 const filteredComponents = computed(() => {
   if (!searchQuery.value) return components.value;
@@ -40,15 +50,25 @@ onMounted(() => {
         class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
       />
     </div>
-    <button
-      @click="router.push('/admin/components/new')"
-      class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors"
-    >
-      Crear Componente
-    </button>
+    <div class="flex w-full sm:w-auto gap-2">
+      <button
+        type="button"
+        :disabled="refreshing"
+        @click="refreshComponents"
+        class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {{ refreshing ? "Actualizando..." : "Actualizar" }}
+      </button>
+      <button
+        @click="router.push('/admin/components/new')"
+        class="flex-1 sm:flex-none px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors"
+      >
+        Crear Componente
+      </button>
+    </div>
   </section>
 
-  <div v-if="isLoading" class="text-center py-8 text-gray-500">
+  <div v-if="isLoading && !isFetched" class="text-center py-8 text-gray-500">
     Cargando componentes...
   </div>
   <div v-else>
