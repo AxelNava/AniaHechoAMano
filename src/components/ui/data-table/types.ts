@@ -2,12 +2,23 @@ import type { Component } from "vue";
 
 export type DataTableRowKey<TRow> = keyof TRow | ((row: TRow) => string | number);
 
+export type DataTableSortDirection = "asc" | "desc";
+
+export interface DataTableSort {
+  key: string;
+  direction: DataTableSortDirection;
+}
+
 type BaseColumn = {
   id?: string;
   label: string;
   headerClass?: string;
   cellClass?: string;
   cellComponent?: Component;
+  sortable?: boolean;
+  sortKey?: string;
+  sortAscLabel?: string;
+  sortDescLabel?: string;
 };
 
 type ColumnWithProp<TRow, TProp extends keyof TRow = keyof TRow> = BaseColumn & {
@@ -36,4 +47,8 @@ export type DataTableParsedColumnNode<TRow> = {
   cellClass?: string;
   cellComponent?: DataTableColumnDefinition<TRow>["cellComponent"];
   cellSlot?: (props: { row: TRow; value: unknown }) => unknown;
+  sortable?: boolean;
+  sortKey?: string;
+  sortAscLabel?: string;
+  sortDescLabel?: string;
 };

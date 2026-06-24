@@ -1,10 +1,12 @@
 <script setup lang="ts" generic="TRow extends Record<string, unknown>">
 import { computed, Fragment, type VNode } from "vue";
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-vue-next";
 import DataTableColumn from "./DataTableColumn.vue";
 import type {
   DataTableParsedColumnNode,
   DataTableResolvedColumn,
   DataTableRowKey,
+  DataTableSort,
 } from "./types";
 
 const props = withDefaults(
@@ -61,6 +63,11 @@ const flattenNodes = (nodes: VNode[]): VNode[] => {
   return result;
 };
 
+const coerceBoolean = (value: unknown): boolean => {
+  // Vue renders a bare boolean attribute (`sortable`) as an empty string in raw vnode props.
+  return value === true || value === "";
+};
+
 const normalizeColumnProps = (
   rawProps: DataTableParsedColumnNode<TRow> & Record<string, unknown>,
 ): DataTableParsedColumnNode<TRow> => {
@@ -79,6 +86,15 @@ const normalizeColumnProps = (
     cellComponent:
       (rawProps.cellComponent as DataTableParsedColumnNode<TRow>["cellComponent"]) ??
       (rawProps["cell-component"] as DataTableParsedColumnNode<TRow>["cellComponent"]),
+    sortable: coerceBoolean(rawProps.sortable ?? rawProps["sortable"]),
+    sortKey:
+      (rawProps.sortKey as string | undefined) ?? (rawProps["sort-key"] as string | undefined),
+    sortAscLabel:
+      (rawProps.sortAscLabel as string | undefined) ??
+      (rawProps["sort-asc-label"] as string | undefined),
+    sortDescLabel:
+      (rawProps.sortDescLabel as string | undefined) ??
+      (rawProps["sort-desc-label"] as string | undefined),
   };
 };
 
@@ -117,6 +133,11 @@ const slotColumns = computed<DataTableResolvedColumn<TRow>[]>(() => {
       cellClass: nodeProps.cellClass,
       cellComponent: nodeProps.cellComponent,
       cellSlot: children?.default,
+      sortable: nodeProps.sortable === true,
+      // nodeProps.sortable is already coerced to a boolean in normalizeColumnProps.
+      sortKey: nodeProps.sortKey,
+      sortAscLabel: nodeProps.sortAscLabel,
+      sortDescLabel: nodeProps.sortDescLabel,
     };
 
     if (hasAccessor) {
@@ -141,6 +162,58 @@ const resolvedColumns = computed<DataTableResolvedColumn<TRow>[]>(() => {
 });
 
 const hasRows = computed(() => props.rows.length > 0);
+
+const sort = defineModel<DataTableSort | null>("sort", { default: null });
+
+const resolveSortKey = (column: DataTableResolvedColumn<TRow>): string => {
+  if (column.sortKey) {
+    return column.sortKey;
+  }
+  return "prop" in column && typeof column.prop === "string" ? column.prop : column.id;
+};
+
+const sortDirectionFor = (
+  column: DataTableResolvedColumn<TRow>,
+): DataTableSort["direction"] | null => {
+  const current = sort.value;
+  if (!current || current.key !== resolveSortKey(column)) {
+    return null;
+  }
+  return current.direction;
+};
+
+const toggleSort = (column: DataTableResolvedColumn<TRow>): void => {
+  const key = resolveSortKey(column);
+  const direction = sortDirectionFor(column);
+
+  if (direction === null) {
+    sort.value = { key, direction: "asc" };
+    return;
+  }
+
+  if (direction === "asc") {
+    sort.value = { key, direction: "desc" };
+    return;
+  }
+
+  sort.value = null;
+};
+
+const sortTooltipFor = (column: DataTableResolvedColumn<TRow>): string => {
+  const ascLabel = column.sortAscLabel ?? "menor a mayor";
+  const descLabel = column.sortDescLabel ?? "mayor a menor";
+  const direction = sortDirectionFor(column);
+
+  if (direction === "asc") {
+    return `Ordenado de ${ascLabel} (clic para ${descLabel})`;
+  }
+
+  if (direction === "desc") {
+    return `Ordenado de ${descLabel} (clic para quitar el orden)`;
+  }
+
+  return `Ordenar de ${ascLabel}`;
+};
 </script>
 
 <template>
@@ -160,12 +233,46 @@ const hasRows = computed(() => props.rows.length > 0);
           <th
             v-for="column in resolvedColumns"
             :key="column.id"
+            :aria-sort="
+              column.sortable
+                ? sortDirectionFor(column) === 'asc'
+                  ? 'ascending'
+                  : sortDirectionFor(column) === 'desc'
+                    ? 'descending'
+                    : 'none'
+                : undefined
+            "
             :class="[
               'px-4 py-3 text-left text-sm font-medium tracking-normal text-gray-600',
               column.headerClass,
             ]"
           >
-            {{ column.label }}
+            <button
+              v-if="column.sortable"
+              type="button"
+              :title="sortTooltipFor(column)"
+              :aria-label="sortTooltipFor(column)"
+              class="group inline-flex items-center gap-1 rounded transition-colors hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              @click="toggleSort(column)"
+            >
+              <span>{{ column.label }}</span>
+              <ArrowUp
+                v-if="sortDirectionFor(column) === 'asc'"
+                class="h-3.5 w-3.5 shrink-0 text-blue-600"
+                aria-hidden="true"
+              />
+              <ArrowDown
+                v-else-if="sortDirectionFor(column) === 'desc'"
+                class="h-3.5 w-3.5 shrink-0 text-blue-600"
+                aria-hidden="true"
+              />
+              <ArrowUpDown
+                v-else
+                class="h-3.5 w-3.5 shrink-0 text-gray-400 group-hover:text-gray-600"
+                aria-hidden="true"
+              />
+            </button>
+            <template v-else>{{ column.label }}</template>
           </th>
         </tr>
       </thead>
@@ -179,7 +286,7 @@ const hasRows = computed(() => props.rows.length > 0);
           v-for="row in rows"
           v-else
           :key="resolveRowKey(row)"
-          class="align-top transition-colors hover:bg-gray-50"
+          class="align-middle transition-colors hover:bg-gray-50"
         >
           <td
             v-for="column in resolvedColumns"

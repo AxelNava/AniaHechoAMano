@@ -15,7 +15,9 @@ export interface ProductListQueryDto {
   limit?: number;
   search?: string;
   categoria_id?: number;
+  categoria_ids?: number[];
   activo?: boolean;
+  sort?: string;
 }
 
 export interface PedidoHistorialQueryDto {

@@ -9,11 +9,10 @@ const { isDark, toggle: toggleDark } = useDarkMode();
 
 const services = [
   { name: "Inicio", href: "/" },
-  { name: "Productos", href: "/products" },
-  { name: "Adornos de fiesta", href: "#" },
-  { name: "Papelería creativa", href: "#" },
-  { name: "Postres", href: "#" },
-  { name: "Sublimación", href: "#" },
+  { name: "Sublimación", href: "/categoria/sublimacion" },
+  { name: "Adornos de fiesta", href: "/categoria/adornos-de-fiesta" },
+  { name: "Papelería creativa", href: "/categoria/papeleria-creativa" },
+  { name: "Postres", href: "/categoria/postres" },
 ];
 
 const isAdmin = computed(() => true);

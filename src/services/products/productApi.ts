@@ -17,6 +17,20 @@ export const resolveProductImageUrl = (url: string) => {
   return `${apiBackend}${url.startsWith("/") ? "" : "/"}${url}`;
 };
 
+/**
+ * Resuelve la URL del endpoint binario de una imagen de producto
+ * (campo `binario_url`, p. ej. `/productos/1/imagenes/10/binario`). A
+ * diferencia de `resolveProductImageUrl`, antepone el prefijo `/api` porque la
+ * ruta vive bajo el controlador de la API, no en los estáticos. Es la fuente
+ * fiable para mostrar la imagen sin depender del almacenamiento local temporal.
+ */
+export const resolveProductBinaryUrl = (binarioUrl: string) => {
+  if (!binarioUrl) return binarioUrl;
+  if (/^(blob:|data:|https?:\/\/)/.test(binarioUrl)) return binarioUrl;
+
+  return `${api}${binarioUrl.startsWith("/") ? "" : "/"}${binarioUrl}`;
+};
+
 export const getProductImageBinaryUrl = (imageId: number | string) =>
   `${api}/productos/imagenes/${imageId}/binary`;
 
@@ -33,12 +47,21 @@ const parseMultipartResponse = async (response: Response): Promise<ProductDto | 
 const toQueryString = (query: Record<string, unknown>) => {
   const params = new URLSearchParams();
   Object.entries(query).forEach(([key, value]) => {
-    if (
-      value !== undefined &&
-      value !== null &&
-      value !== "" &&
-      (typeof value === "string" || typeof value === "number" || typeof value === "boolean")
-    ) {
+    if (value === undefined || value === null || value === "") {
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      const joined = value
+        .filter((item) => item !== undefined && item !== null && item !== "")
+        .join(",");
+      if (joined) {
+        params.append(key, joined);
+      }
+      return;
+    }
+
+    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
       params.append(key, String(value));
     }
   });

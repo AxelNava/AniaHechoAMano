@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { computed, ref, onMounted, watch } from "vue";
 import ListProductsFilter from "@/components/dashboard/list-products-filter.vue";
-import { DataTable, DataTableColumn } from "@/components/ui";
+import { DataTable, DataTableColumn, type DataTableSort } from "@/components/ui";
 import ProductActionsCell from "@/components/dashboard/product-table-cells/ProductActionsCell.vue";
 import ProductNameCell from "@/components/dashboard/product-table-cells/ProductNameCell.vue";
 import ProductPriceCell from "@/components/dashboard/product-table-cells/ProductPriceCell.vue";
@@ -9,24 +9,55 @@ import ProductStatusCell from "@/components/dashboard/product-table-cells/Produc
 import { ProductApi } from "@/services/products/productApi";
 import { CategoriesApi } from "@/services/categories/categoriesApi";
 import { ProductDto } from "@/types/products/ProductDto";
+import type { ProductListQueryDto } from "@/types/orders/orderHistoryDto";
+
+type ProductFilters = Pick<ProductListQueryDto, "search" | "categoria_id" | "activo">;
 
 const products = ref<ProductDto[]>([]);
 const categories = ref<Array<{ id: number; nombre: string }>>([]);
 const loading = ref(true);
 const refreshing = ref(false);
+const searching = ref(false);
+const activeFilters = ref<ProductFilters>({});
+const sort = ref<DataTableSort | null>(null);
 const productApi = new ProductApi();
 const categoriesApi = new CategoriesApi();
+
+const sortQuery = computed(() =>
+  sort.value ? `${sort.value.key}:${sort.value.direction}` : undefined,
+);
 
 const fetchProducts = async () => {
   try {
     const response = await productApi.getProductsPaginated({
       page: 1,
       limit: 50,
+      ...activeFilters.value,
+      sort: sortQuery.value,
     });
     products.value = response.data;
   } catch (error) {
     products.value = [];
     console.error("Error fetching products:", error);
+  }
+};
+
+watch(sort, async () => {
+  searching.value = true;
+  try {
+    await fetchProducts();
+  } finally {
+    searching.value = false;
+  }
+});
+
+const handleSearch = async (filters: ProductFilters) => {
+  activeFilters.value = filters;
+  searching.value = true;
+  try {
+    await fetchProducts();
+  } finally {
+    searching.value = false;
   }
 };
 
@@ -58,10 +89,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <section>
-    <span>Filtros</span>
-    <ListProductsFilter />
-  </section>
+  <ListProductsFilter :categories="categories" :loading="searching" @search="handleSearch" />
   <div v-if="loading" class="text-center py-8 text-gray-500">Cargando productos...</div>
   <div v-else>
     <section class="bg-white rounded-lg shadow mb-8">
@@ -78,6 +106,7 @@ onMounted(async () => {
       <DataTable
         :rows="products"
         :row-key="(row) => row.id"
+        v-model:sort="sort"
         empty-message="No hay dato"
       >
         <template #toolbar>
@@ -102,6 +131,10 @@ onMounted(async () => {
           prop="precio_base"
           header-class="text-right"
           cell-class="text-right"
+          sortable
+          sort-key="precio_base"
+          sort-asc-label="menor a mayor"
+          sort-desc-label="mayor a menor"
           :cell-component="ProductPriceCell"
         />
         <DataTableColumn label="Estado" prop="activo" :cell-component="ProductStatusCell" />
