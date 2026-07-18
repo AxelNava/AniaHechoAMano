@@ -18,6 +18,8 @@ export interface CatalogProductDto {
   descripcion: string;
   precio_base: number;
   activo: boolean;
+  permite_modificaciones: boolean;
+  requiere_anticipo: boolean;
   fecha_creacion: string;
   tiene_historial: boolean;
   categoria_id: number | null;

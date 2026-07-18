@@ -50,11 +50,14 @@ const gruposPorMes = computed(() => {
     { key: string; label: string; pedidos: PedidoHistorialListItemDto[] }
   >();
   for (const pedido of pedidos.value) {
-    const key = getMonthKey(pedido.fecha_entrega_acordada);
+    // Los pedidos sin fecha de entrega acordada (COTIZANDO /
+    // PENDIENTE_CONFIRMACION) se agrupan aparte.
+    const fecha = pedido.fecha_entrega_acordada;
+    const key = fecha ? getMonthKey(fecha) : "sin-fecha";
     if (!grupos.has(key)) {
       grupos.set(key, {
         key,
-        label: getMonthLabel(pedido.fecha_entrega_acordada),
+        label: fecha ? getMonthLabel(fecha) : "Sin fecha de entrega",
         pedidos: [],
       });
     }

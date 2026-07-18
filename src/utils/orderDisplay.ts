@@ -8,6 +8,7 @@ import type { PedidoHistorialListItemDto } from "@/types/orders/orderHistoryDto"
 
 export const ESTADO_LABELS: Record<string, string> = {
   COTIZANDO: "Cotizando",
+  PENDIENTE_CONFIRMACION: "Pendiente de confirmación",
   ESPERANDO_ANTICIPO: "Esperando anticipo",
   CONFIRMADO: "Confirmado",
   EN_PROCESO: "En proceso",
@@ -22,6 +23,7 @@ export const getEstadoLabel = (estado: string): string => ESTADO_LABELS[estado] 
 // el avance del pedido de un vistazo.
 const ESTADO_COLORS: Record<string, string> = {
   COTIZANDO: "bg-yellow-100 text-yellow-800 ring-yellow-600/20",
+  PENDIENTE_CONFIRMACION: "bg-amber-100 text-amber-800 ring-amber-600/20",
   ESPERANDO_ANTICIPO: "bg-orange-100 text-orange-800 ring-orange-600/20",
   CONFIRMADO: "bg-blue-100 text-blue-800 ring-blue-600/20",
   EN_PROCESO: "bg-purple-100 text-purple-800 ring-purple-600/20",
@@ -55,6 +57,19 @@ export const formatDateLong = (date: string): string =>
     day: "numeric",
   });
 
+/**
+ * Formatea un día ISO corto ("YYYY-MM-DD") en formato largo local. Fuerza la
+ * hora local ("T00:00:00") para evitar el desfase de un día que produce
+ * `new Date("YYYY-MM-DD")` (interpretado como UTC) en zonas horarias negativas.
+ */
+export const formatDiaISO = (dia: string): string =>
+  new Date(`${dia}T00:00:00`).toLocaleDateString("es-MX", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
 export const getClienteNombre = (pedido: PedidoHistorialListItemDto): string =>
   pedido.cliente?.nombre || pedido.cliente_nombre || `Cliente #${pedido.cliente_id}`;
 
@@ -75,6 +90,13 @@ export const getEntregaTexto = (fecha: string): string => {
   if (dias === -1) return "Fue ayer";
   return `Hace ${Math.abs(dias)} días`;
 };
+
+/**
+ * Texto de reemplazo cuando el pedido aún no tiene `fecha_entrega_acordada`
+ * (COTIZANDO → "Por cotizar"; PENDIENTE_CONFIRMACION y demás → "Por confirmar").
+ */
+export const getEntregaPendienteTexto = (estado: string): string =>
+  estado === "COTIZANDO" ? "Por cotizar" : "Por confirmar";
 
 /**
  * Imagen representativa del pedido: la foto propia del pedido si existe; si no,

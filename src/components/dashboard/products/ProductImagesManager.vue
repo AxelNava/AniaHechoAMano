@@ -7,9 +7,13 @@ import type { ProductImageItem } from "@/types/products/ProductDto";
 const props = withDefaults(
   defineProps<{
     disabled?: boolean;
+    titulo?: string;
+    subtitulo?: string;
   }>(),
   {
     disabled: false,
+    titulo: "Imágenes del producto",
+    subtitulo: "Ordena las imágenes como aparecerán en el carrusel del cliente.",
   },
 );
 
@@ -267,9 +271,9 @@ onUnmounted(() => {
   <section class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
     <div class="mb-4 flex items-start justify-between gap-4">
       <div>
-        <h2 class="text-lg font-semibold text-gray-800">Imágenes del producto</h2>
+        <h2 class="text-lg font-semibold text-gray-800">{{ titulo }}</h2>
         <p class="mt-1 text-sm text-gray-500">
-          Ordena las imágenes como aparecerán en el carrusel del cliente.
+          {{ subtitulo }}
         </p>
       </div>
       <button

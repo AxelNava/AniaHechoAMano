@@ -28,6 +28,8 @@ export interface ProductoInfoPedidoDto {
   precio_base: number;
   categoria_id: number | null;
   categoria: string;
+  permite_modificaciones: boolean;
+  requiere_anticipo: boolean;
   tiempo_total_estimado_minutos: number;
   componentes: ComponenteActualDto[];
 }
@@ -77,7 +79,9 @@ export interface CreateOrderDto {
   nombre?: string;
   cliente_id?: number;
   cliente_nuevo?: ClienteNuevoInput;
-  fecha_entrega_acordada: string;
+  // Opcional: el backend relajó `CreatePedidoDto.fecha_entrega_acordada`
+  // (@IsOptional). Las solicitudes públicas la fijan después (confirmar/cotizar).
+  fecha_entrega_acordada?: string;
   estado?: string;
   anticipo_pagado?: number;
   notas_admin?: string;

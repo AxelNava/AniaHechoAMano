@@ -8,7 +8,9 @@ const menuItems = [
   { name: "Inicio", href: "/" },
   { name: "Productos", href: "/admin/products" },
   { name: "Componentes", href: "/admin/components" },
+  { name: "Solicitudes", href: "/admin/solicitudes" },
   { name: "Historial de Pedidos", href: "/admin/orders" },
+  { name: "Agenda", href: "/admin/agenda" },
 ];
 </script>
 

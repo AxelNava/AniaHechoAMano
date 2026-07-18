@@ -50,6 +50,11 @@ const router = createRouter({
           component: () => import("@/views/OrderDetailView.vue"),
         },
         {
+          path: "solicitudes",
+          name: "admin-solicitudes",
+          component: () => import("@/views/SolicitudesView.vue"),
+        },
+        {
           path: "orders",
           name: "admin-orders",
           component: () => import("@/views/OrdersHistoryView.vue"),
@@ -58,6 +63,11 @@ const router = createRouter({
           path: "orders/:pedidoId",
           name: "admin-order-detail",
           component: () => import("@/views/OrderDetailView.vue"),
+        },
+        {
+          path: "agenda",
+          name: "admin-agenda",
+          component: () => import("@/views/AgendaView.vue"),
         },
         {
           path: "components",
@@ -80,6 +90,21 @@ const router = createRouter({
       path: "/categoria/:slug",
       name: "category-catalog",
       component: () => import("@/views/CategoryCatalogView.vue"),
+    },
+    {
+      path: "/categoria/:slug/producto/:id",
+      name: "producto-detalle",
+      component: () => import("@/views/ProductoDetalleView.vue"),
+    },
+    {
+      path: "/pedido",
+      name: "pedido-wizard",
+      component: () => import("@/views/PedidoWizardView.vue"),
+    },
+    {
+      path: "/pedido/confirmacion/:ref",
+      name: "pedido-confirmacion",
+      component: () => import("@/views/PedidoConfirmacionView.vue"),
     },
     {
       path: "/about",

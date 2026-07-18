@@ -253,6 +253,7 @@ watch(search, () => {
             :title="product.nombre"
             :tags="buildTags(product)"
             :image-src="coverImage(product)"
+            :url-target="`/categoria/${slug}/producto/${product.id}`"
             class-name="row-span-2"
             :style="{ viewTransitionName: 'product-card-' + product.id }"
           >
