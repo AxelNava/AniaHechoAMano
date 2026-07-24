@@ -21,6 +21,9 @@ export default defineConfig({
     }),
     tailwindcss(),
   ],
+  server: {
+    sourcemapIgnoreList: false
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))

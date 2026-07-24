@@ -15,7 +15,7 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "types": ["node", "jsdom"]
+    "types": ["node"]
   },
   "include": [
     "env.d.ts",

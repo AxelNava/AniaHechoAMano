@@ -9,8 +9,11 @@ import {
   resolveProductImageUrl,
 } from "@/services/products/productApi";
 import ProductImagesManager from "@/components/dashboard/products/ProductImagesManager.vue";
+import ProductComponentsManager from "@/components/dashboard/products/ProductComponentsManager.vue";
 import type { ProductDto, ProductImageItem } from "@/types/products/ProductDto";
+import type { ComponentsDto } from "@/types/products/ComponentsDto";
 import { normalizeProductImages } from "@/composables/products/useProductImages";
+import { serializarComponentes } from "@/composables/products/useProductComponents";
 
 const router = useRouter();
 const route = useRoute();
@@ -24,6 +27,7 @@ const error = ref("");
 const productId = ref<number>(0);
 const productImages = ref<ProductImageItem[]>([]);
 const originalImageIds = ref<number[]>([]);
+const productComponents = ref<ComponentsDto[]>([]);
 
 const product = ref({
   name: "",
@@ -43,6 +47,10 @@ const syncProductFromData = (data: ProductDto) => {
     categoryId: data.categoria_id,
     activo: data.activo ?? true,
   };
+  productComponents.value = (data.componentes ?? []).map((componente) => ({
+    componente_id: componente.componente_id,
+    cantidad: Number(componente.cantidad),
+  }));
   productImages.value = normalizeProductImages(
     [...(data.imagenes || [])]
       .sort((first, second) => first.orden - second.orden)
@@ -97,7 +105,9 @@ const updateProduct = async () => {
     formData.append("precio_base", String(product.value.price));
     formData.append("categoria_id", String(product.value.categoryId));
     formData.append("activo", String(product.value.activo));
-    formData.append("componentes", JSON.stringify([]));
+    // El backend hace full-replace de la receta: hay que enviar SIEMPRE la
+    // receta actual completa (enviar [] la borraría en cada guardado).
+    formData.append("componentes", serializarComponentes(productComponents.value));
 
     const existingImages = productImages.value
       .filter((image) => image.existingUrl && !image.file)
@@ -222,6 +232,12 @@ onMounted(() => {
             <label for="activo" class="text-sm text-gray-700">Producto activo</label>
           </div>
         </div>
+
+        <ProductComponentsManager
+          v-model="productComponents"
+          :nombre-producto="product.name"
+          :disabled="saving"
+        />
 
         <div v-if="error" class="p-3 bg-red-100 text-red-700 rounded-md text-sm">
           {{ error }}
