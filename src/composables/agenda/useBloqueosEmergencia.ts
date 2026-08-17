@@ -45,7 +45,7 @@ export function useBloqueosEmergencia() {
   };
 
   const cargarEmergencias = async (): Promise<boolean> => {
-    if (hayContactosEnCurso.value) return false;
+    if (creando.value || hayContactosEnCurso.value) return false;
     const token = ++tokenLista;
     cargandoLista.value = true;
     try {
@@ -63,7 +63,7 @@ export function useBloqueosEmergencia() {
   };
 
   const cargarDetalle = async (emergenciaId: number): Promise<boolean> => {
-    if (hayContactosEnCurso.value) return false;
+    if (creando.value || hayContactosEnCurso.value) return false;
     const token = ++tokenDetalle;
     detalle.value = null;
     cargandoDetalle.value = true;
@@ -84,7 +84,8 @@ export function useBloqueosEmergencia() {
   const crearEmergencia = async (
     dto: CreateBloqueoEmergenciaDto,
   ): Promise<BloqueoEmergenciaDetalleDto | null> => {
-    if (creando.value || hayContactosEnCurso.value) return null;
+    if (creando.value || cargandoLista.value || cargandoDetalle.value || hayContactosEnCurso.value)
+      return null;
     creando.value = true;
     try {
       const creada = await emergenciasApi.createEmergencia(dto);

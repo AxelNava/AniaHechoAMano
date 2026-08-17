@@ -122,6 +122,64 @@ describe("useBloqueosEmergencia", () => {
     expect(toastSuccess).not.toHaveBeenCalled();
   });
 
+  it("hace mutuamente excluyentes la creación y las lecturas", async () => {
+    const estado = useBloqueosEmergencia();
+    const listaPendiente = diferida<BloqueoEmergenciaListItemDto[]>();
+    api.getEmergencias.mockReturnValueOnce(listaPendiente.promise);
+    const lecturaLista = estado.cargarEmergencias();
+    const listaPrevia = estado.emergencias.value;
+    const detallePrevio = estado.detalle.value;
+
+    await expect(
+      estado.crearEmergencia({ desde: "2026-08-20", hasta: "2026-08-21" }),
+    ).resolves.toBeNull();
+    expect(api.createEmergencia).not.toHaveBeenCalled();
+    expect(estado.emergencias.value).toBe(listaPrevia);
+    expect(estado.detalle.value).toBe(detallePrevio);
+    expect([toastError, toastSuccess].every((mock) => !mock.mock.calls.length)).toBe(true);
+
+    listaPendiente.resolve([item(1)]);
+    await expect(lecturaLista).resolves.toBe(true);
+
+    const detallePendiente = diferida<BloqueoEmergenciaDetalleDto>();
+    api.getEmergencia.mockReturnValueOnce(detallePendiente.promise);
+    const lecturaDetalle = estado.cargarDetalle(1);
+    const listaAntesDelDetalle = estado.emergencias.value;
+    const detalleAntesDelDetalle = estado.detalle.value;
+
+    await expect(
+      estado.crearEmergencia({ desde: "2026-08-20", hasta: "2026-08-21" }),
+    ).resolves.toBeNull();
+    expect(api.createEmergencia).not.toHaveBeenCalled();
+    expect(estado.emergencias.value).toBe(listaAntesDelDetalle);
+    expect(estado.detalle.value).toBe(detalleAntesDelDetalle);
+    expect([toastError, toastSuccess].every((mock) => !mock.mock.calls.length)).toBe(true);
+
+    detallePendiente.resolve(detalle(1));
+    await expect(lecturaDetalle).resolves.toBe(true);
+
+    const creacionPendiente = diferida<BloqueoEmergenciaDetalleDto>();
+    const creada = detalle(2);
+    api.createEmergencia.mockReturnValueOnce(creacionPendiente.promise);
+    const creacion = estado.crearEmergencia({ desde: "2026-08-22", hasta: "2026-08-23" });
+    api.getEmergencias.mockClear();
+    api.getEmergencia.mockClear();
+    const listaAntesDeLecturas = estado.emergencias.value;
+    const detalleAntesDeLecturas = estado.detalle.value;
+
+    await expect(
+      Promise.all([estado.cargarEmergencias(), estado.cargarDetalle(2)]),
+    ).resolves.toEqual([false, false]);
+    expect(api.getEmergencias).not.toHaveBeenCalled();
+    expect(api.getEmergencia).not.toHaveBeenCalled();
+    expect(estado.emergencias.value).toBe(listaAntesDeLecturas);
+    expect(estado.detalle.value).toBe(detalleAntesDeLecturas);
+    expect([toastError, toastSuccess].every((mock) => !mock.mock.calls.length)).toBe(true);
+
+    creacionPendiente.resolve(creada);
+    await expect(creacion).resolves.toBe(creada);
+  });
+
   it("crea con upsert canónico y preserva estado ante fallo y single-flight", async () => {
     const estado = await cargarEstado(detalle(1), [item(9), item(1, 1)]);
     const pendiente = diferida<BloqueoEmergenciaDetalleDto>();
