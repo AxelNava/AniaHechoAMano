@@ -9,6 +9,8 @@
 
 /** Tipo de bloqueo de agenda (espejo del enum Prisma `TipoBloqueoAgenda`). */
 export type TipoBloqueoAgenda = "FERIADO" | "PERSONAL" | "OCUPADO";
+export type TipoBloqueoVista = TipoBloqueoAgenda | "EMERGENCIA";
+export type OrigenBloqueoAgenda = "MANUAL" | "EMERGENCIA";
 
 /** Configuración de agenda (singleton) tal como se devuelve al admin. */
 export interface AgendaConfigDto {
@@ -33,9 +35,12 @@ export interface UpdateAgendaConfigDto {
 export interface BloqueoDto {
   id: number;
   fecha: string;
-  tipo: TipoBloqueoAgenda;
+  tipo: TipoBloqueoVista;
   motivo: string | null;
   creado_en: string;
+  origen: OrigenBloqueoAgenda;
+  emergencia_id: number | null;
+  eliminable_individualmente: boolean;
 }
 
 /** Alta de un bloqueo de agenda (`POST /api/agenda/bloqueos`). */

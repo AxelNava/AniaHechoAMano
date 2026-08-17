@@ -23,7 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAgenda, TIPO_BLOQUEO_LABELS } from "@/composables/agenda/useAgenda";
 import { formatDiaISO } from "@/utils/orderDisplay";
-import type { TipoBloqueoAgenda } from "@/types/disponibilidad/agendaDto";
+import type { BloqueoDto, TipoBloqueoAgenda } from "@/types/disponibilidad/agendaDto";
 import type { DiaISO } from "@/components/ui/calendar";
 
 const {
@@ -77,12 +77,12 @@ const confirmarCrear = async () => {
 
 const confirmarEliminar = async () => {
   if (!bloqueoDelDia.value) return;
-  const ok = await eliminarBloqueo(bloqueoDelDia.value.id);
+  const ok = await eliminarBloqueo(bloqueoDelDia.value);
   if (ok) dialogAbierto.value = false;
 };
 
-const eliminarDesdeLista = async (id: number) => {
-  await eliminarBloqueo(id);
+const eliminarDesdeLista = async (bloqueo: BloqueoDto) => {
+  await eliminarBloqueo(bloqueo);
 };
 
 onMounted(cargarTodo);
@@ -96,8 +96,8 @@ onMounted(cargarTodo);
         Agenda y disponibilidad
       </h1>
       <p class="text-text-page2 mt-1 text-sm">
-        Ajusta la capacidad diaria y bloquea días para que no puedan reservarse en
-        el calendario de pedidos.
+        Ajusta la capacidad diaria y bloquea días para que no puedan reservarse en el calendario de
+        pedidos.
       </p>
     </div>
 
@@ -105,17 +105,14 @@ onMounted(cargarTodo);
     <section class="rounded-lg bg-white p-6 shadow ring-1 ring-secondary dark:bg-gray-900">
       <h2 class="text-text-page mb-4 text-lg font-semibold">Configuración</h2>
 
-      <div v-if="cargandoConfig" class="text-text-page2 py-4 text-sm">Cargando configuración...</div>
+      <div v-if="cargandoConfig" class="text-text-page2 py-4 text-sm">
+        Cargando configuración...
+      </div>
 
       <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div class="space-y-1.5">
           <Label for="capacidad">Capacidad diaria (minutos)</Label>
-          <Input
-            id="capacidad"
-            v-model.number="form.capacidad_minutos_dia"
-            type="number"
-            min="1"
-          />
+          <Input id="capacidad" v-model.number="form.capacidad_minutos_dia" type="number" min="1" />
           <p class="text-text-page2 text-xs">
             Minutos de trabajo disponibles por día para calcular la capacidad.
           </p>
@@ -149,8 +146,8 @@ onMounted(cargarTodo);
     <section class="rounded-lg bg-white p-6 shadow ring-1 ring-secondary dark:bg-gray-900">
       <h2 class="text-text-page mb-1 text-lg font-semibold">Días bloqueados</h2>
       <p class="text-text-page2 mb-4 text-sm">
-        Haz clic en un día del calendario para bloquearlo o quitar el bloqueo. Los
-        días bloqueados aparecen resaltados.
+        Haz clic en un día del calendario para bloquearlo o quitar el bloqueo. Los días bloqueados
+        aparecen resaltados.
       </p>
 
       <div class="flex flex-col gap-8 lg:flex-row">
@@ -169,7 +166,7 @@ onMounted(cargarTodo);
           <ul v-else class="divide-y divide-gray-100 dark:divide-gray-800">
             <li
               v-for="bloqueo in bloqueos"
-              :key="bloqueo.id"
+              :key="`${bloqueo.origen}-${bloqueo.id}`"
               class="flex items-center justify-between gap-3 py-2"
             >
               <div class="min-w-0">
@@ -186,7 +183,7 @@ onMounted(cargarTodo);
                 size="icon"
                 :disabled="guardandoBloqueo"
                 aria-label="Eliminar bloqueo"
-                @click="eliminarDesdeLista(bloqueo.id)"
+                @click="eliminarDesdeLista(bloqueo)"
               >
                 <Trash2 class="size-4 text-destructive" />
               </Button>

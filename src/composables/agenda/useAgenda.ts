@@ -9,6 +9,16 @@ import type {
 } from "@/types/disponibilidad/agendaDto";
 import type { DiaISO, MesISO } from "@/components/ui/calendar";
 
+type BloqueoManualDto = BloqueoDto & {
+  tipo: TipoBloqueoAgenda;
+  origen: "MANUAL";
+  emergencia_id: null;
+  eliminable_individualmente: true;
+};
+
+const esBloqueoManualEliminable = (bloqueo: BloqueoDto): bloqueo is BloqueoManualDto =>
+  bloqueo.origen === "MANUAL" && bloqueo.eliminable_individualmente;
+
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
 const mesActualISO = (): MesISO => {
@@ -82,19 +92,20 @@ export function useAgenda() {
   // --- Bloqueos ---
   // Se cargan todos (son pocos: feriados/días personales) para poder pintarlos
   // en cualquier mes del calendario sin recargar al navegar.
-  const bloqueos = ref<BloqueoDto[]>([]);
+  const todosLosBloqueos = ref<BloqueoDto[]>([]);
   const cargandoBloqueos = ref(false);
   const mesVisible = ref<MesISO>(mesActualISO());
 
+  const bloqueos = computed(() => todosLosBloqueos.value.filter(esBloqueoManualEliminable));
   const bloqueosPorFecha = computed(
     () => new Map(bloqueos.value.map((b) => [b.fecha, b] as const)),
   );
-  const diasBloqueados = computed<DiaISO[]>(() => bloqueos.value.map((b) => b.fecha));
+  const diasBloqueados = computed<DiaISO[]>(() => todosLosBloqueos.value.map((b) => b.fecha));
 
   const cargarBloqueos = async () => {
     cargandoBloqueos.value = true;
     try {
-      bloqueos.value = await disponibilidadApi.getBloqueos();
+      todosLosBloqueos.value = await disponibilidadApi.getBloqueos();
     } finally {
       cargandoBloqueos.value = false;
     }
@@ -117,10 +128,12 @@ export function useAgenda() {
     }
   };
 
-  const eliminarBloqueo = async (id: number): Promise<boolean> => {
+  const eliminarBloqueo = async (bloqueo: BloqueoDto): Promise<boolean> => {
+    if (bloqueo.origen !== "MANUAL" || !bloqueo.eliminable_individualmente) return false;
+
     guardandoBloqueo.value = true;
     try {
-      await disponibilidadApi.deleteBloqueo(id);
+      await disponibilidadApi.deleteBloqueo(bloqueo.id);
       await cargarBloqueos();
       toast.success("Bloqueo eliminado.");
       return true;
