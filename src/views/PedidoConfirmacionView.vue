@@ -104,6 +104,17 @@ onMounted(async () => {
         </p>
       </div>
 
+      <RouterLink
+        v-if="resumen && resumen.seguimiento_token_publico"
+        :to="{
+          name: 'pedido-seguimiento',
+          params: { token: resumen.seguimiento_token_publico },
+        }"
+        class="bg-primary text-primary-foreground inline-flex rounded-md px-4 py-2 font-medium shadow-sm transition-opacity hover:opacity-90"
+      >
+        Consultar el seguimiento de tu pedido
+      </RouterLink>
+
       <!-- Siguiente paso -->
       <div class="mt-8">
         <template v-if="!resumen || resumen.hay_modificaciones">

@@ -57,6 +57,8 @@ export interface ResumenLineaEnviada {
 
 export interface ResumenPedidoEnviado {
   referencia_publica: string;
+  /** Token público opcional para snapshots creados antes del seguimiento. */
+  seguimiento_token_publico?: string | null;
   hay_modificaciones: boolean;
   requiere_anticipo: boolean;
   contacto_nombre: string;

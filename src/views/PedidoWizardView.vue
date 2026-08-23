@@ -77,7 +77,10 @@ const enviar = async () => {
     const referencia = detalle.referencia_publica ?? String(detalle.id);
 
     // Snapshot para la confirmación ANTES de vaciar el carrito.
-    store.ultimoResumen = cliente.construirResumen(referencia, fotosPendientes);
+    store.ultimoResumen = {
+      ...cliente.construirResumen(referencia, fotosPendientes),
+      seguimiento_token_publico: detalle.seguimiento_token_publico ?? null,
+    };
     cliente.limpiarCarrito();
 
     if (fotosPendientes) {

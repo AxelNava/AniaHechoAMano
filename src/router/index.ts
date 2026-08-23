@@ -107,6 +107,11 @@ const router = createRouter({
       component: () => import("@/views/PedidoWizardView.vue"),
     },
     {
+      path: "/pedido/seguimiento/:token",
+      name: "pedido-seguimiento",
+      component: () => import("@/views/PedidoSeguimientoView.vue"),
+    },
+    {
       path: "/pedido/confirmacion/:ref",
       name: "pedido-confirmacion",
       component: () => import("@/views/PedidoConfirmacionView.vue"),
