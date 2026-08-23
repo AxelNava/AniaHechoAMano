@@ -73,6 +73,7 @@ export interface PedidoHistorialListItemDto {
   cliente_id: number;
   nombre: string | null;
   referencia_publica: string | null;
+  seguimiento_token_publico: string | null;
   fecha_solicitud: string;
   fecha_entrega_solicitada: string | null;
   // Nullable: los pedidos COTIZANDO/PENDIENTE_CONFIRMACION aún no tienen fecha

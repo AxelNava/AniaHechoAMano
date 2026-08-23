@@ -3,6 +3,7 @@ export type ProblemDetailsCode =
   | "NOT_FOUND"
   | "CONFLICT"
   | "VALIDATION_ERROR"
+  | "RATE_LIMITED"
   | "UNKNOWN_ERROR";
 
 export interface ProblemDetails {
@@ -37,6 +38,7 @@ const problemCodes: ProblemDetailsCode[] = [
   "NOT_FOUND",
   "CONFLICT",
   "VALIDATION_ERROR",
+  "RATE_LIMITED",
   "UNKNOWN_ERROR",
 ];
 
@@ -58,10 +60,9 @@ const isProblemDetails = (body: unknown, httpStatus: number): body is ProblemDet
   );
 };
 
-export async function requestJson<T>(
-  path: `/agenda/emergencias${string}`,
-  options: JsonRequestOptions,
-): Promise<T> {
+type ApiPath = `/agenda/emergencias${string}` | `/pedidos/seguimiento/${string}`;
+
+export async function requestJson<T>(path: ApiPath, options: JsonRequestOptions): Promise<T> {
   const init: RequestInit = { method: options.method };
   if ("body" in options) {
     init.headers = { "Content-Type": "application/json" };

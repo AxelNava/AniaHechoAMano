@@ -1,8 +1,10 @@
 import { useFetch } from "@/composables/useFetch";
+import { requestJson } from "@/services/http/apiClient";
 import type { ConfirmarPedidoDto } from "@/types/orders/confirmarPedidoDto";
 import type { CotizarPedidoDto } from "@/types/orders/cotizarPedidoDto";
 import type { CreateOrderDto } from "@/types/orders/createOrderDto";
 import type { CreatePedidoPublicoDto } from "@/types/orders/createPedidoPublicoDto";
+import type { PedidoSeguimientoDto } from "@/types/orders/seguimientoDto";
 import type {
   PaginatedResponseDto,
   PedidoDetalleDto,
@@ -13,6 +15,9 @@ import type {
 
 const apiBackend = import.meta.env.VITE_VUE_APP_DOMAIN || "http://localhost:5001";
 const api = `${apiBackend}/api`;
+
+const seguimientoPath = (token: string): `/pedidos/seguimiento/${string}` =>
+  `/pedidos/seguimiento/${encodeURIComponent(token)}`;
 
 const toQueryString = (query: Record<string, unknown>): string => {
   const params = new URLSearchParams();
@@ -58,6 +63,10 @@ export class OrdersApi {
         meta: { page: query.page ?? 1, limit: query.limit ?? 50, total: 0, total_pages: 0 },
       }
     );
+  }
+
+  async getSeguimiento(token: string): Promise<PedidoSeguimientoDto> {
+    return requestJson<PedidoSeguimientoDto>(seguimientoPath(token), { method: "GET" });
   }
 
   async createOrder(payload: CreateOrderDto): Promise<PedidoDetalleDto> {

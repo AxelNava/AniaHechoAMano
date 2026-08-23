@@ -8,6 +8,7 @@ const createRow = (retrasado: boolean): PedidoHistorialListItemDto => ({
   cliente_id: 1,
   nombre: "Pedido de prueba",
   referencia_publica: null,
+  seguimiento_token_publico: null,
   fecha_solicitud: "2026-07-01T00:00:00.000Z",
   fecha_entrega_solicitada: null,
   fecha_entrega_acordada: "2026-07-20T00:00:00.000Z",

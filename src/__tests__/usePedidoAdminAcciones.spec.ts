@@ -64,6 +64,7 @@ const basePedido = (over: Partial<PedidoDetalleDto> = {}): PedidoDetalleDto => (
     },
   ],
   ...over,
+  seguimiento_token_publico: over.seguimiento_token_publico ?? null,
 });
 
 describe("usePedidoAdminAcciones", () => {
