@@ -3,7 +3,9 @@ import { computed, onMounted, shallowRef } from "vue";
 import { useRoute } from "vue-router";
 import ProductLayout from "@/layouts/ProductLayout.vue";
 import { ApiError } from "@/services/http/apiClient";
+import { configApi } from "@/services/config/configApi";
 import { OrdersApi } from "@/services/orders/ordersApi";
+import type { ContactoConfigDto } from "@/types/config/contactoDto";
 import type { PedidoSeguimientoDto } from "@/types/orders/seguimientoDto";
 import {
   formatDiaISO,
@@ -18,6 +20,7 @@ const ordersApi = new OrdersApi();
 const loading = shallowRef(true);
 const error = shallowRef("");
 const seguimiento = shallowRef<PedidoSeguimientoDto | null>(null);
+const contactoConfig = shallowRef<ContactoConfigDto | null>(null);
 
 const token = computed(() => String(route.params.token ?? ""));
 const estadoCodigo = computed(() => seguimiento.value?.estado ?? "");
@@ -28,6 +31,24 @@ const estadoColor = computed(() => getEstadoColor(estadoCodigo.value));
 const referenciaTexto = computed(
   () => seguimiento.value?.referencia_publica || "Sin referencia disponible",
 );
+const muestraAvisoRetraso = computed(
+  () =>
+    seguimiento.value?.retrasado === true &&
+    estadoCodigo.value !== "ENTREGADO" &&
+    estadoCodigo.value !== "CANCELADO",
+);
+const esCancelado = computed(() => estadoCodigo.value === "CANCELADO");
+const enlaceFacebook = computed(() => {
+  const cfg = contactoConfig.value;
+  if (!cfg) return "";
+  if (cfg.messenger_url_template && seguimiento.value?.referencia_publica) {
+    return cfg.messenger_url_template.replace(
+      "{ref}",
+      encodeURIComponent(seguimiento.value.referencia_publica),
+    );
+  }
+  return cfg.facebook_page_url;
+});
 
 const formatearFecha = (fecha: string | null): string =>
   fecha ? formatDiaISO(fecha.slice(0, 10)) : "";
@@ -58,13 +79,26 @@ const mensajeError = (cause: unknown): string => {
   return mensajesPorEstado[cause.status ?? 0] ?? "No se pudo cargar el seguimiento. Intenta de nuevo más tarde.";
 };
 
+const cargarContacto = async () => {
+  try {
+    contactoConfig.value = await configApi.getContacto();
+  } catch {
+    contactoConfig.value = null;
+  }
+};
+
 const cargarSeguimiento = async () => {
   loading.value = true;
   error.value = "";
   seguimiento.value = null;
+  contactoConfig.value = null;
 
   try {
-    seguimiento.value = await ordersApi.getSeguimiento(token.value);
+    const data = await ordersApi.getSeguimiento(token.value);
+    seguimiento.value = data;
+    if (data.estado === "CANCELADO") {
+      void cargarContacto();
+    }
   } catch (cause) {
     error.value = mensajeError(cause);
   } finally {
@@ -127,6 +161,33 @@ onMounted(cargarSeguimiento);
               Retrasado
             </span>
           </div>
+        </div>
+
+        <div
+          v-if="muestraAvisoRetraso"
+          role="status"
+          aria-live="polite"
+          class="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-200"
+        >
+          Tu pedido tiene un retraso, lamentamos la demora. Nos pondremos en contacto contigo…
+        </div>
+
+        <div
+          v-if="esCancelado"
+          role="status"
+          aria-live="polite"
+          class="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-200"
+        >
+          <p>Lo sentimos, tu pedido fue cancelado. Lamentamos la situación.</p>
+          <a
+            v-if="enlaceFacebook"
+            :href="enlaceFacebook"
+            target="_blank"
+            rel="noopener"
+            class="mt-3 inline-flex rounded-md border border-amber-700/40 px-3 py-2 font-medium underline underline-offset-2 hover:bg-amber-100 dark:border-amber-300/40 dark:hover:bg-amber-900/40"
+          >
+            Contactar por Facebook
+          </a>
         </div>
 
         <dl class="mt-8 grid gap-5 border-t border-gray-100 pt-6 sm:grid-cols-2 dark:border-gray-800">
