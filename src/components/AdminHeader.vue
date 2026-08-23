@@ -4,6 +4,9 @@ import DarkModeToggle from "@/components/DarkModeToggle.vue";
 
 const route = useRoute();
 
+const esRutaActiva = (href: string) =>
+  route.path === href || (href === "/admin/agenda" && route.path.startsWith(`${href}/`));
+
 const menuItems = [
   { name: "Inicio", href: "/" },
   { name: "Productos", href: "/admin/products" },
@@ -23,7 +26,7 @@ const menuItems = [
           :key="item.href"
           :to="item.href"
           class="text-sm font-medium transition-colors hover:text-[#701548] dark:hover:text-[#ead9ea]"
-          :class="route.path === item.href ? 'text-[#701548] dark:text-[#ead9ea] font-semibold' : 'text-gray-600 dark:text-gray-300'"
+          :class="esRutaActiva(item.href) ? 'text-[#701548] dark:text-[#ead9ea] font-semibold' : 'text-gray-600 dark:text-gray-300'"
         >
           {{ item.name }}
         </router-link>
@@ -38,7 +41,7 @@ const menuItems = [
         :key="item.href"
         :to="item.href"
         class="whitespace-nowrap text-sm font-medium transition-colors hover:text-[#701548] px-3 py-1.5 rounded-md"
-        :class="route.path === item.href ? 'bg-[#ead9ea] text-[#701548] dark:bg-[#701548] dark:text-[#ead9ea] font-semibold' : 'text-gray-600 dark:text-gray-300'"
+        :class="esRutaActiva(item.href) ? 'bg-[#ead9ea] text-[#701548] dark:bg-[#701548] dark:text-[#ead9ea] font-semibold' : 'text-gray-600 dark:text-gray-300'"
       >
         {{ item.name }}
       </router-link>

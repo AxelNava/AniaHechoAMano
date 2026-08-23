@@ -273,9 +273,12 @@ onMounted(() => {
         <ul v-else class="divide-y divide-gray-100 dark:divide-gray-800">
           <li v-for="emergencia in emergencias" :key="emergencia.id" class="py-4 first:pt-0 last:pb-0">
             <div class="flex flex-wrap items-start justify-between gap-2">
-              <p class="text-text-page text-sm font-medium">
+              <RouterLink
+                :to="{ name: 'admin-agenda-emergencia', params: { id: emergencia.id } }"
+                class="text-text-page text-sm font-medium hover:underline"
+              >
                 {{ formatearRangoEmergencia(emergencia) }}
-              </p>
+              </RouterLink>
               <span
                 :class="[
                   'rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset',
