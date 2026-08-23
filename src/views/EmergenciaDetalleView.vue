@@ -11,7 +11,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DisponibilidadCalendar, type DiaISO } from "@/components/ui/calendar";
 import { useBloqueosEmergencia } from "@/composables/agenda/useBloqueosEmergencia";
+import { useDisponibilidad } from "@/composables/pedido/useDisponibilidad";
 import {
   formatDate,
   formatDiaISO,
@@ -27,10 +29,25 @@ const {
   contactosEnCurso,
   cargarDetalle,
   marcarContactado,
+  resolverAfectado,
   retirarEmergencia,
   retirando,
   resolucionesEnCurso,
 } = useBloqueosEmergencia();
+const afectadoResolucionId = shallowRef<number | null>(null);
+const dialogoResolucion = shallowRef<"opciones" | "cancelar" | "retrasar" | null>(null);
+const fechaNueva = shallowRef<DiaISO | null>(null);
+const errorResolucion = shallowRef("");
+const cargandoDisponibilidadResolucion = shallowRef(false);
+const resolviendo = shallowRef(false);
+const afectadoResolucion = computed(() =>
+  detalle.value?.afectados.find((afectado) => afectado.id === afectadoResolucionId.value) ?? null,
+);
+const minutosResolucion = computed(() => {
+  const afectado = afectadoResolucion.value;
+  return afectado?.estado_pedido === "TERMINADO" ? 0 : (afectado?.tiempo_total_minutos ?? 0);
+});
+const disponibilidad = useDisponibilidad(minutosResolucion);
 const emergenciaId = computed<number | null>(() => {
   const raw = route.params.id;
   if (Array.isArray(raw)) return null;
@@ -59,6 +76,132 @@ const estadoPedido = (afectado: PedidoAfectadoDto): string =>
 const resolucion = (afectado: PedidoAfectadoDto): string => {
   const labels = { RETRASADO: "Retrasado", CANCELADO: "Cancelado", OBSOLETO: "Obsoleto" };
   return afectado.resolucion ? labels[afectado.resolucion] : "Sin resolver";
+};
+const siguienteDiaISO = (dia: DiaISO): DiaISO => {
+  const [anio, mes, diaMes] = dia.split("-").map(Number);
+  return new Date(Date.UTC(anio, mes - 1, diaMes + 1)).toISOString().slice(0, 10);
+};
+const minFechaResolucion = computed<DiaISO | undefined>(() => {
+  const original = afectadoResolucion.value?.fecha_entrega_original.slice(0, 10);
+  const estrictamentePosterior = original ? siguienteDiaISO(original) : undefined;
+  const minDisponibilidad = disponibilidad.minFecha.value;
+  if (!estrictamentePosterior) return minDisponibilidad;
+  return minDisponibilidad > estrictamentePosterior ? minDisponibilidad : estrictamentePosterior;
+});
+const mostrarResolver = (afectado: PedidoAfectadoDto): boolean =>
+  detalle.value?.activo === true && afectado.contactado && afectado.resolucion === null;
+const resolverDeshabilitado = (afectado: PedidoAfectadoDto): boolean =>
+  retirando.value || resolucionesEnCurso.value.has(afectado.id);
+const puedeConfirmarResolucion = computed(() => {
+  const afectado = afectadoResolucion.value;
+  return (
+    detalle.value?.activo === true &&
+    afectado !== null &&
+    afectado.contactado &&
+    afectado.resolucion === null &&
+    !retirando.value &&
+    !resolviendo.value &&
+    !resolucionesEnCurso.value.has(afectado.id)
+  );
+});
+const disponibilidadOcupada = computed(
+  () => cargandoDisponibilidadResolucion.value || disponibilidad.cargandoMes.value,
+);
+const limpiarResolucion = () => {
+  dialogoResolucion.value = null;
+  afectadoResolucionId.value = null;
+  fechaNueva.value = null;
+  errorResolucion.value = "";
+};
+const abrirResolucion = (afectado: PedidoAfectadoDto) => {
+  if (!mostrarResolver(afectado) || resolverDeshabilitado(afectado)) return;
+  afectadoResolucionId.value = afectado.id;
+  fechaNueva.value = null;
+  errorResolucion.value = "";
+  dialogoResolucion.value = "opciones";
+};
+const abrirCancelacion = () => {
+  if (!puedeConfirmarResolucion.value) return;
+  errorResolucion.value = "";
+  dialogoResolucion.value = "cancelar";
+};
+const abrirDesplazamiento = async () => {
+  if (!puedeConfirmarResolucion.value) return;
+  fechaNueva.value = null;
+  errorResolucion.value = "";
+  dialogoResolucion.value = "retrasar";
+  cargandoDisponibilidadResolucion.value = true;
+  try {
+    await disponibilidad.recargar();
+  } catch {
+    errorResolucion.value = "No se pudo cargar la disponibilidad. Puedes cerrar e intentarlo de nuevo.";
+  } finally {
+    cargandoDisponibilidadResolucion.value = false;
+  }
+};
+const volverAOpciones = () => {
+  if (resolviendo.value) return;
+  errorResolucion.value = "";
+  dialogoResolucion.value = "opciones";
+};
+const actualizarResolucionDialogo = (abierto: boolean) => {
+  if (!abierto && !resolviendo.value) limpiarResolucion();
+};
+const evaluarFechaResolucion = (fecha: DiaISO) => {
+  fechaNueva.value = fecha;
+  void disponibilidad.evaluarFecha(fecha);
+};
+const confirmarCancelacion = async () => {
+  const emergencia = detalle.value;
+  const afectado = afectadoResolucion.value;
+  if (!emergencia || !afectado || !puedeConfirmarResolucion.value) return;
+  errorResolucion.value = "";
+  resolviendo.value = true;
+  let exito = false;
+  try {
+    exito = await resolverAfectado(emergencia.id, afectado.id, { resolucion: "CANCELADO" });
+  } catch {
+    // Se muestra el mismo mensaje para respuestas fallidas o excepciones del adaptador.
+  }
+  try {
+    await disponibilidad.recargar();
+  } catch {
+    // La resolución conserva su resultado aunque falle la actualización visual.
+  }
+  if (exito) {
+    limpiarResolucion();
+  } else {
+    errorResolucion.value = "No se pudo resolver el pedido. Puedes intentarlo de nuevo.";
+  }
+  resolviendo.value = false;
+};
+const confirmarDesplazamiento = async () => {
+  const emergencia = detalle.value;
+  const afectado = afectadoResolucion.value;
+  const nuevaFecha = fechaNueva.value;
+  if (!emergencia || !afectado || !nuevaFecha || !puedeConfirmarResolucion.value) return;
+  errorResolucion.value = "";
+  resolviendo.value = true;
+  let exito = false;
+  try {
+    exito = await resolverAfectado(emergencia.id, afectado.id, {
+      resolucion: "RETRASADO",
+      nueva_fecha: nuevaFecha,
+    });
+  } catch {
+    // Se muestra el mismo mensaje para respuestas fallidas o excepciones del adaptador.
+  }
+  try {
+    await disponibilidad.recargar();
+  } catch {
+    // La resolución conserva su resultado aunque falle la actualización visual.
+  }
+  if (exito) {
+    limpiarResolucion();
+  } else {
+    errorResolucion.value = "No se pudo resolver el pedido. Puedes intentarlo de nuevo.";
+  }
+  resolviendo.value = false;
 };
 const cambiarContacto = (afectado: PedidoAfectadoDto, contactado: boolean) => {
   const emergencia = detalle.value;
@@ -285,10 +428,98 @@ onMounted(() => {
               Nueva fecha:
               <span class="capitalize">{{ formatDiaISO(afectado.nueva_fecha.slice(0, 10)) }}</span>
             </p>
-          </article>
+                <Button
+                  v-if="mostrarResolver(afectado)"
+                  type="button"
+                  :disabled="resolverDeshabilitado(afectado)"
+                  @click="abrirResolucion(afectado)"
+                >
+                  Resolver
+                </Button>
+              </article>
         </div>
       </section>
     </div>
+
+    <Dialog
+      :open="dialogoResolucion !== null"
+      @update:open="actualizarResolucionDialogo"
+    >
+      <DialogContent class="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Resolver pedido</DialogTitle>
+          <DialogDescription v-if="afectadoResolucion">
+            {{ afectadoResolucion.cliente.nombre }} — elige cómo resolver este pedido afectado.
+          </DialogDescription>
+        </DialogHeader>
+        <p v-if="errorResolucion" class="rounded-md bg-red-100 p-3 text-sm text-red-700" role="alert">
+          {{ errorResolucion }}
+        </p>
+        <div v-if="dialogoResolucion === 'opciones'" class="space-y-3">
+          <p class="text-sm">Puedes cancelar el pedido o desplazar su entrega a otra fecha disponible.</p>
+          <div class="flex flex-wrap gap-2">
+            <Button type="button" @click="abrirCancelacion">Cancelar pedido</Button>
+            <Button type="button" variant="outline" @click="abrirDesplazamiento">
+              Desplazar entrega
+            </Button>
+          </div>
+        </div>
+        <div v-else-if="dialogoResolucion === 'cancelar'" class="space-y-3">
+          <p class="text-sm font-medium">¿Confirmas la cancelación de este pedido?</p>
+          <p class="text-sm text-gray-600">
+            Esta acción marcará el pedido como cancelado y no se puede deshacer desde esta pantalla.
+          </p>
+        </div>
+        <div v-else-if="dialogoResolucion === 'retrasar'" class="space-y-4">
+          <p class="text-sm">Elige una nueva fecha posterior a la fecha de entrega original.</p>
+          <div class="flex flex-col items-start gap-4 sm:flex-row">
+            <DisponibilidadCalendar
+              v-model:mes-visible="disponibilidad.mesVisible.value"
+              :fecha-seleccionada="fechaNueva"
+              :dias-disponibles="disponibilidad.diasDisponibles.value"
+              :dias-deshabilitados="disponibilidad.diasDeshabilitados.value"
+              :min-fecha="minFechaResolucion"
+              @update:fecha-seleccionada="evaluarFechaResolucion"
+            />
+            <div class="min-w-0 flex-1 text-sm">
+              <p v-if="disponibilidadOcupada" role="status">Cargando disponibilidad...</p>
+              <p v-else-if="fechaNueva" class="capitalize">
+                Nueva fecha: {{ formatDiaISO(fechaNueva) }}
+              </p>
+              <p v-else class="text-gray-500">Elige un día disponible.</p>
+            </div>
+          </div>
+        </div>
+        <DialogFooter v-if="dialogoResolucion === 'opciones'">
+          <Button type="button" variant="outline" @click="limpiarResolucion">Decidir después</Button>
+        </DialogFooter>
+        <DialogFooter v-else-if="dialogoResolucion === 'cancelar'">
+          <Button type="button" variant="outline" :disabled="resolviendo" @click="volverAOpciones">
+            Volver
+          </Button>
+          <Button type="button" :disabled="!puedeConfirmarResolucion" @click="confirmarCancelacion">
+            {{ resolviendo ? "Cancelando..." : "Confirmar cancelación" }}
+          </Button>
+        </DialogFooter>
+        <DialogFooter v-else-if="dialogoResolucion === 'retrasar'">
+          <Button
+            type="button"
+            variant="outline"
+            :disabled="resolviendo || disponibilidadOcupada"
+            @click="volverAOpciones"
+          >
+            Volver
+          </Button>
+          <Button
+            type="button"
+            :disabled="!fechaNueva || disponibilidadOcupada || !puedeConfirmarResolucion"
+            @click="confirmarDesplazamiento"
+          >
+            {{ resolviendo ? "Guardando..." : "Confirmar desplazamiento" }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
     <Dialog :open="retiradaDialogoAbierta" @update:open="actualizarRetiradaDialogo">
       <DialogContent>

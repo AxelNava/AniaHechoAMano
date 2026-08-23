@@ -8,9 +8,11 @@ import type {
 const {
   route,
   useEmergenciasMock,
+  useDisponibilidadMock,
   RouterLinkStub,
   CheckboxStub,
   ButtonStub,
+  DisponibilidadCalendarStub,
   DialogStub,
   SlotStub,
 } = vi.hoisted(() => {
@@ -18,6 +20,7 @@ const {
   return {
     route: { params: { id: "7" } },
     useEmergenciasMock: vi.fn(),
+    useDisponibilidadMock: vi.fn(),
     RouterLinkStub: {
       name: "RouterLink",
       props: { to: { type: [String, Object], required: true } },
@@ -36,6 +39,19 @@ const {
       emits: ["click"],
       template: '<button :disabled="disabled" @click="$emit(\'click\', $event)"><slot /></button>',
     },
+    DisponibilidadCalendarStub: {
+      name: "DisponibilidadCalendar",
+      props: {
+        mesVisible: String,
+        fechaSeleccionada: { type: String, default: null },
+        diasDisponibles: { type: Array, default: () => [] },
+        diasDeshabilitados: { type: Array, default: () => [] },
+        minFecha: String,
+      },
+      emits: ["update:fechaSeleccionada", "update:mesVisible"],
+      template:
+        '<div data-calendar :data-min-date="minFecha" :data-dias-disponibles="diasDisponibles.join(\',\')" :data-dias-deshabilitados="diasDeshabilitados.join(\',\')"><button type="button" data-calendar-date="2026-08-22" @click="$emit(\'update:fechaSeleccionada\', \'2026-08-22\')">2026-08-22</button></div>',
+    },
     DialogStub: {
       name: "Dialog",
       props: { open: Boolean },
@@ -48,6 +64,9 @@ const {
 vi.mock("vue-router", () => ({ RouterLink: RouterLinkStub, useRoute: () => route }));
 vi.mock("@/components/ui/checkbox", () => ({ Checkbox: CheckboxStub }));
 vi.mock("@/components/ui/button", () => ({ Button: ButtonStub }));
+vi.mock("@/components/ui/calendar", () => ({
+  DisponibilidadCalendar: DisponibilidadCalendarStub,
+}));
 vi.mock("@/components/ui/dialog", () => ({
   Dialog: DialogStub,
   DialogContent: SlotStub,
@@ -59,6 +78,9 @@ vi.mock("@/components/ui/dialog", () => ({
 vi.mock("@/composables/agenda/useBloqueosEmergencia", () => ({
   useBloqueosEmergencia: useEmergenciasMock,
 }));
+vi.mock("@/composables/pedido/useDisponibilidad", () => ({
+  useDisponibilidad: useDisponibilidadMock,
+}));
 import EmergenciaDetalleView from "@/views/EmergenciaDetalleView.vue";
 const makeAfectado = (
   id: number,
@@ -68,19 +90,22 @@ const makeAfectado = (
     phone?: string | null;
     original?: string;
     nuevaFecha?: string | null;
+    resolucion?: PedidoAfectadoDto["resolucion"];
+    estado?: PedidoAfectadoDto["estado_pedido"];
+    tiempoTotalMinutos?: number;
   } = {},
 ): PedidoAfectadoDto => ({
   id,
   pedido_id: id * 10,
   referencia_publica: `PED-${id}`,
-  estado_pedido: "CONFIRMADO",
+  estado_pedido: options.estado ?? "CONFIRMADO",
   fecha_entrega_original: options.original ?? "2026-08-20",
   contactado: options.contactado ?? false,
   contactado_en: null,
-  resolucion: "RETRASADO",
+  resolucion: options.resolucion === undefined ? "RETRASADO" : options.resolucion,
   resuelto_en: null,
   nueva_fecha: options.nuevaFecha === undefined ? "2026-08-25" : options.nuevaFecha,
-  tiempo_total_minutos: 45,
+  tiempo_total_minutos: options.tiempoTotalMinutos ?? 45,
   cliente: {
     id,
     nombre: `Cliente ${id}`,
@@ -108,6 +133,21 @@ const makeDetail = (
   dias_con_bloqueo_manual: ["2026-08-21"],
   afectados,
 });
+const createDisponibilidad = (
+  options: {
+    minFecha?: string;
+    diasDisponibles?: string[];
+    diasDeshabilitados?: string[];
+  } = {},
+) => ({
+  mesVisible: shallowRef("2026-08"),
+  minFecha: shallowRef(options.minFecha ?? "2026-08-17"),
+  diasDisponibles: shallowRef(options.diasDisponibles ?? ["2026-08-21", "2026-08-22"]),
+  diasDeshabilitados: shallowRef(options.diasDeshabilitados ?? ["2026-08-23"]),
+  cargandoMes: shallowRef(false),
+  evaluarFecha: vi.fn().mockResolvedValue(undefined),
+  recargar: vi.fn().mockResolvedValue(undefined),
+});
 const createState = (data: BloqueoEmergenciaDetalleDto | null, loading = false) => ({
   detalle: shallowRef(data),
   cargandoDetalle: shallowRef(loading),
@@ -116,10 +156,15 @@ const createState = (data: BloqueoEmergenciaDetalleDto | null, loading = false) 
   retirando: shallowRef(false),
   cargarDetalle: vi.fn().mockResolvedValue(Boolean(data)),
   marcarContactado: vi.fn().mockResolvedValue(true),
+  resolverAfectado: vi.fn().mockResolvedValue(true),
   retirarEmergencia: vi.fn().mockResolvedValue(true),
 });
-const mountView = (state = createState(makeDetail())) => {
+const mountView = (
+  state = createState(makeDetail()),
+  disponibilidad = createDisponibilidad(),
+) => {
   useEmergenciasMock.mockReturnValue(state);
+  useDisponibilidadMock.mockReturnValue(disponibilidad);
   return mount(EmergenciaDetalleView);
 };
 const findButton = (wrapper: ReturnType<typeof mount>, text: string) =>
@@ -214,6 +259,95 @@ describe("EmergenciaDetalleView", () => {
     expect(wrapper.text()).toContain("20 de agosto de 2026");
     expect(wrapper.text()).toContain("25 de agosto de 2026");
     expect(wrapper.text()).not.toContain("Invalid Date");
+  });
+  it("muestra Resolver solo para afectados contactados sin resolución y deshabilita los que están en curso", async () => {
+    const state = createState(
+      makeDetail([
+        makeAfectado(11, { contactado: true, resolucion: null }),
+        makeAfectado(12, { contactado: false, resolucion: null }),
+        makeAfectado(13, { contactado: true, resolucion: "OBSOLETO" }),
+        makeAfectado(14, { contactado: true, resolucion: "CANCELADO" }),
+        makeAfectado(15, { contactado: true, resolucion: null }),
+      ]),
+    );
+    state.resolucionesEnCurso.value = new Set([11]);
+    const wrapper = mountView(state);
+    await nextTick();
+    const resolverButtons = wrapper.findAll("button").filter((button) => button.text() === "Resolver");
+    expect(resolverButtons).toHaveLength(2);
+    expect(resolverButtons[0].attributes("disabled")).toBeDefined();
+    expect(resolverButtons[1].attributes("disabled")).toBeUndefined();
+  });
+  it("confirma la cancelación con confirmación visible y el payload canónico", async () => {
+    const state = createState(makeDetail([makeAfectado(11, { contactado: true, resolucion: null })]));
+    const disponibilidad = createDisponibilidad();
+    const wrapper = mountView(state, disponibilidad);
+    await nextTick();
+    await findButton(wrapper, "Resolver")!.trigger("click");
+    expect(wrapper.text()).toContain("Cancelar pedido");
+    await findButton(wrapper, "Cancelar pedido")!.trigger("click");
+    expect(wrapper.text()).toContain("¿Confirmas la cancelación de este pedido?");
+    expect(state.resolverAfectado).not.toHaveBeenCalled();
+    await findButton(wrapper, "Confirmar cancelación")!.trigger("click");
+    await flushPromises();
+    expect(state.resolverAfectado).toHaveBeenCalledWith(7, 11, { resolucion: "CANCELADO" });
+    expect(disponibilidad.recargar).toHaveBeenCalledTimes(1);
+    expect(wrapper.text()).not.toContain("¿Confirmas la cancelación de este pedido?");
+  });
+  it("cierra la elección con Decidir después y conserva el diálogo si falla el resolver", async () => {
+    const state = createState(makeDetail([makeAfectado(11, { contactado: true, resolucion: null })]));
+    state.resolverAfectado.mockResolvedValue(false);
+    const disponibilidad = createDisponibilidad();
+    const wrapper = mountView(state, disponibilidad);
+    await nextTick();
+    await findButton(wrapper, "Resolver")!.trigger("click");
+    await findButton(wrapper, "Decidir después")!.trigger("click");
+    expect(wrapper.text()).not.toContain("Puedes cancelar el pedido o desplazar");
+    await findButton(wrapper, "Resolver")!.trigger("click");
+    await findButton(wrapper, "Cancelar pedido")!.trigger("click");
+    await findButton(wrapper, "Confirmar cancelación")!.trigger("click");
+    await flushPromises();
+    expect(disponibilidad.recargar).toHaveBeenCalledTimes(1);
+    expect(wrapper.text()).toContain("No se pudo resolver el pedido");
+    expect(wrapper.find("[data-dialog]").exists()).toBe(true);
+  });
+  it("usa la fecha estrictamente posterior, la disponibilidad y el payload de desplazamiento", async () => {
+    const state = createState(makeDetail([makeAfectado(11, { contactado: true, resolucion: null })]));
+    const disponibilidad = createDisponibilidad({
+      minFecha: "2026-08-19",
+      diasDisponibles: ["2026-08-22"],
+      diasDeshabilitados: ["2026-08-23"],
+    });
+    const wrapper = mountView(state, disponibilidad);
+    await nextTick();
+    await findButton(wrapper, "Resolver")!.trigger("click");
+    await findButton(wrapper, "Desplazar entrega")!.trigger("click");
+    await flushPromises();
+    const calendar = wrapper.get("[data-calendar]");
+    expect(calendar.attributes("data-min-date")).toBe("2026-08-21");
+    expect(calendar.attributes("data-dias-disponibles")).toBe("2026-08-22");
+    expect(calendar.attributes("data-dias-deshabilitados")).toBe("2026-08-23");
+    expect(disponibilidad.recargar).toHaveBeenCalledTimes(1);
+    expect(useDisponibilidadMock.mock.calls[0][0].value).toBe(45);
+    await calendar.get("[data-calendar-date='2026-08-22']").trigger("click");
+    await nextTick();
+    await findButton(wrapper, "Confirmar desplazamiento")!.trigger("click");
+    await flushPromises();
+    expect(state.resolverAfectado).toHaveBeenCalledWith(7, 11, {
+      resolucion: "RETRASADO",
+      nueva_fecha: "2026-08-22",
+    });
+    expect(disponibilidad.recargar).toHaveBeenCalledTimes(2);
+  });
+  it("deshabilita el desplazamiento hasta elegir una fecha", async () => {
+    const state = createState(makeDetail([makeAfectado(11, { contactado: true, resolucion: null })]));
+    const wrapper = mountView(state);
+    await nextTick();
+    await findButton(wrapper, "Resolver")!.trigger("click");
+    await findButton(wrapper, "Desplazar entrega")!.trigger("click");
+    await flushPromises();
+    expect(findButton(wrapper, "Confirmar desplazamiento")!.attributes("disabled")).toBeDefined();
+    expect(state.resolverAfectado).not.toHaveBeenCalled();
   });
   it("guarda la emergencia inactiva y no ofrece acciones mutables", async () => {
     const state = createState(makeDetail([makeAfectado(11, { contactado: true })], { activo: false }));
