@@ -5,6 +5,7 @@ import type {
   CreateBloqueoEmergenciaDto,
   MarcarContactadoDto,
   PedidoAfectadoDto,
+  ResolverAfectadoDto,
 } from "@/types/disponibilidad/emergenciaDto";
 
 const emergenciasPath = "/agenda/emergencias" as const;
@@ -31,6 +32,24 @@ export class EmergenciasApi {
       method: "PATCH",
       body: dto,
     });
+  }
+
+  resolverAfectado(
+    emergenciaId: number,
+    afectadoId: number,
+    dto: ResolverAfectadoDto,
+  ): Promise<PedidoAfectadoDto> {
+    return requestJson(
+      `${emergenciasPath}/${encodeURIComponent(String(emergenciaId))}/afectados/${encodeURIComponent(String(afectadoId))}/resolver`,
+      { method: "POST", body: dto },
+    );
+  }
+
+  retirarEmergencia(emergenciaId: number): Promise<BloqueoEmergenciaDetalleDto> {
+    return requestJson(
+      `${emergenciasPath}/${encodeURIComponent(String(emergenciaId))}/retirar`,
+      { method: "POST" },
+    );
   }
 }
 

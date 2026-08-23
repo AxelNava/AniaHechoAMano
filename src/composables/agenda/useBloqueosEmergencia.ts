@@ -8,6 +8,7 @@ import type {
   CreateBloqueoEmergenciaDto,
   MarcarContactadoDto,
   PedidoAfectadoDto,
+  ResolverAfectadoDto,
 } from "@/types/disponibilidad/emergenciaDto";
 
 const mensajeError = (error: unknown, fallback: string) =>
@@ -28,6 +29,12 @@ export function useBloqueosEmergencia() {
   const creando = shallowRef(false);
   const contactosEnCurso = shallowRef<ReadonlySet<number>>(new Set());
   const hayContactosEnCurso = computed(() => contactosEnCurso.value.size > 0);
+  const resolucionesEnCurso = shallowRef<ReadonlySet<number>>(new Set());
+  const hayResolucionesEnCurso = computed(() => resolucionesEnCurso.value.size > 0);
+  const retirando = shallowRef(false);
+  const hayOperacionesMutablesEnCurso = computed(
+    () => hayContactosEnCurso.value || hayResolucionesEnCurso.value || retirando.value,
+  );
   let tokenLista = 0,
     tokenDetalle = 0;
 
@@ -44,8 +51,22 @@ export function useBloqueosEmergencia() {
     );
   };
 
+  const sincronizarResolucion = (afectado: PedidoAfectadoDto) => {
+    if (!detalle.value) return;
+    const afectados = detalle.value.afectados.map((actual) =>
+      actual.id === afectado.id ? afectado : actual,
+    );
+    const pendientes_contacto = afectados.filter((actual) => !actual.contactado).length;
+    const pendientes_resolucion = afectados.filter((actual) => actual.resolucion === null).length;
+    const id = detalle.value.id;
+    detalle.value = { ...detalle.value, afectados, pendientes_contacto, pendientes_resolucion };
+    emergencias.value = emergencias.value.map((item) =>
+      item.id === id ? { ...item, pendientes_contacto, pendientes_resolucion } : item,
+    );
+  };
+
   const cargarEmergencias = async (): Promise<boolean> => {
-    if (creando.value || hayContactosEnCurso.value) return false;
+    if (creando.value || hayOperacionesMutablesEnCurso.value) return false;
     const token = ++tokenLista;
     cargandoLista.value = true;
     try {
@@ -63,7 +84,7 @@ export function useBloqueosEmergencia() {
   };
 
   const cargarDetalle = async (emergenciaId: number): Promise<boolean> => {
-    if (creando.value || hayContactosEnCurso.value) return false;
+    if (creando.value || hayOperacionesMutablesEnCurso.value) return false;
     const token = ++tokenDetalle;
     detalle.value = null;
     cargandoDetalle.value = true;
@@ -84,7 +105,12 @@ export function useBloqueosEmergencia() {
   const crearEmergencia = async (
     dto: CreateBloqueoEmergenciaDto,
   ): Promise<BloqueoEmergenciaDetalleDto | null> => {
-    if (creando.value || cargandoLista.value || cargandoDetalle.value || hayContactosEnCurso.value)
+    if (
+      creando.value ||
+      cargandoLista.value ||
+      cargandoDetalle.value ||
+      hayOperacionesMutablesEnCurso.value
+    )
       return null;
     creando.value = true;
     try {
@@ -110,7 +136,14 @@ export function useBloqueosEmergencia() {
     afectadoId: number,
     dto: MarcarContactadoDto,
   ): Promise<boolean> => {
-    if (cargandoLista.value || cargandoDetalle.value || creando.value) return false;
+    if (
+      cargandoLista.value ||
+      cargandoDetalle.value ||
+      creando.value ||
+      hayResolucionesEnCurso.value ||
+      retirando.value
+    )
+      return false;
     if (contactosEnCurso.value.has(afectadoId)) return false;
     const anterior =
       detalle.value?.id === emergenciaId
@@ -141,6 +174,69 @@ export function useBloqueosEmergencia() {
     }
   };
 
+  const resolverAfectado = async (
+    emergenciaId: number,
+    afectadoId: number,
+    dto: ResolverAfectadoDto,
+  ): Promise<boolean> => {
+    if (
+      cargandoLista.value ||
+      cargandoDetalle.value ||
+      creando.value ||
+      hayContactosEnCurso.value ||
+      retirando.value
+    )
+      return false;
+    if (resolucionesEnCurso.value.has(afectadoId)) return false;
+    const anterior =
+      detalle.value?.id === emergenciaId
+        ? detalle.value.afectados.find((afectado) => afectado.id === afectadoId)
+        : undefined;
+    if (!anterior) return false;
+
+    resolucionesEnCurso.value = new Set([...resolucionesEnCurso.value, afectadoId]);
+    try {
+      const actualizado = await emergenciasApi.resolverAfectado(emergenciaId, afectadoId, dto);
+      sincronizarResolucion(actualizado);
+      toast.success("Resolución actualizada.");
+      return true;
+    } catch (error) {
+      toast.error(mensajeError(error, "No se pudo actualizar la resolución."));
+      return false;
+    } finally {
+      const pendientes = new Set(resolucionesEnCurso.value);
+      pendientes.delete(afectadoId);
+      resolucionesEnCurso.value = pendientes;
+    }
+  };
+
+  const retirarEmergencia = async (emergenciaId: number): Promise<boolean> => {
+    if (
+      cargandoLista.value ||
+      cargandoDetalle.value ||
+      creando.value ||
+      hayOperacionesMutablesEnCurso.value
+    )
+      return false;
+
+    retirando.value = true;
+    try {
+      const retirada = await emergenciasApi.retirarEmergencia(emergenciaId);
+      detalle.value = retirada;
+      const item = convertirALista(retirada);
+      emergencias.value = emergencias.value.map((actual) =>
+        actual.id === item.id ? item : actual,
+      );
+      toast.success("Emergencia retirada.");
+      return true;
+    } catch (error) {
+      toast.error(mensajeError(error, "No se pudo retirar la emergencia."));
+      return false;
+    } finally {
+      retirando.value = false;
+    }
+  };
+
   return {
     emergencias: readonly(emergencias),
     detalle: readonly(detalle),
@@ -149,9 +245,14 @@ export function useBloqueosEmergencia() {
     creando: readonly(creando),
     contactosEnCurso: readonly(contactosEnCurso),
     hayContactosEnCurso,
+    resolucionesEnCurso: readonly(resolucionesEnCurso),
+    hayResolucionesEnCurso,
+    retirando: readonly(retirando),
     cargarEmergencias,
     cargarDetalle,
     crearEmergencia,
     marcarContactado,
+    resolverAfectado,
+    retirarEmergencia,
   };
 }

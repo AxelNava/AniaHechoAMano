@@ -4,6 +4,8 @@ import { EmergenciasApi } from "@/services/disponibilidad/emergenciasApi";
 
 const createDto = { desde: "2026-08-20", hasta: "2026-08-22", motivo: "Cierre" };
 const contactadoDto = { contactado: true };
+const resolverCanceladoDto = { resolucion: "CANCELADO" } as const;
+const resolverRetrasadoDto = { resolucion: "RETRASADO", nueva_fecha: "2026-08-25" } as const;
 
 const stubJson = (body: unknown, status = 200) => {
   const json = vi.fn().mockResolvedValue(body);
@@ -82,6 +84,35 @@ describe("EmergenciasApi", () => {
     );
   });
 
+  it.each([
+    ["CANCELADO", resolverCanceladoDto],
+    ["RETRASADO", resolverRetrasadoDto],
+  ] as const)("resuelve un afectado por POST con payload %s", async (_, dto) => {
+    const pedido = { id: 41, resolucion: dto.resolucion };
+    const { fetchMock } = stubJson(pedido);
+
+    await expect(new EmergenciasApi().resolverAfectado(23, 41, dto)).resolves.toBe(pedido);
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringMatching(/\/api\/agenda\/emergencias\/23\/afectados\/41\/resolver$/),
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dto),
+      },
+    );
+  });
+
+  it("retira una emergencia por POST sin cuerpo", async () => {
+    const detalle = { id: 23, activo: false };
+    const { fetchMock } = stubJson(detalle);
+
+    await expect(new EmergenciasApi().retirarEmergencia(23)).resolves.toBe(detalle);
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringMatching(/\/api\/agenda\/emergencias\/23\/retirar$/),
+      { method: "POST" },
+    );
+  });
+
   const validProblems: Array<[number, ProblemDetailsCode]> = [
     [400, "VALIDATION_ERROR"],
     [404, "NOT_FOUND"],
@@ -100,13 +131,19 @@ describe("EmergenciasApi", () => {
         code,
       };
       const { json } = stubJson(problem, status);
+      const requests = [
+        new EmergenciasApi().getEmergencia(23),
+        new EmergenciasApi().resolverAfectado(23, 41, resolverCanceladoDto),
+        new EmergenciasApi().retirarEmergencia(23),
+      ];
 
-      const error = await captureApiError(new EmergenciasApi().getEmergencia(23));
-
-      expect(error.status).toBe(status);
-      expect(error.problem).toBe(problem);
-      expect(error.message).toBe(problem.detail);
-      expect(json).toHaveBeenCalledTimes(1);
+      for (const request of requests) {
+        const error = await captureApiError(request);
+        expect(error.status).toBe(status);
+        expect(error.problem).toBe(problem);
+        expect(error.message).toBe(problem.detail);
+      }
+      expect(json).toHaveBeenCalledTimes(requests.length);
     },
   );
 

@@ -22,6 +22,10 @@ export interface MarcarContactadoDto {
   contactado: boolean;
 }
 
+export type ResolverAfectadoDto =
+  | { resolucion: "CANCELADO" }
+  | { resolucion: "RETRASADO"; nueva_fecha: string };
+
 export interface BloqueoEmergenciaListItemDto {
   id: number;
   desde: string;

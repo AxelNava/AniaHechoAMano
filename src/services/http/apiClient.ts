@@ -31,7 +31,10 @@ export class ApiError extends Error {
   }
 }
 
-type JsonRequestOptions = { method: "GET" } | { method: "POST" | "PATCH"; body: unknown };
+type JsonRequestOptions =
+  | { method: "GET" }
+  | { method: "POST"; body?: unknown }
+  | { method: "PATCH"; body: unknown };
 
 const problemCodes: ProblemDetailsCode[] = [
   "DATABASE_ERROR",
@@ -64,7 +67,7 @@ type ApiPath = `/agenda/emergencias${string}` | `/pedidos/seguimiento/${string}`
 
 export async function requestJson<T>(path: ApiPath, options: JsonRequestOptions): Promise<T> {
   const init: RequestInit = { method: options.method };
-  if ("body" in options) {
+  if ("body" in options && options.body !== undefined) {
     init.headers = { "Content-Type": "application/json" };
     init.body = JSON.stringify(options.body);
   }

@@ -13,6 +13,8 @@ const { api, toastError, toastSuccess } = vi.hoisted(() => ({
     getEmergencias: vi.fn(),
     getEmergencia: vi.fn(),
     marcarContactado: vi.fn(),
+    resolverAfectado: vi.fn(),
+    retirarEmergencia: vi.fn(),
   },
   toastError: vi.fn(),
   toastSuccess: vi.fn(),
@@ -50,6 +52,16 @@ const afectado = (id: number, contactado = false): PedidoAfectadoDto => ({
     url_perfil: null,
     red_social_contacto: null,
   },
+});
+const afectadoResuelto = (
+  id: number,
+  resolucion: "CANCELADO" | "RETRASADO" | "OBSOLETO",
+  contactado = false,
+): PedidoAfectadoDto => ({
+  ...afectado(id, contactado),
+  resolucion,
+  resuelto_en: "2026-08-18T10:00:00Z",
+  nueva_fecha: resolucion === "RETRASADO" ? "2026-08-25" : null,
 });
 const item = (id: number, pendientes = 0, total = 2): BloqueoEmergenciaListItemDto => ({
   id,
@@ -283,5 +295,110 @@ describe("useBloqueosEmergencia", () => {
     await expect(estado.marcarContactado(1, 12, { contactado: true })).resolves.toBe(true);
     await expect(estado.marcarContactado(1, 99, { contactado: true })).resolves.toBe(false);
     expect(api.marcarContactado).toHaveBeenCalledTimes(2);
+  });
+
+  it.each(["CANCELADO", "RETRASADO", "OBSOLETO"] as const)(
+    "acepta la resolución canónica %s y actualiza ambos contadores sin optimismo",
+    async (resolucion) => {
+      const estado = await cargarEstado(detalle(1, [afectado(11), afectado(12)]), [item(1, 2)]);
+      const previo = toRaw(estado.detalle.value);
+      const pendiente = diferida<PedidoAfectadoDto>();
+      api.resolverAfectado.mockReturnValueOnce(pendiente.promise);
+      const dto =
+        resolucion === "RETRASADO"
+          ? { resolucion, nueva_fecha: "2026-08-25" }
+          : { resolucion: "CANCELADO" as const };
+      const operacion = estado.resolverAfectado(1, 11, dto);
+
+      expect(estado.resolucionesEnCurso.value).toEqual(new Set([11]));
+      expect(estado.hayResolucionesEnCurso.value).toBe(true);
+      expect(toRaw(estado.detalle.value)).toBe(previo);
+      expect(toRaw(estado.detalle.value?.afectados[0])).toBe(previo?.afectados[0]);
+      await expect(estado.resolverAfectado(1, 11, dto)).resolves.toBe(false);
+
+      const canonico = afectadoResuelto(11, resolucion, true);
+      pendiente.resolve(canonico);
+      await expect(operacion).resolves.toBe(true);
+      expect(estado.detalle.value?.afectados).toEqual([canonico, afectado(12)]);
+      expect(estado.detalle.value?.pendientes_contacto).toBe(1);
+      expect(estado.detalle.value?.pendientes_resolucion).toBe(1);
+      expect(estado.emergencias.value[0]).toMatchObject({
+        pendientes_contacto: 1,
+        pendientes_resolucion: 1,
+      });
+      expect(toRaw(estado.detalle.value?.afectados[0])).toBe(canonico);
+      expect(estado.resolucionesEnCurso.value.size).toBe(0);
+    },
+  );
+
+  it("mantiene el detalle intacto al fallar una resolución y bloquea trabajos conflictivos", async () => {
+    const estado = await cargarEstado(detalle(1, [afectado(11)]), [item(1, 1)]);
+    const previo = toRaw(estado.detalle.value);
+    const listaPrevia = estado.emergencias.value;
+    const pendiente = diferida<PedidoAfectadoDto>();
+    api.resolverAfectado.mockReturnValueOnce(pendiente.promise);
+    const operacion = estado.resolverAfectado(1, 11, { resolucion: "CANCELADO" });
+
+    await expect(estado.cargarEmergencias()).resolves.toBe(false);
+    await expect(estado.cargarDetalle(1)).resolves.toBe(false);
+    await expect(
+      estado.crearEmergencia({ desde: "2026-08-20", hasta: "2026-08-21" }),
+    ).resolves.toBeNull();
+    await expect(estado.marcarContactado(1, 11, { contactado: true })).resolves.toBe(false);
+    await expect(estado.retirarEmergencia(1)).resolves.toBe(false);
+    expect(api.getEmergencias).toHaveBeenCalledOnce();
+    expect(api.getEmergencia).toHaveBeenCalledOnce();
+    expect(api.createEmergencia).not.toHaveBeenCalled();
+    expect(api.marcarContactado).not.toHaveBeenCalled();
+    expect(api.retirarEmergencia).not.toHaveBeenCalled();
+
+    pendiente.reject(new ApiError("No autorizado", 409, null));
+    await expect(operacion).resolves.toBe(false);
+    expect(toRaw(estado.detalle.value)).toBe(previo);
+    expect(toRaw(estado.detalle.value?.afectados[0])).toBe(previo?.afectados[0]);
+    expect(estado.emergencias.value).toBe(listaPrevia);
+    expect(estado.resolucionesEnCurso.value.size).toBe(0);
+    expect(toastError).toHaveBeenLastCalledWith("No autorizado");
+  });
+
+  it("retira sin optimismo, conserva afectados canónicos y permite la operación idempotente", async () => {
+    const estado = await cargarEstado(detalle(1, [afectado(11), afectado(12)]), [item(1, 2)]);
+    const previo = toRaw(estado.detalle.value);
+    const retirada = {
+      ...detalle(1, [afectadoResuelto(11, "RETRASADO"), afectado(12)]),
+      activo: false,
+      retirado_en: "2026-08-18T11:00:00Z",
+      pendientes_contacto: 1,
+      pendientes_resolucion: 1,
+    };
+    const pendiente = diferida<BloqueoEmergenciaDetalleDto>();
+    api.retirarEmergencia.mockReturnValueOnce(pendiente.promise);
+    const operacion = estado.retirarEmergencia(1);
+
+    expect(estado.retirando.value).toBe(true);
+    expect(toRaw(estado.detalle.value)).toBe(previo);
+    expect(estado.detalle.value?.activo).toBe(true);
+    await expect(estado.retirarEmergencia(1)).resolves.toBe(false);
+    await expect(estado.cargarEmergencias()).resolves.toBe(false);
+
+    pendiente.resolve(retirada);
+    await expect(operacion).resolves.toBe(true);
+    expect(estado.retirando.value).toBe(false);
+    expect(toRaw(estado.detalle.value)).toBe(retirada);
+    expect(toRaw(estado.detalle.value?.afectados[0])).toBe(retirada.afectados[0]);
+    expect(estado.detalle.value?.afectados[0].resolucion).toBe("RETRASADO");
+    expect(estado.emergencias.value[0]).toMatchObject({
+      activo: false,
+      retirado_en: retirada.retirado_en,
+      pendientes_contacto: 1,
+      pendientes_resolucion: 1,
+    });
+
+    const segundaRetirada = { ...retirada, retirado_en: "2026-08-18T12:00:00Z" };
+    api.retirarEmergencia.mockResolvedValueOnce(segundaRetirada);
+    await expect(estado.retirarEmergencia(1)).resolves.toBe(true);
+    expect(api.retirarEmergencia).toHaveBeenCalledTimes(2);
+    expect(toRaw(estado.detalle.value)).toBe(segundaRetirada);
+    expect(estado.detalle.value?.afectados[0].resolucion).toBe("RETRASADO");
   });
 });
