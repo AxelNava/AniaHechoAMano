@@ -152,6 +152,12 @@ onMounted(fetchPedido);
               {{ getEstadoLabel(pedido.estado) }}
             </span>
             <span
+              v-if="pedido.retrasado"
+              class="inline-flex rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-amber-100 text-amber-800 ring-amber-600/20"
+            >
+              Retrasado
+            </span>
+            <span
               v-if="pedido.referencia_publica"
               class="rounded-md bg-gray-100 px-2 py-1 font-mono text-xs text-gray-600"
             >

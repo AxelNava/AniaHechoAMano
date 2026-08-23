@@ -40,6 +40,7 @@ const basePedido = (over: Partial<PedidoDetalleDto> = {}): PedidoDetalleDto => (
   fecha_entrega_solicitada: "2026-07-20T00:00:00.000Z",
   fecha_entrega_acordada: null,
   estado: "PENDIENTE_CONFIRMACION",
+  retrasado: false,
   precio_final_total: 100,
   anticipo_pagado: 0,
   notas_admin: null,

@@ -79,6 +79,7 @@ export interface PedidoHistorialListItemDto {
   // firme (se fija al confirmar/cotizar).
   fecha_entrega_acordada: string | null;
   estado: string;
+  retrasado: boolean;
   precio_final_total: number | null;
   anticipo_pagado: number;
   notas_admin: string | null;

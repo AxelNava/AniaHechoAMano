@@ -17,4 +17,10 @@ defineProps<{
   >
     {{ getEstadoLabel(row.estado) }}
   </span>
+  <span
+    v-if="row.retrasado"
+    class="ml-2 inline-flex rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-amber-100 text-amber-800 ring-amber-600/20"
+  >
+    Retrasado
+  </span>
 </template>
