@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import { computed, onMounted, shallowRef } from "vue";
 import { RouterLink, useRoute } from "vue-router";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useBloqueosEmergencia } from "@/composables/agenda/useBloqueosEmergencia";
 import {
@@ -10,9 +19,18 @@ import {
   getEstadoLabel,
 } from "@/utils/orderDisplay";
 import type { PedidoAfectadoDto } from "@/types/disponibilidad/emergenciaDto";
+
 const route = useRoute();
-const { detalle, cargandoDetalle, contactosEnCurso, cargarDetalle, marcarContactado } =
-  useBloqueosEmergencia();
+const {
+  detalle,
+  cargandoDetalle,
+  contactosEnCurso,
+  cargarDetalle,
+  marcarContactado,
+  retirarEmergencia,
+  retirando,
+  resolucionesEnCurso,
+} = useBloqueosEmergencia();
 const emergenciaId = computed<number | null>(() => {
   const raw = route.params.id;
   if (Array.isArray(raw)) return null;
@@ -22,6 +40,15 @@ const emergenciaId = computed<number | null>(() => {
     : null;
 });
 const cargaIniciada = shallowRef(false);
+const retiradaDialogoAbierta = shallowRef(false);
+const errorRetirada = shallowRef("");
+const retiroDeshabilitado = computed(
+  () =>
+    !detalle.value?.activo ||
+    retirando.value ||
+    contactosEnCurso.value.size > 0 ||
+    resolucionesEnCurso.value.size > 0,
+);
 const contactoCliente = (afectado: PedidoAfectadoDto): string =>
   afectado.cliente.red_social_contacto?.trim() ||
   afectado.cliente.url_perfil?.trim() ||
@@ -35,8 +62,36 @@ const resolucion = (afectado: PedidoAfectadoDto): string => {
 };
 const cambiarContacto = (afectado: PedidoAfectadoDto, contactado: boolean) => {
   const emergencia = detalle.value;
-  if (!emergencia) return;
+  if (!emergencia?.activo || retirando.value) return;
   void marcarContactado(emergencia.id, afectado.id, { contactado });
+};
+const abrirRetirada = () => {
+  if (retiroDeshabilitado.value) return;
+  errorRetirada.value = "";
+  retiradaDialogoAbierta.value = true;
+};
+const cerrarRetirada = () => {
+  if (retirando.value) return;
+  retiradaDialogoAbierta.value = false;
+  errorRetirada.value = "";
+};
+const actualizarRetiradaDialogo = (abierto: boolean) => {
+  if (!abierto) cerrarRetirada();
+};
+const confirmarRetirada = async () => {
+  const emergencia = detalle.value;
+  if (!emergencia || retiroDeshabilitado.value) return;
+  errorRetirada.value = "";
+  try {
+    const exito = await retirarEmergencia(emergencia.id);
+    if (exito) {
+      retiradaDialogoAbierta.value = false;
+      return;
+    }
+  } catch {
+    // Se muestra el mismo mensaje para respuestas fallidas o excepciones del adaptador.
+  }
+  errorRetirada.value = "No se pudo retirar la emergencia. Puedes intentarlo de nuevo.";
 };
 onMounted(() => {
   if (emergenciaId.value === null) return;
@@ -71,16 +126,27 @@ onMounted(() => {
               {{ formatDiaISO(detalle.desde) }} — {{ formatDiaISO(detalle.hasta) }}
             </p>
           </div>
-          <span
-            :class="[
-              'rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset',
-              detalle.activo
-                ? 'bg-green-100 text-green-800 ring-green-600/20'
-                : 'bg-gray-100 text-gray-800 ring-gray-600/20',
-            ]"
-          >
-            {{ detalle.activo ? "Activa" : "Retirada" }}
-          </span>
+          <div class="flex flex-wrap items-center gap-2">
+            <span
+              :class="[
+                'rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset',
+                detalle.activo
+                  ? 'bg-green-100 text-green-800 ring-green-600/20'
+                  : 'bg-gray-100 text-gray-800 ring-gray-600/20',
+              ]"
+            >
+              {{ detalle.activo ? "Activa" : "Retirada" }}
+            </span>
+            <Button
+              v-if="detalle.activo"
+              type="button"
+              variant="outline"
+              :disabled="retiroDeshabilitado"
+              @click="abrirRetirada"
+            >
+              {{ retirando ? "Retirando..." : "Retirar emergencia" }}
+            </Button>
+          </div>
         </div>
         <p v-if="detalle.motivo" class="mt-4 text-sm">
           <span class="font-medium">Motivo:</span> {{ detalle.motivo }}
@@ -165,7 +231,12 @@ onMounted(() => {
                 <Checkbox
                   :id="`contactado-${afectado.id}`"
                   :checked="afectado.contactado"
-                  :disabled="contactosEnCurso.has(afectado.id)"
+                  :disabled="
+                    !detalle.activo ||
+                    contactosEnCurso.has(afectado.id) ||
+                    resolucionesEnCurso.has(afectado.id) ||
+                    retirando
+                  "
                   @update:checked="(valor) => cambiarContacto(afectado, valor === true)"
                 />
                 Contactado
@@ -189,7 +260,7 @@ onMounted(() => {
               <div>
                 <dt class="text-text-page2">Fecha de entrega original</dt>
                 <dd class="font-medium capitalize">
-                  {{ formatDiaISO(afectado.fecha_entrega_original) }}
+                  {{ formatDiaISO(afectado.fecha_entrega_original.slice(0, 10)) }}
                 </dd>
               </div>
               <div>
@@ -211,11 +282,35 @@ onMounted(() => {
               </div>
             </dl>
             <p v-if="afectado.nueva_fecha" class="text-text-page2 mt-3 text-sm">
-              Nueva fecha: <span class="capitalize">{{ formatDiaISO(afectado.nueva_fecha) }}</span>
+              Nueva fecha:
+              <span class="capitalize">{{ formatDiaISO(afectado.nueva_fecha.slice(0, 10)) }}</span>
             </p>
           </article>
         </div>
       </section>
     </div>
+
+    <Dialog :open="retiradaDialogoAbierta" @update:open="actualizarRetiradaDialogo">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Retirar emergencia</DialogTitle>
+          <DialogDescription>
+            Retirar esta emergencia libera el bloque, conserva la auditoría y el historial, y no
+            deshace las resoluciones existentes.
+          </DialogDescription>
+        </DialogHeader>
+        <p v-if="errorRetirada" class="rounded-md bg-red-100 p-3 text-sm text-red-700" role="alert">
+          {{ errorRetirada }}
+        </p>
+        <DialogFooter>
+          <Button type="button" variant="outline" :disabled="retirando" @click="cerrarRetirada">
+            Cancelar
+          </Button>
+          <Button type="button" :disabled="retiroDeshabilitado" @click="confirmarRetirada">
+            {{ retirando ? "Retirando..." : "Confirmar retirada" }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
