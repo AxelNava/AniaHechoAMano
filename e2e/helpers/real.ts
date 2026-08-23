@@ -480,6 +480,18 @@ export async function marcarContactadoEmergencia(
   );
 }
 
+/** Intenta resolver como CANCELADO; el journey usa el 409 solo como invariante negativa. */
+export async function resolverAfectadoCanceladoEmergencia(
+  request: APIRequestContext,
+  emergenciaId: number,
+  afectadoId: number,
+): Promise<APIResponse> {
+  return request.post(
+    `${API_BASE}/api/agenda/emergencias/${emergenciaId}/afectados/${afectadoId}/resolver`,
+    { data: { resolucion: "CANCELADO" } },
+  );
+}
+
 /** Retiro lógico de una emergencia; no borra datos ni se usa desde la UI. */
 export async function retirarEmergenciaReal(
   request: APIRequestContext,

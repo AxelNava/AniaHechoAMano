@@ -5,6 +5,7 @@ import {
   crearPedidoConfirmadoE2E,
   esperarDetalleEmergencia,
   esperarEmergenciaPorMotivo,
+  resolverAfectadoCanceladoEmergencia,
   listarEmergencias,
   marcarContactadoEmergencia,
   obtenerDiaDisponibleFuturo,
@@ -113,6 +114,24 @@ test.describe("Integración real — agenda de emergencias", () => {
       ).toBeVisible();
       await page.getByRole("button", { name: "Confirmar cancelación", exact: true }).click();
       await expect(tarjeta.getByText("Cancelado", { exact: true }).last()).toBeVisible();
+      const persistidaCancelada = await esperarDetalleEmergencia(request, emergenciaId, (detalle) =>
+        detalle.afectados.some(
+          (item) => item.id === afectadoId && item.resolucion === "CANCELADO",
+        ),
+      );
+      const afectadoCancelado = persistidaCancelada.afectados.find(
+        (item) => item.id === afectadoId,
+      );
+      expect(afectadoCancelado).toMatchObject({
+        pedido_id: pedido.id,
+        resolucion: "CANCELADO",
+      });
+      const segundaResolucion = await resolverAfectadoCanceladoEmergencia(
+        request,
+        emergenciaId,
+        afectadoId,
+      );
+      expect(segundaResolucion.status()).toBe(409);
 
       await page.getByRole("button", { name: "Retirar emergencia", exact: true }).click();
       await expect(page.getByRole("heading", { name: "Retirar emergencia", exact: true })).toBeVisible();
