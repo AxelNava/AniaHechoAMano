@@ -103,13 +103,29 @@ test.describe("Integración real — agenda de emergencias", () => {
         contactado: true,
       });
 
+      await tarjeta.getByRole("button", { name: "Resolver", exact: true }).click();
+      await expect(page.getByRole("heading", { name: "Resolver pedido", exact: true })).toBeVisible();
+      await page.getByRole("button", { name: "Cancelar pedido", exact: true }).click();
+      await expect(
+        page.getByText("¿Confirmas la cancelación de este pedido?", { exact: true }),
+      ).toBeVisible();
+      await page.getByRole("button", { name: "Confirmar cancelación", exact: true }).click();
+      await expect(tarjeta.getByText("Cancelado", { exact: true }).last()).toBeVisible();
+
+      await page.getByRole("button", { name: "Retirar emergencia", exact: true }).click();
+      await expect(page.getByRole("heading", { name: "Retirar emergencia", exact: true })).toBeVisible();
+      await page.getByRole("button", { name: "Confirmar retirada", exact: true }).click();
+      await expect(
+        page.locator("section").first().getByText("Retirada", { exact: true }).first(),
+      ).toBeVisible();
+
       const seguimiento = await obtenerSeguimientoPublico(
         request,
         pedido.seguimiento_token_publico,
       );
       expect(seguimiento).toMatchObject({
         referencia_publica: pedido.referencia_publica,
-        estado: "CONFIRMADO",
+        estado: "CANCELADO",
         retrasado: false,
       });
       expect(seguimiento.fecha_entrega_solicitada?.slice(0, 10)).toBe(fecha);
@@ -118,7 +134,7 @@ test.describe("Integración real — agenda de emergencias", () => {
       await page.goto(`/pedido/seguimiento/${encodeURIComponent(pedido.seguimiento_token_publico)}`);
       await expect(page.getByRole("heading", { name: "Seguimiento de tu pedido" })).toBeVisible();
       await expect(page.getByText(pedido.referencia_publica, { exact: true })).toBeVisible();
-      await expect(page.getByText("Confirmado", { exact: true })).toBeVisible();
+      await expect(page.getByText("Cancelado", { exact: true })).toBeVisible();
       const fechas = page.locator("dl > div");
       await expect(fechas.nth(0)).toContainText(fechaVisible(fecha));
       await expect(fechas.nth(1)).toContainText(fechaVisible(fecha));
@@ -129,7 +145,7 @@ test.describe("Integración real — agenda de emergencias", () => {
         const afectado = afectadoId
           ? detalle.afectados.find((item) => item.id === afectadoId)
           : undefined;
-        if (afectado?.contactado) {
+        if (afectado?.contactado && afectado.resolucion === null) {
           await marcarContactadoEmergencia(request, emergenciaId, afectado.id, false);
           await esperarDetalleEmergencia(
             request,
@@ -137,8 +153,9 @@ test.describe("Integración real — agenda de emergencias", () => {
             (actual) => !actual.afectados.some((item) => item.id === afectado.id && item.contactado),
           );
         }
-        // Retiro lógico únicamente por API; la UI de F8a no ofrece esa acción.
-        await retirarEmergenciaReal(request, emergenciaId);
+        if (detalle.activo) {
+          await retirarEmergenciaReal(request, emergenciaId);
+        }
       }
     }
   });

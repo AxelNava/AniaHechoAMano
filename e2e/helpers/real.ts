@@ -68,6 +68,8 @@ export interface PedidoAfectadoE2E {
   pedido_id: number;
   referencia_publica: string | null;
   contactado: boolean;
+  resolucion: "CANCELADO" | "RETRASADO" | "OBSOLETO" | null;
+  nueva_fecha: string | null;
   cliente: { nombre: string };
 }
 
