@@ -84,7 +84,7 @@ test.describe("Integración real — agenda de emergencias", () => {
 
       await expect(page.getByRole("heading", { name: "Detalle de emergencia" })).toBeVisible();
       await expect(page.getByText(fechaVisible(fecha), { exact: false }).first()).toBeVisible();
-      await expect(page.getByText(motivo, { exact: true })).toBeVisible();
+      await expect(page.getByText(`Motivo: ${motivo}`, { exact: true })).toBeVisible();
       await expect(page.getByText(pedido.cliente_nombre, { exact: true })).toBeVisible();
       await expect(page.getByText(pedido.referencia_publica, { exact: true })).toBeVisible();
 
