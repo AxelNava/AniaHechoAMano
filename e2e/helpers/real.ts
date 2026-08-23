@@ -61,12 +61,15 @@ export interface PedidoConfirmadoE2E {
   cliente_nombre: string;
   fecha_entrega_acordada: string;
   estado: string;
+  tiempo_total_minutos: number;
 }
 
 export interface PedidoAfectadoE2E {
   id: number;
   pedido_id: number;
   referencia_publica: string | null;
+  fecha_entrega_original: string;
+  tiempo_total_minutos: number;
   contactado: boolean;
   resolucion: "CANCELADO" | "RETRASADO" | "OBSOLETO" | null;
   nueva_fecha: string | null;
@@ -229,6 +232,46 @@ export async function obtenerDiaDisponibleFuturo(request: APIRequestContext): Pr
 }
 
 /**
+ * Busca un día disponible posterior al original usando la duración real del pedido.
+ * Consulta por meses para no depender del límite máximo de rango del backend.
+ */
+export async function obtenerDiaDisponiblePosterior(
+  request: APIRequestContext,
+  fechaOriginal: string,
+  minutosEstimados: number,
+): Promise<string> {
+  expect(Number.isFinite(minutosEstimados)).toBeTruthy();
+  const siguienteDia = (fecha: string): string => {
+    const [anio, mes, dia] = fecha.split("-").map(Number);
+    return new Date(Date.UTC(anio, mes - 1, dia + 1)).toISOString().slice(0, 10);
+  };
+  const finDeMes = (fecha: string): string => {
+    const [anio, mes] = fecha.split("-").map(Number);
+    const ultimo = new Date(Date.UTC(anio, mes, 0)).getUTCDate();
+    return `${anio}-${pad2(mes)}-${pad2(ultimo)}`;
+  };
+
+  let desde = siguienteDia(fechaOriginal);
+  for (let intento = 0; intento < 6; intento += 1) {
+    const hasta = finDeMes(desde);
+    const res = await request.get(
+      `${API_BASE}/api/disponibilidad/dias?desde=${desde}&hasta=${hasta}` +
+        `&minutos_estimados=${encodeURIComponent(String(minutosEstimados))}`,
+    );
+    expect(res.ok(), `GET /api/disponibilidad/dias falló (${res.status()})`).toBeTruthy();
+    const body = (await res.json()) as { min_fecha: string; dias: DiaDisponibilidad[] };
+    const dia = body.dias.find(
+      (item) => item.disponible && item.fecha > fechaOriginal && item.fecha >= body.min_fecha,
+    );
+    if (dia) return dia.fecha;
+    desde = siguienteDia(hasta);
+  }
+  throw new Error(
+    `No hay un día posterior disponible para ${fechaOriginal} con ${minutosEstimados} minutos.`,
+  );
+}
+
+/**
  * En el paso Fecha del wizard: navega al mes siguiente, elige un día habilitado
  * real (leído de la disponibilidad del backend) y espera a que la UI confirme la
  * disponibilidad. Devuelve la fecha ISO elegida.
@@ -258,6 +301,7 @@ interface PedidoDetalleMinimoE2E {
   seguimiento_token_publico: string | null;
   estado: string | null;
   fecha_entrega_acordada: string | null;
+  productos?: { tiempo_total_estimado_minutos: number | null }[];
 }
 
 const leerJsonOk = async <T>(res: APIResponse, operacion: string): Promise<T> => {
@@ -390,6 +434,23 @@ export async function crearPedidoConfirmadoE2E(
   expect(confirmado.estado).toBe("CONFIRMADO");
   expect(confirmado.fecha_entrega_acordada?.slice(0, 10)).toBe(fechaEntrega);
 
+  let detalle = confirmado;
+  if (!detalle.productos?.length) {
+    const detalleRes = await request.get(`${API_BASE}/api/pedidos/${creado.id}`);
+    detalle = await leerJsonOk<PedidoDetalleMinimoE2E>(
+      detalleRes,
+      `GET /api/pedidos/${creado.id}`,
+    );
+  }
+  const tiempos = detalle.productos?.map((linea) => linea.tiempo_total_estimado_minutos);
+  const tiemposNumericos = tiempos?.filter(
+    (minutos): minutos is number => typeof minutos === "number" && Number.isFinite(minutos),
+  );
+  if (!tiempos || !tiemposNumericos?.length || tiemposNumericos.length !== tiempos.length) {
+    throw new Error(`El pedido ${creado.id} no devolvió sus minutos reales de elaboración.`);
+  }
+  const tiempoTotalMinutos = tiemposNumericos.reduce((total, minutos) => total + minutos, 0);
+
   return {
     id: creado.id,
     referencia_publica: confirmado.referencia_publica ?? creado.referencia_publica!,
@@ -398,6 +459,7 @@ export async function crearPedidoConfirmadoE2E(
     cliente_nombre: clienteNombre,
     fecha_entrega_acordada: confirmado.fecha_entrega_acordada!,
     estado: confirmado.estado!,
+    tiempo_total_minutos: tiempoTotalMinutos,
   };
 }
 

@@ -5,8 +5,10 @@ import {
   crearPedidoConfirmadoE2E,
   esperarDetalleEmergencia,
   esperarEmergenciaPorMotivo,
+  listarEmergencias,
   marcarContactadoEmergencia,
   obtenerDiaDisponibleFuturo,
+  obtenerDiaDisponiblePosterior,
   obtenerEmergenciaReal,
   obtenerSeguimientoPublico,
   retirarEmergenciaReal,
@@ -156,6 +158,136 @@ test.describe("Integración real — agenda de emergencias", () => {
         if (detalle.activo) {
           await retirarEmergenciaReal(request, emergenciaId);
         }
+      }
+    }
+  });
+
+  test("desplaza la entrega y publica el retraso", async ({ page, request }) => {
+    let emergenciaId: number | undefined;
+    let afectadoId: number | undefined;
+    let motivo = "";
+
+    try {
+      await assertEmergenciasAdminEnabled(request);
+      const fechaOriginal = await obtenerDiaDisponibleFuturo(request);
+      const pedido = await crearPedidoConfirmadoE2E(request, fechaOriginal);
+      const fechaNueva = await obtenerDiaDisponiblePosterior(
+        request,
+        fechaOriginal,
+        pedido.tiempo_total_minutos,
+      );
+      expect(fechaNueva > fechaOriginal).toBeTruthy();
+      const runId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      motivo = `${MARCA_E2E} emergencia desplazamiento ${runId}`;
+
+      await page.goto("/admin/agenda");
+      await expect(page.getByRole("heading", { name: "Agenda y disponibilidad" })).toBeVisible();
+      await page.getByLabel("Desde", { exact: true }).fill(fechaOriginal);
+      await page.getByLabel("Hasta", { exact: true }).fill(fechaOriginal);
+      await page.getByLabel("Motivo (opcional)", { exact: true }).fill(motivo);
+      const crear = page.getByRole("button", { name: "Crear emergencia", exact: true });
+      await expect(crear).toBeEnabled();
+      await crear.click();
+
+      const creada = await esperarEmergenciaPorMotivo(request, motivo);
+      emergenciaId = creada.id;
+      expect(creada).toMatchObject({ desde: fechaOriginal, hasta: fechaOriginal, motivo });
+      const afectado = creada.afectados.find((item) => item.pedido_id === pedido.id);
+      expect(afectado, `El pedido ${pedido.id} no quedó afectado por la emergencia.`).toBeTruthy();
+      if (!afectado) throw new Error(`No se encontró el afectado del pedido ${pedido.id}.`);
+      afectadoId = afectado.id;
+      expect(afectado.tiempo_total_minutos).toBe(pedido.tiempo_total_minutos);
+
+      const fila = page.locator("li").filter({ hasText: motivo });
+      await expect(fila).toBeVisible();
+      const detalleLink = fila.getByRole("link");
+      await expect(detalleLink).toHaveAttribute(
+        "href",
+        new RegExp(`/admin/agenda/emergencias/${emergenciaId}$`),
+      );
+      await detalleLink.click();
+      await expect(page).toHaveURL(new RegExp(`/admin/agenda/emergencias/${emergenciaId}$`));
+      await expect(page.getByRole("heading", { name: "Detalle de emergencia" })).toBeVisible();
+
+      const tarjeta = page.locator("article").filter({ hasText: pedido.referencia_publica });
+      await expect(tarjeta).toBeVisible();
+      const contactado = tarjeta.getByRole("checkbox", { name: "Contactado" });
+      await expect(contactado).not.toBeChecked();
+      await contactado.click();
+      await expect(contactado).toBeChecked();
+      await esperarDetalleEmergencia(request, emergenciaId, (detalle) =>
+        detalle.afectados.some((item) => item.id === afectadoId && item.contactado),
+      );
+
+      await tarjeta.getByRole("button", { name: "Resolver", exact: true }).click();
+      await expect(page.getByRole("heading", { name: "Resolver pedido", exact: true })).toBeVisible();
+      await page.getByRole("button", { name: "Desplazar entrega", exact: true }).click();
+
+      for (let intento = 0; intento < 12; intento += 1) {
+        const botonDia = page.getByRole("button", { name: fechaNueva, exact: true });
+        if (await botonDia.isVisible()) break;
+        await page.getByRole("button", { name: "Mes siguiente", exact: true }).click();
+      }
+      const botonDia = page.getByRole("button", { name: fechaNueva, exact: true });
+      await expect(botonDia).toBeVisible();
+      await expect(botonDia).toBeEnabled();
+      await botonDia.click();
+      const confirmar = page.getByRole("button", { name: "Confirmar desplazamiento", exact: true });
+      await expect(confirmar).toBeEnabled();
+      await confirmar.click();
+
+      await expect(tarjeta.getByText("Retrasado", { exact: true })).toBeVisible();
+      await expect(tarjeta.getByText(fechaVisible(fechaNueva), { exact: false })).toBeVisible();
+      const persistida = await esperarDetalleEmergencia(request, emergenciaId, (detalle) =>
+        detalle.afectados.some(
+          (item) =>
+            item.id === afectadoId &&
+            item.resolucion === "RETRASADO" &&
+            item.nueva_fecha?.slice(0, 10) === fechaNueva,
+        ),
+      );
+      const afectadoPersistido = persistida.afectados.find((item) => item.id === afectadoId);
+      expect(afectadoPersistido?.resolucion).toBe("RETRASADO");
+      expect(afectadoPersistido?.nueva_fecha?.slice(0, 10)).toBe(fechaNueva);
+
+      const seguimiento = await obtenerSeguimientoPublico(
+        request,
+        pedido.seguimiento_token_publico,
+      );
+      expect(seguimiento).toMatchObject({
+        referencia_publica: pedido.referencia_publica,
+        retrasado: true,
+      });
+      expect(seguimiento.fecha_entrega_acordada?.slice(0, 10)).toBe(fechaNueva);
+
+      await page.goto(`/pedido/seguimiento/${encodeURIComponent(pedido.seguimiento_token_publico)}`);
+      await expect(page.getByRole("heading", { name: "Seguimiento de tu pedido" })).toBeVisible();
+      await expect(page.getByText("Retrasado", { exact: true })).toBeVisible();
+      await expect(
+        page.getByRole("status").filter({ hasText: "Tu pedido tiene un retraso, lamentamos la demora" }),
+      ).toBeVisible();
+      const fechas = page.locator("dl > div");
+      await expect(fechas.nth(1)).toContainText(fechaVisible(fechaNueva));
+    } finally {
+      if (emergenciaId === undefined && motivo) {
+        const creada = (await listarEmergencias(request)).find((item) => item.motivo === motivo);
+        emergenciaId = creada?.id;
+      }
+      if (emergenciaId !== undefined) {
+        const detalle = await obtenerEmergenciaReal(request, emergenciaId);
+        const afectado =
+          afectadoId !== undefined
+            ? detalle.afectados.find((item) => item.id === afectadoId)
+            : undefined;
+        if (afectado?.contactado && afectado.resolucion === null) {
+          await marcarContactadoEmergencia(request, emergenciaId, afectado.id, false);
+          await esperarDetalleEmergencia(
+            request,
+            emergenciaId,
+            (actual) => !actual.afectados.some((item) => item.id === afectado.id && item.contactado),
+          );
+        }
+        if (detalle.activo) await retirarEmergenciaReal(request, emergenciaId);
       }
     }
   });
