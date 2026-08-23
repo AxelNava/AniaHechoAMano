@@ -105,6 +105,16 @@ export function useDisponibilidad(minutos: MaybeRefOrGetter<number> = 0) {
     void cargarMes(mesVisible.value);
   };
 
+  const recargar = async (): Promise<void> => {
+    disponiblesSet.clear();
+    deshabilitadosSet.clear();
+    cacheMeses.clear();
+    diasDisponibles.value = [];
+    diasDeshabilitados.value = [];
+    evaluacion.value = null;
+    await cargarMes(mesVisible.value);
+  };
+
   const evaluarFecha = useDebounceFn(async (fecha: DiaISO | null) => {
     if (!fecha) {
       evaluacion.value = null;
@@ -130,5 +140,6 @@ export function useDisponibilidad(minutos: MaybeRefOrGetter<number> = 0) {
     evaluacion,
     evaluando,
     evaluarFecha,
+    recargar,
   };
 }
