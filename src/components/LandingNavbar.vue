@@ -35,7 +35,7 @@ const toggleOthers = () => {
     class="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 sticky top-0 z-50"
   >
     <!-- Desktop Layout -->
-    <div class="hidden md:flex items-center justify-between px-8 h-20 max-w-7xl mx-auto">
+    <div class="hidden lg:flex items-center justify-between px-8 h-20 max-w-7xl mx-auto">
       <div class="flex gap-8 items-center flex-1 justify-end">
         <RouterLink
           v-for="s in services.slice(0, 3)"
@@ -189,7 +189,7 @@ const toggleOthers = () => {
     </div>
 
     <!-- Mobile Layout -->
-    <div class="md:hidden flex flex-col px-4 py-4">
+    <div class="lg:hidden flex flex-col px-4 py-4">
       <div class="flex items-center justify-between">
         <div class="flex items-center">
           <RouterLink to="/">
