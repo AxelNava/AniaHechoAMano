@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, shallowRef } from "vue";
-import { CalendarClock, Trash2 } from "lucide-vue-next";
+import { CalendarClock, ChevronDown, Trash2 } from "lucide-vue-next";
 import { DisponibilidadCalendar } from "@/components/ui/calendar";
 import {
   Dialog,
@@ -38,10 +38,15 @@ const {
   guardandoConfig,
   guardarConfig,
   mesVisible,
-  bloqueos,
+  bloqueosParaLista,
   bloqueosPorFecha,
   diasBloqueados,
   guardandoBloqueo,
+  impactoBloqueo,
+  cargandoImpactoBloqueo,
+  errorImpactoBloqueo,
+  consultarImpactoBloqueo,
+  limpiarImpactoBloqueo,
   crearBloqueo,
   eliminarBloqueo,
   cargarTodo,
@@ -101,6 +106,36 @@ const crearEmergenciaDesdeFormulario = async () => {
 const formatearRangoEmergencia = (emergencia: BloqueoEmergenciaListItemDto) =>
   `${formatDiaISO(emergencia.desde)} — ${formatDiaISO(emergencia.hasta)}`;
 
+type FiltroEmergencias = "TODAS" | "ACTIVAS" | "RETIRADAS";
+const filtroEmergencias = ref<FiltroEmergencias>("TODAS");
+const emergenciasExpandidas = ref<Set<number>>(new Set());
+
+const emergenciasVisibles = computed(() => {
+  const filtradas = emergencias.value.filter((emergencia) => {
+    if (filtroEmergencias.value === "ACTIVAS") return emergencia.activo;
+    if (filtroEmergencias.value === "RETIRADAS") return !emergencia.activo;
+    return true;
+  });
+
+  return [...filtradas].sort(
+    (a, b) =>
+      Number(b.activo) - Number(a.activo) ||
+      a.desde.localeCompare(b.desde) ||
+      a.hasta.localeCompare(b.hasta) ||
+      a.creado_en.localeCompare(b.creado_en) ||
+      a.id - b.id,
+  );
+});
+
+const emergenciaEstaExpandida = (id: number) => emergenciasExpandidas.value.has(id);
+
+const alternarEmergencia = (id: number) => {
+  const siguientes = new Set(emergenciasExpandidas.value);
+  if (siguientes.has(id)) siguientes.delete(id);
+  else siguientes.add(id);
+  emergenciasExpandidas.value = siguientes;
+};
+
 // --- Diálogo de bloqueo (crear/eliminar según el día elegido) ---
 const dialogAbierto = ref(false);
 const diaSeleccionado = ref<DiaISO | null>(null);
@@ -116,6 +151,12 @@ const onSeleccionarDia = (dia: DiaISO) => {
   nuevoTipo.value = "FERIADO";
   nuevoMotivo.value = "";
   dialogAbierto.value = true;
+
+  if (bloqueosPorFecha.value.has(dia)) {
+    limpiarImpactoBloqueo();
+  } else {
+    void consultarImpactoBloqueo(dia);
+  }
 };
 
 const onTipoBloqueo = (valor: unknown) => {
@@ -262,53 +303,121 @@ onMounted(() => {
         </Button>
       </form>
 
-      <div class="mt-8">
-        <h3 class="text-text-page mb-2 text-sm font-semibold">Emergencias registradas</h3>
-        <p v-if="cargandoEmergencias" class="text-text-page2 text-sm">
-          Cargando emergencias...
-        </p>
+      <div class="mt-8 space-y-4">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h3 class="text-text-page text-sm font-semibold">Emergencias registradas</h3>
+            <p class="text-text-page2 mt-1 text-xs">
+              Las activas aparecen primero y las retiradas al final, ordenadas por fecha.
+            </p>
+          </div>
+          <div class="space-y-1.5 sm:min-w-52">
+            <Label for="emergencias-filtro">Filtrar emergencias</Label>
+            <select
+              id="emergencias-filtro"
+              v-model="filtroEmergencias"
+              class="border-input bg-background text-text-page focus:ring-ring h-9 w-full rounded-md border px-3 text-sm focus:outline-none focus:ring-2"
+            >
+              <option value="TODAS">Todas (activas primero)</option>
+              <option value="ACTIVAS">Solo activas</option>
+              <option value="RETIRADAS">Solo retiradas</option>
+            </select>
+          </div>
+        </div>
+
+        <p v-if="cargandoEmergencias" class="text-text-page2 text-sm">Cargando emergencias...</p>
         <p v-else-if="emergencias.length === 0" class="text-text-page2 text-sm">
           No hay emergencias registradas.
         </p>
-        <ul v-else class="divide-y divide-gray-100 dark:divide-gray-800">
-          <li v-for="emergencia in emergencias" :key="emergencia.id" class="py-4 first:pt-0 last:pb-0">
-            <div class="flex flex-wrap items-start justify-between gap-2">
-              <RouterLink
-                :to="{ name: 'admin-agenda-emergencia', params: { id: emergencia.id } }"
-                class="text-text-page text-sm font-medium hover:underline"
+        <template v-else>
+          <ul
+            v-if="emergenciasVisibles.length > 0"
+            class="divide-y divide-gray-100 dark:divide-gray-800"
+          >
+            <li
+              v-for="emergencia in emergenciasVisibles"
+              :key="emergencia.id"
+              class="py-4 first:pt-0 last:pb-0"
+            >
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <RouterLink
+                  :to="{ name: 'admin-agenda-emergencia', params: { id: emergencia.id } }"
+                  class="text-text-page text-sm font-medium hover:underline"
+                >
+                  {{ formatearRangoEmergencia(emergencia) }}
+                </RouterLink>
+                <div class="flex items-center gap-2">
+                  <span
+                    :class="[
+                      'rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset',
+                      emergencia.activo
+                        ? 'bg-green-100 text-green-800 ring-green-600/20'
+                        : 'bg-gray-100 text-gray-800 ring-gray-600/20',
+                    ]"
+                  >
+                    {{ emergencia.activo ? "Activa" : "Retirada" }}
+                  </span>
+                  <button
+                    type="button"
+                    class="text-text-page2 rounded-md p-2 transition hover:bg-secondary/30 focus:outline-none focus:ring-2 focus:ring-primary"
+                    :aria-expanded="emergenciaEstaExpandida(emergencia.id)"
+                    :aria-controls="`emergencia-detalle-${emergencia.id}`"
+                    :aria-label="
+                      emergenciaEstaExpandida(emergencia.id)
+                        ? `Ocultar detalles de ${formatearRangoEmergencia(emergencia)}`
+                        : `Mostrar detalles de ${formatearRangoEmergencia(emergencia)}`
+                    "
+                    @click="alternarEmergencia(emergencia.id)"
+                  >
+                    <ChevronDown
+                      :class="[
+                        'size-4 transition-transform',
+                        emergenciaEstaExpandida(emergencia.id) ? 'rotate-180' : '',
+                      ]"
+                    />
+                  </button>
+                </div>
+              </div>
+
+              <div
+                v-if="emergenciaEstaExpandida(emergencia.id)"
+                :id="`emergencia-detalle-${emergencia.id}`"
+                class="mt-3 space-y-3 rounded-md bg-secondary/20 p-3"
               >
-                {{ formatearRangoEmergencia(emergencia) }}
-              </RouterLink>
-              <span
-                :class="[
-                  'rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset',
-                  emergencia.activo
-                    ? 'bg-green-100 text-green-800 ring-green-600/20'
-                    : 'bg-gray-100 text-gray-800 ring-gray-600/20',
-                ]"
-              >
-                {{ emergencia.activo ? "Activa" : "Retirada" }}
-              </span>
-            </div>
-            <p v-if="emergencia.motivo" class="text-text-page2 mt-1 text-sm">
-              <span class="font-medium">Motivo:</span> {{ emergencia.motivo }}
-            </p>
-            <dl class="mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-3">
-              <div>
-                <dt class="text-text-page2">Total afectados</dt>
-                <dd class="text-text-page font-semibold">{{ emergencia.total_afectados }}</dd>
+                <p v-if="emergencia.motivo" class="text-text-page2 text-sm">
+                  <span class="font-medium">Motivo:</span> {{ emergencia.motivo }}
+                </p>
+                <dl class="grid grid-cols-1 gap-2 text-xs sm:grid-cols-3">
+                  <div>
+                    <dt class="text-text-page2">Total afectados</dt>
+                    <dd class="text-text-page font-semibold">{{ emergencia.total_afectados }}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-text-page2">Pendientes de contacto</dt>
+                    <dd class="text-text-page font-semibold">
+                      {{ emergencia.pendientes_contacto }}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class="text-text-page2">Pendientes de resolución</dt>
+                    <dd class="text-text-page font-semibold">
+                      {{ emergencia.pendientes_resolucion }}
+                    </dd>
+                  </div>
+                </dl>
+                <RouterLink
+                  :to="{ name: 'admin-agenda-emergencia', params: { id: emergencia.id } }"
+                  class="text-text-page text-sm font-medium underline underline-offset-2"
+                >
+                  Ver detalle de la emergencia
+                </RouterLink>
               </div>
-              <div>
-                <dt class="text-text-page2">Pendientes de contacto</dt>
-                <dd class="text-text-page font-semibold">{{ emergencia.pendientes_contacto }}</dd>
-              </div>
-              <div>
-                <dt class="text-text-page2">Pendientes de resolución</dt>
-                <dd class="text-text-page font-semibold">{{ emergencia.pendientes_resolucion }}</dd>
-              </div>
-            </dl>
-          </li>
-        </ul>
+            </li>
+          </ul>
+          <p v-else class="text-text-page2 text-sm">
+            No hay emergencias que coincidan con el filtro seleccionado.
+          </p>
+        </template>
       </div>
     </section>
 
@@ -330,25 +439,42 @@ onMounted(() => {
 
         <div class="min-w-0 flex-1">
           <h3 class="text-text-page mb-2 text-sm font-semibold">Bloqueos registrados</h3>
-          <p v-if="bloqueos.length === 0" class="text-text-page2 text-sm">
+          <p v-if="bloqueosParaLista.length === 0" class="text-text-page2 text-sm">
             No hay días bloqueados.
           </p>
           <ul v-else class="divide-y divide-gray-100 dark:divide-gray-800">
             <li
-              v-for="bloqueo in bloqueos"
+              v-for="bloqueo in bloqueosParaLista"
               :key="`${bloqueo.origen}-${bloqueo.id}`"
               class="flex items-center justify-between gap-3 py-2"
             >
               <div class="min-w-0">
-                <p class="text-text-page truncate text-sm font-medium capitalize">
-                  {{ formatDiaISO(bloqueo.fecha) }}
-                </p>
+                <div class="flex flex-wrap items-center gap-2">
+                  <p class="text-text-page truncate text-sm font-medium capitalize">
+                    {{ formatDiaISO(bloqueo.fecha) }}
+                  </p>
+                  <span
+                    class="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-text-page2"
+                  >
+                    {{ bloqueo.origen === "MANUAL" ? "Bloqueo manual" : "Emergencia" }}
+                  </span>
+                </div>
                 <p class="text-text-page2 text-xs">
-                  {{ TIPO_BLOQUEO_LABELS[bloqueo.tipo] }}
+                  {{
+                    bloqueo.tipo === "EMERGENCIA" ? "Emergencia" : TIPO_BLOQUEO_LABELS[bloqueo.tipo]
+                  }}
+                  <RouterLink
+                    v-if="bloqueo.emergencia_id"
+                    :to="{ name: 'admin-agenda-emergencia', params: { id: bloqueo.emergencia_id } }"
+                    class="text-text-page ml-1 font-medium underline underline-offset-2"
+                  >
+                    Ver detalle
+                  </RouterLink>
                   <span v-if="bloqueo.motivo">— {{ bloqueo.motivo }}</span>
                 </p>
               </div>
               <Button
+                v-if="bloqueo.eliminable_individualmente"
                 variant="ghost"
                 size="icon"
                 :disabled="guardandoBloqueo"
@@ -412,6 +538,35 @@ onMounted(() => {
               maxlength="200"
             />
           </div>
+
+          <p v-if="cargandoImpactoBloqueo" class="text-text-page2 text-xs" aria-live="polite">
+            Revisando pedidos para esta fecha...
+          </p>
+          <p
+            v-else-if="errorImpactoBloqueo"
+            class="text-destructive text-xs"
+            role="alert"
+            aria-live="polite"
+          >
+            No se pudo verificar si hay clientes afectados: {{ errorImpactoBloqueo }}
+          </p>
+          <div
+            v-else-if="impactoBloqueo && impactoBloqueo.clientes_unicos_afectados > 0"
+            class="rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-950"
+            role="status"
+            aria-live="polite"
+          >
+            <p class="text-sm font-medium">
+              Este bloqueo afectaría a
+              {{ impactoBloqueo.clientes_unicos_afectados }}
+              {{ impactoBloqueo.clientes_unicos_afectados === 1 ? "cliente" : "clientes" }}.
+            </p>
+            <p class="mt-1 text-xs">
+              Hay {{ impactoBloqueo.total_pedidos_afectados }}
+              {{ impactoBloqueo.total_pedidos_afectados === 1 ? "pedido" : "pedidos" }} con entrega
+              acordada para este día.
+            </p>
+          </div>
         </div>
 
         <DialogFooter>
@@ -426,8 +581,18 @@ onMounted(() => {
           >
             {{ guardandoBloqueo ? "Quitando..." : "Quitar bloqueo" }}
           </Button>
-          <Button v-else :disabled="guardandoBloqueo" @click="confirmarCrear">
-            {{ guardandoBloqueo ? "Bloqueando..." : "Bloquear día" }}
+          <Button
+            v-else
+            :disabled="guardandoBloqueo || cargandoImpactoBloqueo"
+            @click="confirmarCrear"
+          >
+            {{
+              guardandoBloqueo
+                ? "Bloqueando..."
+                : cargandoImpactoBloqueo
+                  ? "Revisando pedidos..."
+                  : "Bloquear día"
+            }}
           </Button>
         </DialogFooter>
       </DialogContent>

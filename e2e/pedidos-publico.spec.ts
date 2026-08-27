@@ -33,7 +33,7 @@ test.describe("Catálogo → detalle", () => {
 
     await expect(page).toHaveURL(/\/categoria\/postres\/producto\/1$/);
     await expect(page.getByRole("heading", { name: "Piñata de Estrella" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Solicitar" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Agregar a mi pedido" })).toBeVisible();
   });
 });
 
@@ -44,7 +44,7 @@ test.describe("Detalle del producto", () => {
 
     await expect(page.getByText("¿Cómo lo quieres?")).toHaveCount(0);
     await expect(page.getByText("Con una modificación")).toHaveCount(0);
-    await expect(page.getByRole("button", { name: "Solicitar" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Agregar a mi pedido" })).toBeVisible();
   });
 
   test("un producto modificable muestra el selector de modo", async ({ page }) => {
@@ -74,13 +74,153 @@ test.describe("Detalle del producto", () => {
     await irADetalle(page);
 
     await page.getByText("Con una modificación", { exact: true }).click();
-    // Textarea vacía → clic en Solicitar dispara el toast de error y NO navega.
-    await page.getByRole("button", { name: "Solicitar" }).click();
+    // Textarea vacía → clic en Agregar a mi pedido dispara el toast de error y NO navega.
+    await page.getByRole("button", { name: "Agregar a mi pedido" }).click();
 
     await expect(
       page.getByText("Describe la modificación que quieres para poder cotizarla."),
     ).toBeVisible();
     await expect(page).toHaveURL(/\/categoria\/pinatas\/producto\/1$/);
+  });
+});
+
+test.describe("Detalle del producto — información y estados", () => {
+  test("aclara el precio base y el siguiente paso antes de enviar la solicitud", async ({
+    page,
+  }) => {
+    await installApiMocks(page);
+    await page.goto("/categoria/pinatas/producto/1");
+
+    await expect(page.getByText("Precio base", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText(
+        "Agregarlo a tu pedido no envía la solicitud; podrás revisarla antes de enviarla.",
+      ),
+    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Agregar a mi pedido" })).toBeVisible();
+  });
+
+  test("el selector de modo tiene un nombre y radios con estado seleccionado", async ({
+    page,
+  }) => {
+    await installApiMocks(page);
+    await page.goto("/categoria/pinatas/producto/1");
+
+    const opciones = page.getByRole("radiogroup", { name: "¿Cómo lo quieres?" });
+    const talCual = opciones.getByRole("radio", { name: /Tal cual/ });
+    const modificacion = opciones.getByRole("radio", { name: /Con una modificación/ });
+
+    await expect(talCual).toBeChecked();
+    await expect(modificacion).not.toBeChecked();
+
+    await modificacion.click();
+
+    await expect(modificacion).toBeChecked();
+    await expect(talCual).not.toBeChecked();
+  });
+
+  test("explica que una modificación se cotiza antes de confirmar el pedido", async ({ page }) => {
+    await installApiMocks(page);
+    await page.goto("/categoria/pinatas/producto/1");
+
+    await page.getByRole("radio", { name: /Con una modificación/ }).click();
+
+    await expect(
+      page.getByText(
+        "El precio base es una referencia. Te enviaremos una cotización antes de confirmar tu pedido.",
+      ),
+    ).toBeVisible();
+  });
+
+  test("la galería anuncia la imagen actual y sus miniaturas", async ({ page }) => {
+    await installApiMocks(page, {
+      productos: {
+        1: {
+          imagenes: [
+            {
+              id: 11,
+              url: "/uploads/productos/pinata-estrella-frontal.jpg",
+              alt: "Piñata de estrella, vista frontal",
+              orden: 0,
+              es_portada: true,
+            },
+            {
+              id: 12,
+              url: "/uploads/productos/pinata-estrella-lateral.jpg",
+              alt: "Piñata de estrella, vista lateral",
+              orden: 1,
+            },
+          ],
+        },
+      },
+    });
+    await page.goto("/categoria/pinatas/producto/1");
+
+    const galeria = page.getByRole("region", {
+      name: "Galería de imágenes de Piñata de Estrella",
+    });
+    const miniaturaFrontal = galeria.getByRole("button", {
+      name: "Ver imagen: Piñata de estrella, vista frontal",
+    });
+    const miniaturaLateral = galeria.getByRole("button", {
+      name: "Ver imagen: Piñata de estrella, vista lateral",
+    });
+
+    await expect(
+      galeria.getByRole("img", { name: "Piñata de estrella, vista frontal" }),
+    ).toBeVisible();
+    await expect(miniaturaFrontal).toHaveAttribute("aria-current", "true");
+
+    await miniaturaLateral.click();
+
+    await expect(
+      galeria.getByRole("img", { name: "Piñata de estrella, vista lateral" }),
+    ).toBeVisible();
+    await expect(miniaturaLateral).toHaveAttribute("aria-current", "true");
+    await expect(miniaturaFrontal).not.toHaveAttribute("aria-current", "true");
+  });
+
+  const esperarDetalleNoAccionable = async (page: import("@playwright/test").Page) => {
+    await expect(page.getByRole("heading", { name: "Producto no disponible" })).toBeVisible();
+    await expect(
+      page.getByText("No podemos agregar este producto a tu pedido en este momento."),
+    ).toBeVisible();
+    await expect(page.getByRole("link", { name: "Volver al catálogo" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Agregar a mi pedido" })).toHaveCount(0);
+  };
+
+  test("un producto inactivo no permite iniciar un pedido y ofrece una salida", async ({ page }) => {
+    await installApiMocks(page, { productos: { 1: { activo: false } } });
+    await page.goto("/categoria/pinatas/producto/1");
+
+    await esperarDetalleNoAccionable(page);
+  });
+
+  test("la falta de información para pedido deja el detalle sin acción", async ({ page }) => {
+    await installApiMocks(page, { sinInfoPedido: true });
+    await page.goto("/categoria/pinatas/producto/1");
+
+    await esperarDetalleNoAccionable(page);
+  });
+
+  test("un payload de producto inválido deja una salida recuperable", async ({ page }) => {
+    await installApiMocks(page, {
+      respuestaDetalleProducto: { id: "id-invalido" },
+    });
+    await page.goto("/categoria/pinatas/producto/1");
+
+    await esperarDetalleNoAccionable(page);
+  });
+
+  test("un payload de información de pedido inválido deja una salida recuperable", async ({
+    page,
+  }) => {
+    await installApiMocks(page, {
+      respuestaInfoPedido: { id: "id-invalido" },
+    });
+    await page.goto("/categoria/pinatas/producto/1");
+
+    await esperarDetalleNoAccionable(page);
   });
 });
 
@@ -313,7 +453,7 @@ test.describe("Happy path — pedido con MODIFICACIÓN → COTIZANDO → Faceboo
     await page.getByText("Con una modificación", { exact: true }).click();
     await page.getByLabel("Describe tu modificación *").fill("Con foto de ejemplo.");
     await page.locator('input[type="file"]').first().setInputFiles(pngFake);
-    await page.getByRole("button", { name: "Solicitar" }).click();
+    await page.getByRole("button", { name: "Agregar a mi pedido" }).click();
     await expect(page).toHaveURL(/\/pedido$/);
 
     await llenarContacto(page);
@@ -336,7 +476,7 @@ test.describe("Happy path — pedido con MODIFICACIÓN → COTIZANDO → Faceboo
     await page.getByText("Con una modificación", { exact: true }).click();
     await page.getByLabel("Describe tu modificación *").fill("Con foto que fallará.");
     await page.locator('input[type="file"]').first().setInputFiles(pngFake);
-    await page.getByRole("button", { name: "Solicitar" }).click();
+    await page.getByRole("button", { name: "Agregar a mi pedido" }).click();
     await expect(page).toHaveURL(/\/pedido$/);
 
     await llenarContacto(page);

@@ -63,7 +63,7 @@ test.describe("Integración real — registro de pedidos y visibilidad admin", (
     await expect(page.getByRole("heading", { name: producto.nombre })).toBeVisible();
 
     // 2) "Tal cual": no hay modificación → agrega al carrito y va al wizard.
-    await page.getByRole("button", { name: "Solicitar" }).click();
+    await page.getByRole("button", { name: "Agregar a mi pedido" }).click();
     await expect(page).toHaveURL(/\/pedido$/);
 
     // 3) Contacto → Dirección → Fecha real → Resumen → Confirmar.
@@ -138,7 +138,7 @@ test.describe("Integración real — registro de pedidos y visibilidad admin", (
     // La foto quedó adjunta en el gestor (preview con el nombre del archivo).
     await expect(page.getByText("e2e-sample.png")).toBeVisible();
 
-    await page.getByRole("button", { name: "Solicitar" }).click();
+    await page.getByRole("button", { name: "Agregar a mi pedido" }).click();
     await expect(page).toHaveURL(/\/pedido$/);
 
     // 3) Contacto → Dirección → (SIN Fecha/Resumen) → Confirmar.

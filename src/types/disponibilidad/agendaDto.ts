@@ -59,3 +59,10 @@ export interface BloqueosQueryDto {
   desde?: string;
   hasta?: string;
 }
+
+/** Impacto informativo de bloquear un día sobre pedidos y clientes únicos. */
+export interface ImpactoBloqueoDto {
+  fecha: string;
+  total_pedidos_afectados: number;
+  clientes_unicos_afectados: number;
+}

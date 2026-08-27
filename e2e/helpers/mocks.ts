@@ -47,9 +47,17 @@ interface ProductoOverrides {
   id?: number;
   nombre?: string;
   precio_base?: number;
+  activo?: boolean;
   permite_modificaciones?: boolean;
   requiere_anticipo?: boolean;
   tiempo?: number;
+  imagenes?: {
+    id: number;
+    url: string;
+    alt: string;
+    orden: number;
+    es_portada?: boolean;
+  }[];
 }
 
 const productoDetalle = (o: ProductoOverrides = {}) => ({
@@ -58,11 +66,11 @@ const productoDetalle = (o: ProductoOverrides = {}) => ({
   descripcion: "Hecho a mano con dedicación.",
   precio_base: o.precio_base ?? 350,
   categoria_id: 1,
-  activo: true,
+  activo: o.activo ?? true,
   permite_modificaciones: o.permite_modificaciones ?? true,
   requiere_anticipo: o.requiere_anticipo ?? false,
   componentes: [],
-  imagenes: [],
+  imagenes: o.imagenes ?? [],
 });
 
 const infoPedido = (o: ProductoOverrides = {}) => ({
@@ -141,6 +149,12 @@ export interface MockOptions {
   requiereAnticipo?: boolean;
   /** Overrides por id de producto. */
   productos?: Record<number, ProductoOverrides>;
+  /** Si true, `GET /productos/:id/info-pedido` devuelve `null`. */
+  sinInfoPedido?: boolean;
+  /** Respuesta cruda de `GET /productos/:id` para probar payloads inválidos. */
+  respuestaDetalleProducto?: unknown;
+  /** Respuesta cruda de `GET /productos/:id/info-pedido` para payloads inválidos. */
+  respuestaInfoPedido?: unknown;
   /** Días ("YYYY-MM-DD") que `GET /disponibilidad/dias` marca NO disponibles. */
   diasBloqueados?: string[];
   /** Respuesta de `POST /disponibilidad/evaluar` (default: disponible). */
@@ -188,13 +202,22 @@ export async function installApiMocks(page: Page, opts: MockOptions = {}): Promi
     // --- Producto: info de pedido (debe ir ANTES del detalle) ---
     let m = path.match(/^productos\/(\d+)\/info-pedido$/);
     if (method === "GET" && m) {
-      return json(route, 200, infoPedido(overridesProducto(Number(m[1]))));
+      if (opts.sinInfoPedido) return json(route, 200, null);
+      const respuesta =
+        opts.respuestaInfoPedido === undefined
+          ? infoPedido(overridesProducto(Number(m[1])))
+          : opts.respuestaInfoPedido;
+      return json(route, 200, respuesta);
     }
 
     // --- Producto: detalle ---
     m = path.match(/^productos\/(\d+)$/);
     if (method === "GET" && m) {
-      return json(route, 200, productoDetalle(overridesProducto(Number(m[1]))));
+      const respuesta =
+        opts.respuestaDetalleProducto === undefined
+          ? productoDetalle(overridesProducto(Number(m[1])))
+          : opts.respuestaDetalleProducto;
+      return json(route, 200, respuesta);
     }
 
     // --- Catálogo: listado de productos ---
@@ -312,12 +335,12 @@ export async function installApiMocks(page: Page, opts: MockOptions = {}): Promi
 /** Navega al detalle de un producto y espera a que sea interactivo. */
 export async function irADetalle(page: Page, id = 1, slug = "pinatas"): Promise<void> {
   await page.goto(`/categoria/${slug}/producto/${id}`);
-  await expect(page.getByRole("button", { name: "Solicitar" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Agregar a mi pedido" })).toBeVisible();
 }
 
 /** Agrega el producto actual "tal cual" y espera aterrizar en el wizard. */
 export async function agregarTalCual(page: Page): Promise<void> {
-  await page.getByRole("button", { name: "Solicitar" }).click();
+  await page.getByRole("button", { name: "Agregar a mi pedido" }).click();
   await expect(page).toHaveURL(/\/pedido$/);
 }
 
@@ -328,7 +351,7 @@ export async function agregarModificacion(
 ): Promise<void> {
   await page.getByText("Con una modificación", { exact: true }).click();
   await page.getByLabel("Describe tu modificación *").fill(descripcion);
-  await page.getByRole("button", { name: "Solicitar" }).click();
+  await page.getByRole("button", { name: "Agregar a mi pedido" }).click();
   await expect(page).toHaveURL(/\/pedido$/);
 }
 

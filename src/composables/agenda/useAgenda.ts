@@ -5,6 +5,7 @@ import type {
   AgendaConfigDto,
   BloqueoDto,
   CreateBloqueoDto,
+  ImpactoBloqueoDto,
   TipoBloqueoAgenda,
 } from "@/types/disponibilidad/agendaDto";
 import type { DiaISO, MesISO } from "@/components/ui/calendar";
@@ -101,6 +102,49 @@ export function useAgenda() {
     () => new Map(bloqueos.value.map((b) => [b.fecha, b] as const)),
   );
   const diasBloqueados = computed<DiaISO[]>(() => todosLosBloqueos.value.map((b) => b.fecha));
+  const bloqueosParaLista = computed(() =>
+    [...todosLosBloqueos.value].sort(
+      (a, b) =>
+        Number(a.origen === "EMERGENCIA") - Number(b.origen === "EMERGENCIA") ||
+        a.fecha.localeCompare(b.fecha) ||
+        a.id - b.id,
+    ),
+  );
+
+  const impactoBloqueo = ref<ImpactoBloqueoDto | null>(null);
+  const cargandoImpactoBloqueo = ref(false);
+  const errorImpactoBloqueo = ref("");
+  let tokenImpactoBloqueo = 0;
+
+  const limpiarImpactoBloqueo = () => {
+    tokenImpactoBloqueo += 1;
+    impactoBloqueo.value = null;
+    cargandoImpactoBloqueo.value = false;
+    errorImpactoBloqueo.value = "";
+  };
+
+  const consultarImpactoBloqueo = async (fecha: DiaISO): Promise<boolean> => {
+    const token = ++tokenImpactoBloqueo;
+    impactoBloqueo.value = null;
+    errorImpactoBloqueo.value = "";
+    cargandoImpactoBloqueo.value = true;
+
+    try {
+      const impacto = await disponibilidadApi.getImpactoBloqueo(fecha);
+      if (token !== tokenImpactoBloqueo) return false;
+      impactoBloqueo.value = impacto;
+      return true;
+    } catch (error) {
+      if (token !== tokenImpactoBloqueo) return false;
+      errorImpactoBloqueo.value =
+        error instanceof Error
+          ? error.message
+          : "No se pudo verificar el impacto sobre los pedidos.";
+      return false;
+    } finally {
+      if (token === tokenImpactoBloqueo) cargandoImpactoBloqueo.value = false;
+    }
+  };
 
   const cargarBloqueos = async () => {
     cargandoBloqueos.value = true;
@@ -158,11 +202,17 @@ export function useAgenda() {
     guardarConfig,
     // bloqueos
     bloqueos,
+    bloqueosParaLista,
     cargandoBloqueos,
     mesVisible,
     bloqueosPorFecha,
     diasBloqueados,
     guardandoBloqueo,
+    impactoBloqueo,
+    cargandoImpactoBloqueo,
+    errorImpactoBloqueo,
+    consultarImpactoBloqueo,
+    limpiarImpactoBloqueo,
     crearBloqueo,
     eliminarBloqueo,
     // carga inicial

@@ -4,6 +4,7 @@ import type {
   BloqueoDto,
   BloqueosQueryDto,
   CreateBloqueoDto,
+  ImpactoBloqueoDto,
   UpdateAgendaConfigDto,
 } from "@/types/disponibilidad/agendaDto";
 import type {
@@ -99,11 +100,24 @@ export class DisponibilidadApi {
     if (query.desde) params.append("desde", query.desde);
     if (query.hasta) params.append("hasta", query.hasta);
     const qs = params.toString();
-    const result = await useFetch<BloqueoDto[]>(
-      `agenda/bloqueos${qs ? `?${qs}` : ""}`,
-      { method: "GET" },
-    );
+    const result = await useFetch<BloqueoDto[]>(`agenda/bloqueos${qs ? `?${qs}` : ""}`, {
+      method: "GET",
+    });
     return result ?? [];
+  }
+
+  /** Consulta los pedidos/clientes que afectaría bloquear un día. */
+  async getImpactoBloqueo(fecha: string): Promise<ImpactoBloqueoDto> {
+    const params = new URLSearchParams({ fecha });
+    const response = await fetch(`${api}/agenda/bloqueos/impacto?${params.toString()}`, {
+      method: "GET",
+    });
+
+    const body = await response.json().catch(() => null);
+    if (!response.ok) {
+      throw new Error(problemDetail(body, response.status, "no se pudo consultar el impacto"));
+    }
+    return body as ImpactoBloqueoDto;
   }
 
   /** Crea un bloqueo de agenda (`POST /api/agenda/bloqueos`). */

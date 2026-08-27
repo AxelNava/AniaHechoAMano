@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-23T22:55:00.000Z",
+  "title": "Design System: Ania Hecho a Mano",
+  "extensions": {
+    "colorMeta": {
+      "tinta-ciruela": { "role": "primary", "displayName": "Tinta ciruela", "canonical": "#701548", "tonalRamp": ["oklch(0.18 0.06 340)", "oklch(0.28 0.10 340)", "oklch(0.38 0.14 340)", "oklch(0.48 0.17 340)", "oklch(0.58 0.17 340)", "oklch(0.68 0.14 340)", "oklch(0.80 0.09 340)", "oklch(0.94 0.03 340)"] },
+      "tinta-suave": { "role": "secondary", "displayName": "Tinta suave", "canonical": "#745674", "tonalRamp": ["oklch(0.24 0.04 325)", "oklch(0.34 0.06 325)", "oklch(0.44 0.08 325)", "oklch(0.54 0.08 325)", "oklch(0.64 0.07 325)", "oklch(0.74 0.05 325)", "oklch(0.84 0.03 325)", "oklch(0.95 0.01 325)"] },
+      "lila-papel": { "role": "primary", "displayName": "Lila papel", "canonical": "#ead9ea", "tonalRamp": ["oklch(0.30 0.04 325)", "oklch(0.40 0.05 325)", "oklch(0.50 0.06 325)", "oklch(0.60 0.06 325)", "oklch(0.70 0.05 325)", "oklch(0.80 0.04 325)", "oklch(0.90 0.03 325)", "oklch(0.97 0.01 325)"] },
+      "lila-suave": { "role": "secondary", "displayName": "Lila suave", "canonical": "#ead8ea", "tonalRamp": ["oklch(0.30 0.04 315)", "oklch(0.40 0.05 315)", "oklch(0.50 0.06 315)", "oklch(0.60 0.06 315)", "oklch(0.70 0.05 315)", "oklch(0.80 0.04 315)", "oklch(0.90 0.03 315)", "oklch(0.97 0.01 315)"] },
+      "papel": { "role": "neutral", "displayName": "Papel", "canonical": "oklch(1 0 0)", "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.27 0 0)", "oklch(0.40 0 0)", "oklch(0.52 0 0)", "oklch(0.64 0 0)", "oklch(0.76 0 0)", "oklch(0.88 0 0)", "oklch(1 0 0)"] },
+      "niebla": { "role": "neutral", "displayName": "Niebla", "canonical": "oklch(0.97 0 0)", "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.27 0 0)", "oklch(0.40 0 0)", "oklch(0.52 0 0)", "oklch(0.64 0 0)", "oklch(0.76 0 0)", "oklch(0.88 0 0)", "oklch(0.97 0 0)"] },
+      "texto-atenuado": { "role": "neutral", "displayName": "Texto atenuado", "canonical": "oklch(0.556 0 0)", "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.27 0 0)", "oklch(0.40 0 0)", "oklch(0.52 0 0)", "oklch(0.64 0 0)", "oklch(0.76 0 0)", "oklch(0.88 0 0)", "oklch(0.95 0 0)"] },
+      "borde-suave": { "role": "neutral", "displayName": "Borde suave", "canonical": "oklch(0.922 0 0)", "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.27 0 0)", "oklch(0.40 0 0)", "oklch(0.52 0 0)", "oklch(0.64 0 0)", "oklch(0.76 0 0)", "oklch(0.88 0 0)", "oklch(0.922 0 0)"] },
+      "anillo-suave": { "role": "neutral", "displayName": "Anillo suave", "canonical": "oklch(0.87 0 0)", "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.27 0 0)", "oklch(0.40 0 0)", "oklch(0.52 0 0)", "oklch(0.64 0 0)", "oklch(0.76 0 0)", "oklch(0.87 0 0)", "oklch(0.95 0 0)"] },
+      "alerta": { "role": "tertiary", "displayName": "Alerta", "canonical": "oklch(0.577 0.245 27.325)", "tonalRamp": ["oklch(0.20 0.08 27)", "oklch(0.30 0.13 27)", "oklch(0.40 0.18 27)", "oklch(0.50 0.22 27)", "oklch(0.60 0.24 27)", "oklch(0.70 0.20 27)", "oklch(0.82 0.13 27)", "oklch(0.94 0.05 27)"] },
+      "papel-oscuro": { "role": "neutral", "displayName": "Papel oscuro", "canonical": "oklch(0.145 0 0)", "tonalRamp": ["oklch(0.145 0 0)", "oklch(0.27 0 0)", "oklch(0.40 0 0)", "oklch(0.52 0 0)", "oklch(0.64 0 0)", "oklch(0.76 0 0)", "oklch(0.88 0 0)", "oklch(0.97 0 0)"] },
+      "borde-oscuro": { "role": "neutral", "displayName": "Borde oscuro", "canonical": "oklch(0.269 0 0)", "tonalRamp": ["oklch(0.145 0 0)", "oklch(0.269 0 0)", "oklch(0.40 0 0)", "oklch(0.52 0 0)", "oklch(0.64 0 0)", "oklch(0.76 0 0)", "oklch(0.88 0 0)", "oklch(0.97 0 0)"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Firma", "purpose": "Identidad y titulares expresivos de alto valor emocional." },
+      "body": { "displayName": "Lectura", "purpose": "Descripciones de producto, pedidos y contenido general." },
+      "label": { "displayName": "Operación", "purpose": "Controles, navegación, campos y estados compactos." }
+    },
+    "shadows": [
+      { "name": "product-halo", "value": "0 0 30px 20px rgb(0 0 0 / .1), 0 0 10px -6px rgb(0 0 0 / .1)", "purpose": "Tarjetas de catálogo explorables." },
+      { "name": "operational-lift", "value": "0 1px 2px rgb(0 0 0 / .05)", "purpose": "Botones e inputs semánticos." }
+    ],
+    "motion": [
+      { "name": "public-response", "value": "200ms", "purpose": "Elevación de CTA públicos y cambios de color." },
+      { "name": "product-transition", "value": "300ms", "purpose": "Respuesta de la tarjeta de producto." }
+    ],
+    "breakpoints": [
+      { "name": "xs", "value": "480px" },
+      { "name": "logo-md", "value": "768px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Public CTA",
+      "kind": "button",
+      "refersTo": "button-public",
+      "description": "Acción pública para descubrir productos o avanzar en una decisión.",
+      "html": "<button class=\"ds-public-cta\">Ver productos</button>",
+      "css": ".ds-public-cta{background:#701548;color:#fff;border:2px solid #701548;border-radius:24px;padding:12px 24px;font:400 14px Arial,sans-serif;text-align:center;cursor:pointer;transition:color .2s,background-color .2s,translate .2s}.ds-public-cta:hover{translate:0 -4px}.ds-public-cta:focus-visible{outline:3px solid oklch(0.87 0 0);outline-offset:2px}.ds-public-cta:active{translate:0 -1px}"
+    },
+    {
+      "name": "Semantic UI Button",
+      "kind": "button",
+      "refersTo": "button-ui",
+      "description": "Control compacto para acciones operativas y formularios.",
+      "html": "<button class=\"ds-ui-button\">Continuar</button>",
+      "css": ".ds-ui-button{height:36px;padding:8px 16px;border:0;border-radius:8px;background:#ead9ea;color:#701548;box-shadow:0 1px 2px rgb(0 0 0 / .05);font:500 14px Arial,sans-serif;cursor:pointer;transition:color .15s,box-shadow .15s,background-color .15s}.ds-ui-button:hover{background:rgb(234 217 234 / .9)}.ds-ui-button:focus-visible{outline:3px solid rgb(222 222 222 / .5)}.ds-ui-button:active{box-shadow:none}"
+    },
+    {
+      "name": "Product Card",
+      "kind": "card",
+      "refersTo": "card-product",
+      "description": "Contenedor táctil para explorar un producto del catálogo.",
+      "html": "<article class=\"ds-product-card\"><div class=\"ds-product-media\"><img src=\"\" alt=\"\"><span>Ver detalles</span></div><div class=\"ds-product-copy\"><h3>Producto artesanal</h3><p>Descripción del producto.</p><b>Adornos</b></div></article>",
+      "css": ".ds-product-card{position:relative;display:grid;overflow:hidden;border-radius:16px;background:#fff;box-shadow:0 0 30px 20px rgb(0 0 0 / .1),0 0 10px -6px rgb(0 0 0 / .1);transition:box-shadow .3s}.ds-product-media{position:relative;overflow:hidden;aspect-ratio:16/9}.ds-product-media img{width:100%;height:100%;object-fit:cover;transition:filter .2s}.ds-product-media span{position:absolute;top:50%;left:25%;right:25%;padding:8px;border-radius:16px;background:#701548;color:#fff;text-align:center;opacity:0;transition:opacity .15s,translate .15s}.ds-product-copy{padding:0 32px 16px;color:#745674;font:400 16px Arial,sans-serif}.ds-product-copy h3{margin:16px 0 0;color:#701548;font:600 20px Arial,sans-serif}.ds-product-copy b{display:inline-block;padding:8px 24px;border-radius:16px;background:#ead9ea;color:#701548;font:600 12px Arial,sans-serif}.ds-product-card:hover{box-shadow:0 0 0 1px #ead9ea;cursor:pointer}.ds-product-card:hover img{filter:blur(1px)}.ds-product-card:hover .ds-product-media span{opacity:1;translate:0 -40px}.ds-product-card:focus-within{outline:3px solid oklch(0.87 0 0);outline-offset:3px}"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "Campo semántico compacto para datos de pedido y administración.",
+      "html": "<input class=\"ds-input\" placeholder=\"Tu nombre\">",
+      "css": ".ds-input{box-sizing:border-box;width:100%;height:36px;padding:4px 12px;border:1px solid oklch(0.922 0 0);border-radius:8px;background:transparent;color:#701548;box-shadow:0 1px 2px rgb(0 0 0 / .05);font:400 14px Arial,sans-serif;transition:color .15s,box-shadow .15s}.ds-input::placeholder{color:oklch(0.556 0 0)}.ds-input:focus-visible{outline:3px solid rgb(222 222 222 / .5);border-color:oklch(0.87 0 0)}.ds-input:disabled{opacity:.5;cursor:not-allowed}"
+    },
+    {
+      "name": "Order Stepper",
+      "kind": "custom",
+      "refersTo": "order-stepper",
+      "description": "Progreso de pedido con estados completado, activo y pendiente.",
+      "html": "<ol class=\"ds-stepper\"><li class=\"done\">✓</li><i></i><li class=\"active\">2</li><i></i><li>3</li></ol>",
+      "css": ".ds-stepper{display:flex;align-items:center;width:100%;padding:0;margin:0;list-style:none}.ds-stepper li{display:grid;width:32px;height:32px;place-items:center;flex:0 0 auto;border:1px solid oklch(0.922 0 0);border-radius:999px;color:oklch(0.556 0 0);font:500 14px Arial,sans-serif}.ds-stepper li.done{border-color:#ead9ea;background:#ead9ea;color:#701548}.ds-stepper li.active{border-color:#ead9ea;color:#701548}.ds-stepper i{height:1px;flex:1;margin:0 8px;background:oklch(0.922 0 0)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "El Taller de Recuerdos",
+    "overview": "El sistema visual ya implementado convierte la exploración de productos y el encargo personalizado en una experiencia cercana, manual y confiable. La tienda pública usa la calidez de una firma escrita, superficies claras y un diálogo entre lila suave y tinta ciruela para que cada encargo se sienta atendido, no automatizado.\n\nLa interfaz alterna dos registros que deben mantenerse distinguibles: el público es expresivo, redondeado y celebratorio; la administración es compacta y semántica para sostener la operación. Ambos comparten la misma base de color, foco visible y jerarquía, pero la marca aparece con mayor presencia en los momentos de descubrimiento, selección y confirmación.",
+    "keyCharacteristics": ["Tipografía manuscrita reservada para la identidad y titulares de alto valor emocional.", "Lila de papel como apoyo suave; tinta ciruela como voz, acción y contraste.", "Tarjetas táctiles con respuesta visible para productos y decisiones del pedido.", "Controles operativos compactos, claros y accesibles."],
+    "rules": [
+      { "name": "The Ink Leads Rule", "body": "La tinta ciruela dirige acciones y lectura; el lila papel la acompaña como superficie, nunca intenta reemplazar su contraste.", "section": "colors" },
+      { "name": "The Signature Reserve Rule", "body": "Dancing Script se reserva para identidad y titulares expresivos; los precios, formularios, estados y textos de operación permanecen en sans-serif.", "section": "typography" },
+      { "name": "The One Clear Task Rule", "body": "En pedidos y administración, cada pantalla debe hacer evidente la siguiente decisión antes de añadir ornamentación o información secundaria.", "section": "layout" },
+      { "name": "The Touch Response Rule", "body": "La elevación comunica una acción disponible o un cambio de contexto; no se agrega como textura de fondo.", "section": "elevation" },
+      { "name": "The Pill Has a Job Rule", "body": "Un pill identifica una acción corta, una etiqueta o un estado; los paneles de contenido conservan radios de tarjeta para no diluir la jerarquía.", "section": "shapes" }
+    ],
+    "dos": ["Do usar tinta ciruela para acciones, enlaces y lectura de máxima prioridad dentro de la experiencia pública.", "Do reservar Dancing Script para identidad y titulares donde el gesto artesanal agrega significado.", "Do usar lila papel para selección, etiquetas y controles de apoyo, manteniendo texto de alto contraste.", "Do conservar un foco visible y estados de error explícitos en cada control interactivo.", "Do aplicar la sombra amplia solo a tarjetas de producto que invitan a explorar."],
+    "donts": ["Don't convertir el lila papel en texto principal ni en una superficie que reduzca la legibilidad de un formulario.", "Don't usar la tipografía manuscrita para datos de pedido, estados, precios o controles administrativos.", "Don't trasladar los azules, grises o verdes utilitarios aislados de formularios CRUD a nuevos componentes compartidos sin una decisión de sistema.", "Don't añadir halos, blur o elevación a cada contenedor: la respuesta táctil debe seguir señalando una interacción real.", "Don't prometer disponibilidad, precio o entrega automática cuando el flujo exige cotización o confirmación humana."]
+  }
+}
