@@ -1,8 +1,18 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { authService } from "@/auth/authService";
 import { DisponibilidadApi } from "@/services/disponibilidad/disponibilidadApi";
 
+vi.mock("@/auth/authService", () => ({
+  authService: { getAccessToken: vi.fn() },
+}));
+
+const tokenMock = vi.mocked(authService.getAccessToken);
+
 describe("DisponibilidadApi — impacto de bloqueo", () => {
+  beforeEach(() => tokenMock.mockResolvedValue("agenda-token"));
+
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
 
@@ -23,17 +33,26 @@ describe("DisponibilidadApi — impacto de bloqueo", () => {
 
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringMatching(/\/api\/agenda\/bloqueos\/impacto\?fecha=2026-08-20$/),
-      { method: "GET" },
+      { method: "GET", headers: { Authorization: "Bearer agenda-token" } },
     );
   });
 
-  it("rechaza un error HTTP en lugar de devolver un impacto vacío", async () => {
-    const json = vi.fn().mockResolvedValue({ detail: "No disponible" });
+  it("preserva ProblemDetails al rechazar un error HTTP", async () => {
+    const problem = {
+      type: "https://ania.test/problems/database",
+      title: "No disponible",
+      status: 503,
+      detail: "No disponible",
+      code: "DATABASE_ERROR",
+    };
+    const json = vi.fn().mockResolvedValue(problem);
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 503, json }));
 
-    await expect(new DisponibilidadApi().getImpactoBloqueo("2026-08-21")).rejects.toThrow(
-      "No disponible",
-    );
+    await expect(new DisponibilidadApi().getImpactoBloqueo("2026-08-21")).rejects.toMatchObject({
+      message: "No disponible",
+      status: 503,
+      problem,
+    });
     expect(json).toHaveBeenCalledOnce();
   });
 });

@@ -1,4 +1,5 @@
 import { IProductApi } from "@/services/interfaces/IProductApi";
+import { API_BASE_URL, API_ORIGIN, request } from "@/services/http/apiClient";
 import { ProductDto } from "@/types/products/ProductDto";
 import { useFetch } from "@/composables/useFetch";
 import {
@@ -6,15 +7,13 @@ import {
   type ProductListQueryDto,
 } from "@/types/orders/orderHistoryDto";
 import type { ProductoInfoPedidoDto } from "@/types/orders/createOrderDto";
-
-const apiBackend = import.meta.env.VITE_VUE_APP_DOMAIN || "http://localhost:5001";
-const api = `${apiBackend}/api`;
+import type { ProductoOpcionesPedidoPublicoDto } from "@/types/products/ProductoOpcionesPedidoPublicoDto";
 
 export const resolveProductImageUrl = (url: string) => {
   if (!url) return url;
   if (/^(blob:|data:|https?:\/\/)/.test(url)) return url;
 
-  return `${apiBackend}${url.startsWith("/") ? "" : "/"}${url}`;
+  return `${API_ORIGIN}${url.startsWith("/") ? "" : "/"}${url}`;
 };
 
 /**
@@ -28,21 +27,11 @@ export const resolveProductBinaryUrl = (binarioUrl: string) => {
   if (!binarioUrl) return binarioUrl;
   if (/^(blob:|data:|https?:\/\/)/.test(binarioUrl)) return binarioUrl;
 
-  return `${api}${binarioUrl.startsWith("/") ? "" : "/"}${binarioUrl}`;
+  return `${API_BASE_URL}${binarioUrl.startsWith("/") ? "" : "/"}${binarioUrl}`;
 };
 
 export const getProductImageBinaryUrl = (imageId: number | string) =>
-  `${api}/productos/imagenes/${imageId}/binary`;
-
-const parseMultipartResponse = async (response: Response): Promise<ProductDto | null> => {
-  const payload = (await response.json().catch(() => null)) as ProductDto | null;
-
-  if (!response.ok) {
-    throw new Error(`Error ${response.status} al consumir productos`);
-  }
-
-  return payload;
-};
+  `${API_BASE_URL}/productos/imagenes/${imageId}/binary`;
 
 const toQueryString = (query: Record<string, unknown>) => {
   const params = new URLSearchParams();
@@ -73,6 +62,7 @@ export class ProductApi implements IProductApi {
   public async getProducts(): Promise<ProductDto[]> {
     const result = await useFetch<ProductDto[]>("productos/all", {
       method: "GET",
+      auth: "none",
     });
     return result || [];
   }
@@ -83,7 +73,7 @@ export class ProductApi implements IProductApi {
     const queryString = toQueryString(query as Record<string, unknown>);
     const result = await useFetch<PaginatedResponseDto<ProductDto> | ProductDto[]>(
       `productos${queryString}`,
-      { method: "GET" },
+      { method: "GET", auth: "none" },
     );
 
     if (Array.isArray(result)) {
@@ -109,12 +99,23 @@ export class ProductApi implements IProductApi {
   public async getProductById(id: number): Promise<ProductDto | null> {
     return useFetch<ProductDto>(`productos/${id}`, {
       method: "GET",
+      auth: "none",
+    });
+  }
+
+  public async getProductOrderOptions(
+    id: number,
+  ): Promise<ProductoOpcionesPedidoPublicoDto | null> {
+    return useFetch<ProductoOpcionesPedidoPublicoDto>(`productos/${id}/opciones-pedido`, {
+      method: "GET",
+      auth: "none",
     });
   }
 
   public async getProductOrderInfo(id: number): Promise<ProductoInfoPedidoDto | null> {
     return useFetch<ProductoInfoPedidoDto>(`productos/${id}/info-pedido`, {
       method: "GET",
+      auth: "required",
     });
   }
 
@@ -123,18 +124,18 @@ export class ProductApi implements IProductApi {
   ): Promise<ProductDto | null> {
     return useFetch<ProductDto>("productos/new", {
       method: "POST",
+      auth: "required",
       body: JSON.stringify(product),
     });
   }
 
   public async createProductWithImages(formData: FormData): Promise<ProductDto | null> {
     try {
-      const response = await fetch(`${api}/productos/new`, {
+      return await request<ProductDto>("/productos/new", {
         method: "POST",
+        auth: "required",
         body: formData,
       });
-
-      return parseMultipartResponse(response);
     } catch (error) {
       console.error("Error creating product with images:", error);
       return null;
@@ -147,19 +148,19 @@ export class ProductApi implements IProductApi {
     }
 
     return useFetch<ProductDto>(`productos/${product.id}`, {
-      method: "PUT",
+      method: "PATCH",
+      auth: "required",
       body: JSON.stringify(product),
     });
   }
 
   public async updateProductWithImages(id: number, formData: FormData): Promise<ProductDto | null> {
     try {
-      const response = await fetch(`${api}/productos/${id}`, {
+      return await request<ProductDto>(`/productos/${id}`, {
         method: "PATCH",
+        auth: "required",
         body: formData,
       });
-
-      return parseMultipartResponse(response);
     } catch (error) {
       console.error("Error updating product with images:", error);
       return null;

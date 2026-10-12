@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "panelUrl": "https://localhost:7127",
+  "username": "REPLACE_WITH_IDENTITYSERVER_ADMIN_USERNAME",
+  "password": "REPLACE_WITH_IDENTITYSERVER_ADMIN_PASSWORD",
+  "expected": {
+    "publicClientId": "client_acc8fe2608a830b8125e7705cdf71fc5",
+    "apiResourceName": "ania.api",
+    "apiScopeName": "ania.api.admin",
+    "apiResourceClaims": ["role"],
+    "apiScopeClaims": []
+  }
+}

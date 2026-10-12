@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./helpers/realTest";
 import { CATEGORIA_PINATAS } from "./helpers/real";
 import {
   fotosDePrueba,
@@ -15,8 +15,7 @@ import {
 // ────────────────────────────────────────────────────────────────────────────
 // E2E de INTEGRACIÓN REAL: CREAR y EDITAR productos CON imágenes desde el panel
 // admin (front :5173 + backend :3001 + Neon). Igual que `pedidos-integracion-
-// real.spec.ts`, ESCRIBEN en la BD real, así que van DESACTIVADOS por defecto y
-// solo corren con `E2E_REAL=1`. Todo lo creado se marca con `[E2E]`.
+// real.spec.ts`, ESCRIBEN en la BD real. Todo lo creado se marca con `[E2E]`.
 //
 // ── Qué validan ─────────────────────────────────────────────────────────────
 //   Las FOTOS de prueba se leen de `e2e/fixtures/productos/` (pega ahí las
@@ -29,22 +28,14 @@ import {
 //
 // ── Cómo levantarlos ────────────────────────────────────────────────────────
 //   1. Backend NestJS en :3001 con la BD Neon.
-//   2. Frontend :5173 lo levanta el `webServer` de playwright.config.ts,
-//      con `VITE_VUE_APP_DOMAIN=http://localhost:3001`.
+//   2. Frontend e IdentityServer levantados manualmente; Playwright conecta con
+//      E2E_BASE_URL (por defecto :5173), con VITE_API_BASE_URL configurada.
 //   3. Pega tus fotos en `e2e/fixtures/productos/` (o usa las semilla).
-//   4. Ejecuta:  E2E_REAL=1 bunx playwright test productos-imagenes-real
 //
 //   Overrides: E2E_PRODUCTO_EDIT_ID (producto a editar), E2E_API_URL, E2E_SLUG.
 // ────────────────────────────────────────────────────────────────────────────
 
-const CORRER_REAL = process.env.E2E_REAL === "1";
-
 test.describe("Integración real — productos con imágenes (crear y editar)", () => {
-  test.skip(
-    !CORRER_REAL,
-    "Integración real deshabilitada. Correr con E2E_REAL=1 y el stack (backend :3001 + Neon) levantado.",
-  );
-
   // Subidas multipart + varias lecturas a la BD real: dan más margen.
   test.slow();
 

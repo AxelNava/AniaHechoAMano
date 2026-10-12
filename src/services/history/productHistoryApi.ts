@@ -31,7 +31,10 @@ export class ProductHistoryApi {
     const queryString = toQueryString(query as Record<string, unknown>);
     const result = await useFetch<
       PaginatedResponseDto<PedidoHistorialListItemDto> | PedidoHistorialListItemDto[]
-    >(`productos/${productId}/pedidos/historial${queryString}`, { method: "GET" });
+    >(`productos/${productId}/pedidos/historial${queryString}`, {
+      method: "GET",
+      auth: "required",
+    });
 
     if (Array.isArray(result)) {
       return {
@@ -54,7 +57,10 @@ export class ProductHistoryApi {
   }
 
   async getOrderById(orderId: number): Promise<PedidoDetalleDto | null> {
-    return useFetch<PedidoDetalleDto>(`pedidos/${orderId}`, { method: "GET" });
+    return useFetch<PedidoDetalleDto>(`pedidos/${orderId}`, {
+      method: "GET",
+      auth: "required",
+    });
   }
 
   async getOrderProductComponents(
@@ -63,7 +69,7 @@ export class ProductHistoryApi {
   ): Promise<PedidoProductoComponenteSnapshotDto[]> {
     const result = await useFetch<PedidoProductoComponenteSnapshotDto[]>(
       `pedidos/${orderId}/productos/${orderProductId}/componentes`,
-      { method: "GET" },
+      { method: "GET", auth: "required" },
     );
     return result || [];
   }
@@ -75,7 +81,7 @@ export class ProductHistoryApi {
   ): Promise<PedidoProductoComponenteSnapshotDto | null> {
     return useFetch<PedidoProductoComponenteSnapshotDto>(
       `pedidos/${orderId}/productos/${orderProductId}/componentes/${snapshotId}`,
-      { method: "GET" },
+      { method: "GET", auth: "required" },
     );
   }
 }

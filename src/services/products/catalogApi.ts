@@ -1,9 +1,6 @@
 import { useFetch } from "@/composables/useFetch";
 import type { CatalogProductDto } from "@/types/products/catalogProductDto";
-import type {
-  PaginatedResponseDto,
-  ProductListQueryDto,
-} from "@/types/orders/orderHistoryDto";
+import type { PaginatedResponseDto, ProductListQueryDto } from "@/types/orders/orderHistoryDto";
 
 const emptyResponse = (query: ProductListQueryDto): PaginatedResponseDto<CatalogProductDto> => ({
   data: [],
@@ -47,7 +44,7 @@ export class CatalogApi {
     const queryString = toQueryString({ activo: true, ...query });
     const result = await useFetch<PaginatedResponseDto<CatalogProductDto> | CatalogProductDto[]>(
       `productos${queryString}`,
-      { method: "GET" },
+      { method: "GET", auth: "none" },
     );
 
     if (!result) {

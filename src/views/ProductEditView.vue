@@ -35,6 +35,8 @@ const product = ref({
   price: 0,
   categoryId: null as number | null,
   activo: true,
+  permite_modificaciones: false,
+  requiere_anticipo: false,
 });
 
 const categories = ref<{ id: number; nombre: string }[]>([]);
@@ -46,6 +48,8 @@ const syncProductFromData = (data: ProductDto) => {
     price: Number(data.precio_base),
     categoryId: data.categoria_id,
     activo: data.activo ?? true,
+    permite_modificaciones: data.permite_modificaciones ?? false,
+    requiere_anticipo: data.requiere_anticipo ?? false,
   };
   productComponents.value = (data.componentes ?? []).map((componente) => ({
     componente_id: componente.componente_id,
@@ -105,6 +109,8 @@ const updateProduct = async () => {
     formData.append("precio_base", String(product.value.price));
     formData.append("categoria_id", String(product.value.categoryId));
     formData.append("activo", String(product.value.activo));
+    formData.append("permite_modificaciones", String(product.value.permite_modificaciones));
+    formData.append("requiere_anticipo", String(product.value.requiere_anticipo));
     // El backend hace full-replace de la receta: hay que enviar SIEMPRE la
     // receta actual completa (enviar [] la borraría en cada guardado).
     formData.append("componentes", serializarComponentes(productComponents.value));
@@ -232,6 +238,52 @@ onMounted(() => {
             <label for="activo" class="text-sm text-gray-700">Producto activo</label>
           </div>
         </div>
+
+        <fieldset class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <legend class="px-1 text-sm font-semibold text-gray-800">Políticas del producto</legend>
+          <p class="mb-4 text-sm text-gray-600">
+            Define qué solicitudes y condiciones debe considerar Ania al gestionar este producto.
+          </p>
+          <div class="space-y-4">
+            <div class="flex items-start gap-3">
+              <input
+                id="permite-modificaciones"
+                v-model="product.permite_modificaciones"
+                type="checkbox"
+                :disabled="saving"
+                aria-describedby="permite-modificaciones-ayuda"
+                class="mt-1 h-4 w-4 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+              <div>
+                <label for="permite-modificaciones" class="text-sm font-medium text-gray-800">
+                  Permite solicitudes de modificación
+                </label>
+                <p id="permite-modificaciones-ayuda" class="mt-1 text-sm text-gray-600">
+                  Los clientes podrán solicitar cambios; la solicitud se revisará y cotizará antes de
+                  confirmar precio o fecha.
+                </p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <input
+                id="requiere-anticipo"
+                v-model="product.requiere_anticipo"
+                type="checkbox"
+                :disabled="saving"
+                aria-describedby="requiere-anticipo-ayuda"
+                class="mt-1 h-4 w-4 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+              <div>
+                <label for="requiere-anticipo" class="text-sm font-medium text-gray-800">
+                  Requiere anticipo
+                </label>
+                <p id="requiere-anticipo-ayuda" class="mt-1 text-sm text-gray-600">
+                  La confirmación del pedido queda sujeta a recibir un anticipo.
+                </p>
+              </div>
+            </div>
+          </div>
+        </fieldset>
 
         <ProductComponentsManager
           v-model="productComponents"

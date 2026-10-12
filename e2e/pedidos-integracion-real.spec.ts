@@ -1,5 +1,5 @@
-import { test, expect } from "@playwright/test";
-import { llenarContacto, llenarDireccion, clickContinuar } from "./helpers/mocks";
+import { test, expect } from "./helpers/realTest";
+import { llenarContacto, llenarDireccion, clickContinuar } from "./helpers/pedidoForm";
 import {
   MARCA_E2E,
   SLUG_PINATAS,
@@ -13,16 +13,12 @@ import {
 // ────────────────────────────────────────────────────────────────────────────
 // E2E de INTEGRACIÓN REAL del proceso de pedidos (front + backend :3001 + Neon).
 //
-// A diferencia de `pedidos-publico.spec.ts` / `pedidos-admin.spec.ts` (que usan
-// `page.route` y NO tocan la red), estos tests golpean el backend real y
-// ESCRIBEN en la BD Neon compartida. Por eso van DESACTIVADOS por defecto y solo
-// corren con `E2E_REAL=1`.
+// Estos tests golpean el backend real y ESCRIBEN en la BD Neon compartida.
 //
 // ── Cómo levantarlos ────────────────────────────────────────────────────────
 //   1. Backend NestJS en :3001 con la BD Neon (ya arriba).
-//   2. Frontend en :5173 lo levanta el `webServer` de playwright.config.ts
-//      (`bun run dev`), con `VITE_VUE_APP_DOMAIN=http://localhost:3001`.
-//   3. Ejecuta:  E2E_REAL=1 bunx playwright test pedidos-integracion-real
+//   2. Frontend e IdentityServer levantados manualmente; Playwright conecta con
+//      E2E_BASE_URL (por defecto :5173), con VITE_API_BASE_URL configurada.
 //
 // ── Estrategia de datos: ACUMULACIÓN `[E2E]` ────────────────────────────────
 //   Cada corrida CREA pedidos reales (y, la 1ª vez, un producto modificable).
@@ -36,16 +32,8 @@ import {
 //   E2E_SLUG, E2E_API_URL.
 // ────────────────────────────────────────────────────────────────────────────
 
-const CORRER_REAL = process.env.E2E_REAL === "1";
-
 test.describe("Integración real — registro de pedidos y visibilidad admin", () => {
-  test.skip(
-    !CORRER_REAL,
-    "Integración real deshabilitada. Correr con E2E_REAL=1 y el stack (backend :3001 + Neon) levantado.",
-  );
-
-  // Los flujos reales tocan red + Neon en varios pasos: dan más margen que un
-  // test mockeado.
+  // Los flujos reales tocan red + Neon en varios pasos: necesitan más margen.
   test.slow();
 
   test("registra un pedido TAL CUAL y queda visible en la bandeja admin con acción de confirmar", async ({

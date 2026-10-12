@@ -1,48 +1,32 @@
 <script setup lang="ts">
-import InputError from '@/components/input-error.vue'
-import { Button, Input, Label } from '@/components/ui'
-import AppLayout from '@/layouts/AppLayout.vue'
-import SettingsLayout from '@/layouts/SettingsLayout.vue'
-import type { BreadcrumbItem } from '@/types'
-import { computed, onMounted, ref } from 'vue'
-import { useAppStore } from '@/stores/appStore'
+import { computed, onMounted } from "vue"
+import { useAuthStore } from "@/stores/authStore"
+import { buildManageUrl } from "@/auth/oidcClient"
+import AppLayout from "@/layouts/AppLayout.vue"
+import SettingsLayout from "@/layouts/SettingsLayout.vue"
+import type { BreadcrumbItem } from "@/types"
 
-defineProps<{
-  mustVerifyEmail?: boolean
-  status?: string
-}>()
+const authStore = useAuthStore()
+const profile = computed(() => authStore.profile)
+const manageUrl = buildManageUrl(import.meta.env.VITE_OIDC_AUTHORITY)
 
-const appStore = useAppStore()
-const user = computed(() => appStore.user)
+const claimText = (value: unknown): string | null =>
+  typeof value === "string" && value.trim().length > 0 ? value : null
+
+const displayName = computed(
+  () => claimText(profile.value?.name) ?? claimText(profile.value?.preferred_username) ?? "No disponible en esta sesión",
+)
+const displayEmail = computed(() => claimText(profile.value?.email) ?? "No disponible en esta sesión")
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
-    title: 'Profile settings',
-    href: '/settings/profile',
+    title: "Perfil",
+    href: "/settings/profile",
   },
 ]
 
-const name = ref(user.value?.name || '')
-const email = ref(user.value?.email || '')
-const errors = ref<{ name?: string; email?: string }>({})
-const processing = ref(false)
-const recentlySuccessful = ref(false)
-
-const submit = () => {
-  processing.value = true
-  errors.value = {}
-
-  setTimeout(() => {
-    processing.value = false
-    recentlySuccessful.value = true
-    setTimeout(() => {
-      recentlySuccessful.value = false
-    }, 2000)
-  }, 1000)
-}
-
 onMounted(() => {
-  document.title = 'Profile settings'
+  document.title = "Perfil"
 })
 </script>
 
@@ -51,65 +35,39 @@ onMounted(() => {
     <SettingsLayout>
       <div class="space-y-6">
         <div class="mb-8 space-y-0.5">
-          <h2 class="text-xl font-semibold tracking-tight">Profile information</h2>
-          <p class="text-sm text-muted-foreground">Update your name and email address</p>
+          <h2 class="text-xl font-semibold tracking-tight">Información del perfil</h2>
+          <p class="text-sm text-muted-foreground">Consulta las claims de tu sesión y administra tu cuenta desde IdentityServer.</p>
         </div>
 
-        <form @submit.prevent="submit" class="space-y-6">
-          <div class="grid gap-2">
-            <Label for="name">Name</Label>
-            <Input
-              id="name"
-              class="mt-1 block w-full"
-              v-model="name"
-              required
-              autocomplete="name"
-              placeholder="Full name"
-            />
-            <InputError :message="errors.name" />
-          </div>
+        <div class="space-y-6">
+          <p class="text-sm leading-6 text-muted-foreground">
+            Tu nombre y correo se muestran desde la sesión actual. Este sitio no modifica esos datos ni ofrece verificación local del correo; los cambios realizados en IdentityServer no actualizan automáticamente la sesión abierta.
+          </p>
 
-          <div class="grid gap-2">
-            <Label for="email">Email address</Label>
-            <Input
-              id="email"
-              type="email"
-              class="mt-1 block w-full"
-              v-model="email"
-              required
-              autocomplete="username"
-              placeholder="Email address"
-            />
-            <InputError :message="errors.email" />
-          </div>
-
-          <div v-if="mustVerifyEmail && user?.email_verified_at === null">
-            <p class="-mt-4 text-sm text-muted-foreground">
-              Your email address is unverified.
-              <button
-                type="button"
-                class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500 cursor-pointer"
-              >
-                Click here to resend the verification email.
-              </button>
-            </p>
-            <div v-if="status === 'verification-link-sent'" class="mt-2 text-sm font-medium text-green-600">
-              A new verification link has been sent to your email address.
+          <dl class="space-y-4">
+            <div class="grid gap-1">
+              <dt class="text-sm font-medium text-foreground">Nombre</dt>
+              <dd class="text-sm text-muted-foreground">{{ displayName }}</dd>
             </div>
-          </div>
+            <div class="grid gap-1">
+              <dt class="text-sm font-medium text-foreground">Correo electrónico</dt>
+              <dd class="text-sm text-muted-foreground">{{ displayEmail }}</dd>
+            </div>
+          </dl>
 
-          <div class="flex items-center gap-4">
-            <Button :disabled="processing">Save</Button>
-            <Transition
-              enter-active-class="transition ease-in-out"
-              enter-from-class="opacity-0"
-              leave-active-class="transition ease-in-out"
-              leave-to-class="opacity-0"
+          <div v-if="manageUrl" class="space-y-2">
+            <a
+              :href="manageUrl"
+              class="inline-flex items-center rounded-md bg-[#ead9ea] px-4 py-2 text-sm font-medium text-[#701548] underline-offset-4 transition-colors hover:bg-[#e2cce2] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#701548] focus-visible:ring-offset-2"
             >
-              <p v-if="recentlySuccessful" class="text-sm text-neutral-600">Saved</p>
-            </Transition>
+              Administrar nombre y correo
+            </a>
+            <p class="text-sm text-muted-foreground">Se abrirá la administración hospedada en la misma pestaña.</p>
           </div>
-        </form>
+          <p v-else role="status" class="text-sm text-muted-foreground">
+            La administración de tu cuenta no está disponible porque falta una configuración válida de IdentityServer.
+          </p>
+        </div>
       </div>
     </SettingsLayout>
   </AppLayout>

@@ -17,10 +17,14 @@ import { usePedidoCliente } from "@/composables/pedido/usePedidoCliente";
 import defaultProductImage from "@/assets/images/default-product.jpg";
 import { formatCurrency } from "@/utils/orderDisplay";
 import type { ProductDto, ProductImageDto, ProductImageItem } from "@/types/products/ProductDto";
-import type { ProductoInfoPedidoDto } from "@/types/orders/createOrderDto";
+import type { ProductoOpcionesPedidoPublicoDto } from "@/types/products/ProductoOpcionesPedidoPublicoDto";
 
 type ModoPedido = "tal_cual" | "modificacion";
 type RegistroDesconocido = Record<string, unknown>;
+type ProductoImagenRecibida = Omit<ProductImageDto, "alt"> & { alt?: string | null };
+type ProductoRecibido = Omit<ProductDto, "imagenes"> & {
+  imagenes?: ProductoImagenRecibida[];
+};
 
 const mensajeNoDisponible = "No podemos agregar este producto a tu pedido en este momento.";
 
@@ -36,7 +40,7 @@ const esNumeroNoNegativo = (valor: unknown): valor is number =>
 const esTextoConContenido = (valor: unknown): valor is string =>
   typeof valor === "string" && valor.trim().length > 0;
 
-const esImagenProductoValida = (valor: unknown): valor is ProductImageDto => {
+const esImagenProductoValida = (valor: unknown): valor is ProductoImagenRecibida => {
   if (!esRegistro(valor)) return false;
 
   const tieneFuente =
@@ -47,11 +51,11 @@ const esImagenProductoValida = (valor: unknown): valor is ProductImageDto => {
     tieneFuente &&
     (valor.id === undefined || esIdValido(valor.id)) &&
     esNumeroNoNegativo(valor.orden) &&
-    (valor.alt === undefined || typeof valor.alt === "string")
+    (valor.alt === undefined || valor.alt === null || typeof valor.alt === "string")
   );
 };
 
-const esProductoValido = (valor: unknown): valor is ProductDto => {
+const esProductoValido = (valor: unknown): valor is ProductoRecibido => {
   if (!esRegistro(valor)) return false;
 
   return (
@@ -69,20 +73,23 @@ const esProductoValido = (valor: unknown): valor is ProductDto => {
   );
 };
 
-const esInfoPedidoValida = (valor: unknown): valor is ProductoInfoPedidoDto => {
+const normalizarProducto = (valor: ProductoRecibido): ProductDto => ({
+  ...valor,
+  imagenes: valor.imagenes?.map((imagen) => ({
+    ...imagen,
+    alt: imagen.alt ?? undefined,
+  })),
+});
+
+const sonOpcionesPedidoValidas = (valor: unknown): valor is ProductoOpcionesPedidoPublicoDto => {
   if (!esRegistro(valor)) return false;
 
   return (
     esIdValido(valor.id) &&
     esTextoConContenido(valor.nombre) &&
-    typeof valor.descripcion === "string" &&
     esNumeroNoNegativo(valor.precio_base) &&
-    (valor.categoria_id === null || esIdValido(valor.categoria_id)) &&
-    esTextoConContenido(valor.categoria) &&
     typeof valor.permite_modificaciones === "boolean" &&
-    typeof valor.requiere_anticipo === "boolean" &&
-    esNumeroNoNegativo(valor.tiempo_total_estimado_minutos) &&
-    Array.isArray(valor.componentes)
+    typeof valor.requiere_anticipo === "boolean"
   );
 };
 
@@ -101,7 +108,7 @@ const productId = computed<number | null>(() => {
 });
 
 const producto = ref<ProductDto | null>(null);
-const info = ref<ProductoInfoPedidoDto | null>(null);
+const opcionesPedido = ref<ProductoOpcionesPedidoPublicoDto | null>(null);
 const cargando = ref(true);
 const errorCarga = ref("");
 
@@ -112,19 +119,13 @@ const imagenActiva = ref(0);
 const enviando = ref(false);
 let solicitudDeCarga = 0;
 
-const permiteModificaciones = computed(
-  () => producto.value?.permite_modificaciones ?? info.value?.permite_modificaciones ?? false,
-);
-const requiereAnticipo = computed(
-  () => producto.value?.requiere_anticipo ?? info.value?.requiere_anticipo ?? false,
-);
-const precioBase = computed(() => info.value?.precio_base ?? null);
+const permiteModificaciones = computed(() => opcionesPedido.value?.permite_modificaciones ?? false);
+const requiereAnticipo = computed(() => opcionesPedido.value?.requiere_anticipo ?? false);
+const precioBase = computed(() => opcionesPedido.value?.precio_base ?? null);
 const precioBaseFormateado = computed(() =>
   precioBase.value === null ? "" : formatCurrency(precioBase.value),
 );
-const descripcion = computed(
-  () => info.value?.descripcion?.trim() || producto.value?.descripcion?.trim() || "",
-);
+const descripcion = computed(() => producto.value?.descripcion?.trim() || "");
 
 const imagenes = computed<ProductImageDto[]>(() =>
   [...(producto.value?.imagenes ?? [])].sort((a, b) => a.orden - b.orden),
@@ -141,7 +142,7 @@ const resolverImagen = (imagen: ProductImageDto): string => {
 
 const nombreImagen = (imagen: ProductImageDto, indice: number): string =>
   imagen.alt?.trim() ||
-  `${producto.value?.nombre ?? info.value?.nombre ?? "Producto"}, imagen ${indice + 1}`;
+  `${producto.value?.nombre ?? opcionesPedido.value?.nombre ?? "Producto"}, imagen ${indice + 1}`;
 
 const imagenPrincipal = computed(() => {
   const imagen = imagenes.value[indiceImagenActiva.value];
@@ -151,14 +152,14 @@ const textoAlternativoImagenPrincipal = computed(() => {
   const imagen = imagenes.value[indiceImagenActiva.value];
   return imagen
     ? nombreImagen(imagen, indiceImagenActiva.value)
-    : (producto.value?.nombre ?? info.value?.nombre ?? "Producto");
+    : (producto.value?.nombre ?? opcionesPedido.value?.nombre ?? "Producto");
 });
 
 const esModificacion = computed(() => permiteModificaciones.value && modo.value === "modificacion");
 
 const limpiarFicha = () => {
   producto.value = null;
-  info.value = null;
+  opcionesPedido.value = null;
   imagenActiva.value = 0;
   errorCarga.value = "";
 };
@@ -176,27 +177,27 @@ const cargarProducto = async () => {
   }
 
   try {
-    const [detalle, ordenInfo] = await Promise.all([
+    const [detalle, opciones] = await Promise.all([
       productApi.getProductById(id),
-      productApi.getProductOrderInfo(id),
+      productApi.getProductOrderOptions(id),
     ]);
 
     if (solicitudActual !== solicitudDeCarga) return;
 
     if (
       !esProductoValido(detalle) ||
-      !esInfoPedidoValida(ordenInfo) ||
+      !sonOpcionesPedidoValidas(opciones) ||
       detalle.id !== id ||
-      ordenInfo.id !== id ||
-      detalle.id !== ordenInfo.id ||
+      opciones.id !== id ||
+      detalle.id !== opciones.id ||
       detalle.activo === false
     ) {
       errorCarga.value = mensajeNoDisponible;
       return;
     }
 
-    producto.value = detalle;
-    info.value = ordenInfo;
+    producto.value = normalizarProducto(detalle);
+    opcionesPedido.value = opciones;
     if (!permiteModificaciones.value) modo.value = "tal_cual";
   } catch {
     if (solicitudActual === solicitudDeCarga) errorCarga.value = mensajeNoDisponible;
@@ -219,13 +220,13 @@ const solicitar = () => {
   if (enviando.value) return;
 
   const detalle = producto.value;
-  const ordenInfo = info.value;
+  const opciones = opcionesPedido.value;
   if (
     !esProductoValido(detalle) ||
-    !esInfoPedidoValida(ordenInfo) ||
+    !sonOpcionesPedidoValidas(opciones) ||
     detalle.id !== productId.value ||
-    ordenInfo.id !== productId.value ||
-    detalle.id !== ordenInfo.id ||
+    opciones.id !== productId.value ||
+    detalle.id !== opciones.id ||
     detalle.activo === false
   ) {
     toast.error(mensajeNoDisponible);
@@ -242,13 +243,13 @@ const solicitar = () => {
     : [];
 
   enviando.value = true;
-  cliente.agregarLinea(ordenInfo, {
+  cliente.agregarLinea(opciones, {
     esModificacion: esModificacion.value,
     descripcion: esModificacion.value ? descripcionModificacion.value : "",
     fotos: archivos,
   });
 
-  toast.success(`"${ordenInfo.nombre}" agregado a tu pedido`);
+  toast.success(`"${opciones.nombre}" agregado a tu pedido`);
   router.push("/pedido");
 };
 </script>
@@ -293,7 +294,7 @@ const solicitar = () => {
 
       <div class="grid grid-cols-1 gap-10 lg:grid-cols-2">
         <section
-          :aria-label="`Galería de imágenes de ${producto?.nombre ?? info?.nombre ?? 'producto'}`"
+          :aria-label="`Galería de imágenes de ${producto?.nombre ?? opcionesPedido?.nombre ?? 'producto'}`"
         >
           <div class="overflow-hidden rounded-2xl bg-primary-vue">
             <img
@@ -328,7 +329,7 @@ const solicitar = () => {
         <section class="space-y-6">
           <div>
             <h1 class="text-text-page text-3xl font-bold dark:text-primary-vue">
-              {{ producto?.nombre ?? info?.nombre }}
+              {{ producto?.nombre ?? opcionesPedido?.nombre }}
             </h1>
             <div class="mt-3">
               <p class="text-text-page2 text-sm font-semibold dark:text-primary-vue">Precio base</p>

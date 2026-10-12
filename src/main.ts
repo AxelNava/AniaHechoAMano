@@ -5,12 +5,29 @@ import { createPinia } from "pinia";
 
 import App from "./App.vue";
 import router from "./router";
-import { asyncPromisePlugin } from "./plugins/async-promise-loading";
+import { bootstrapApplication } from "./bootstrap";
+import { subscribeHttpAuthSignal } from "./services/http/httpAuthSignal";
+import { useAuthStore } from "./stores/authStore";
 
 const app = createApp(App);
+const pinia = createPinia();
 
-app.use(createPinia());
-app.use(router);
-app.use(asyncPromisePlugin);
+const authStore = useAuthStore(pinia);
+const unsubscribeHttpAuth = subscribeHttpAuthSignal(async (signal) => {
+  if (signal === "forbidden") {
+    if (router.currentRoute.value.name !== "forbidden") await router.replace({ name: "forbidden" });
+    return;
+  }
 
-app.mount("#app");
+  const returnUrl = router.currentRoute.value.fullPath;
+  try {
+    await authStore.cleanup();
+  } finally {
+    if (router.currentRoute.value.name !== "login") {
+      await router.replace({ name: "login", query: { returnUrl } });
+    }
+  }
+});
+import.meta.hot?.dispose(unsubscribeHttpAuth);
+
+void bootstrapApplication({ app, pinia, router, authStore });

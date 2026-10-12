@@ -1,31 +1,27 @@
-const apiBackend = import.meta.env.VITE_VUE_APP_DOMAIN || "http://localhost:5001";
-const api = `${apiBackend}/api`;
+import { request, type RequestAuth } from "@/services/http/apiClient";
 
 function defaultErrorHandler(reason: unknown) {
   console.error("Error fetching data:", reason);
 }
 
+export type UseFetchOptions = RequestInit & { auth?: RequestAuth };
+
 export async function useFetch<T>(
   routeApi: string,
-  fetchOptions?: RequestInit,
+  fetchOptions: UseFetchOptions = {},
   errorFn?: (reason: unknown) => PromiseLike<never> | null | undefined,
 ): Promise<T | null> {
-  const endpoint = `${api}/${routeApi}`;
-
-  const defaultOptions: RequestInit = {
-    headers: {
-      "Content-Type": "application/json",
-      ...fetchOptions?.headers,
-    },
-    ...fetchOptions,
-  };
+  const { auth = "none", ...requestOptions } = fetchOptions;
+  const headers = new Headers(requestOptions.headers);
+  if (typeof requestOptions.body === "string" && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
 
   try {
-    const response = await fetch(endpoint, defaultOptions);
-    return (await response.json()) as T;
-  } catch (e) {
-    if (errorFn) errorFn(e);
-    else defaultErrorHandler(e);
+    return await request<T>(routeApi, { ...requestOptions, headers, auth });
+  } catch (error) {
+    if (errorFn) errorFn(error);
+    else defaultErrorHandler(error);
     return null;
   }
 }

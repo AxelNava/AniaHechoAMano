@@ -1,4 +1,4 @@
-import { requestJson } from "@/services/http/apiClient";
+import { request } from "@/services/http/apiClient";
 import type {
   BloqueoEmergenciaDetalleDto,
   BloqueoEmergenciaListItemDto,
@@ -12,15 +12,15 @@ const emergenciasPath = "/agenda/emergencias" as const;
 
 export class EmergenciasApi {
   createEmergencia(dto: CreateBloqueoEmergenciaDto): Promise<BloqueoEmergenciaDetalleDto> {
-    return requestJson(emergenciasPath, { method: "POST", body: dto });
+    return request(emergenciasPath, { method: "POST", auth: "required", body: dto });
   }
 
   getEmergencias(): Promise<BloqueoEmergenciaListItemDto[]> {
-    return requestJson(emergenciasPath, { method: "GET" });
+    return request(emergenciasPath, { method: "GET", auth: "required" });
   }
 
   getEmergencia(id: number): Promise<BloqueoEmergenciaDetalleDto> {
-    return requestJson(`${emergenciasPath}/${id}`, { method: "GET" });
+    return request(`${emergenciasPath}/${id}`, { method: "GET", auth: "required" });
   }
 
   marcarContactado(
@@ -28,8 +28,9 @@ export class EmergenciasApi {
     afectadoId: number,
     dto: MarcarContactadoDto,
   ): Promise<PedidoAfectadoDto> {
-    return requestJson(`${emergenciasPath}/${emergenciaId}/afectados/${afectadoId}/contactado`, {
+    return request(`${emergenciasPath}/${emergenciaId}/afectados/${afectadoId}/contactado`, {
       method: "PATCH",
+      auth: "required",
       body: dto,
     });
   }
@@ -39,17 +40,17 @@ export class EmergenciasApi {
     afectadoId: number,
     dto: ResolverAfectadoDto,
   ): Promise<PedidoAfectadoDto> {
-    return requestJson(
+    return request(
       `${emergenciasPath}/${encodeURIComponent(String(emergenciaId))}/afectados/${encodeURIComponent(String(afectadoId))}/resolver`,
-      { method: "POST", body: dto },
+      { method: "POST", auth: "required", body: dto },
     );
   }
 
   retirarEmergencia(emergenciaId: number): Promise<BloqueoEmergenciaDetalleDto> {
-    return requestJson(
-      `${emergenciasPath}/${encodeURIComponent(String(emergenciaId))}/retirar`,
-      { method: "POST" },
-    );
+    return request(`${emergenciasPath}/${encodeURIComponent(String(emergenciaId))}/retirar`, {
+      method: "POST",
+      auth: "required",
+    });
   }
 }
 

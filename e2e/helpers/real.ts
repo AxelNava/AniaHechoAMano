@@ -1,20 +1,15 @@
-import {
-  type APIRequestContext,
-  type APIResponse,
-  type Page,
-  expect,
-} from "@playwright/test";
+import { type APIRequestContext, type APIResponse, type Page, expect } from "@playwright/test";
 import { fileURLToPath } from "node:url";
+import { realBearerHeaders } from "./oidc";
 
 // ────────────────────────────────────────────────────────────────────────────
 // Helpers de INTEGRACIÓN REAL (front + backend :3001 + Neon).
 //
-// A diferencia de `helpers/mocks.ts` (que intercepta la red con `page.route`),
-// aquí NO se mockea nada: se descubren datos reales por API y se leen respuestas
-// reales del backend. Todo lo que se crea se marca con el prefijo `[E2E]`.
+// Estos helpers no interceptan la red: descubren datos reales por API y leen
+// respuestas reales del backend. Todo lo que se crea se marca con el prefijo `[E2E]`.
 // ────────────────────────────────────────────────────────────────────────────
 
-/** URL base del backend NestJS. El front la lee de VITE_VUE_APP_DOMAIN. */
+/** URL base del backend NestJS. El front la lee de VITE_API_BASE_URL. */
 export const API_BASE = process.env.E2E_API_URL ?? "http://localhost:3001";
 
 /** Slug del catálogo público cuya config incluye la categoría "Piñatas". */
@@ -27,9 +22,7 @@ export const CATEGORIA_PINATAS = "Piñatas";
 export const MARCA_E2E = "[E2E]";
 
 /** Ruta absoluta a la imagen fixture usada en la subida de fotos (fase 2). */
-export const IMAGEN_FIXTURE = fileURLToPath(
-  new URL("../fixtures/e2e-sample.png", import.meta.url),
-);
+export const IMAGEN_FIXTURE = fileURLToPath(new URL("../fixtures/e2e-sample.png", import.meta.url));
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
@@ -179,6 +172,7 @@ export async function asegurarProductoModificable(
   // No existe: se crea UNA vez (multipart/form-data, POST /api/productos/new).
   const categoriaId = await idCategoriaPinatas(request);
   const res = await request.post(`${API_BASE}/api/productos/new`, {
+    headers: realBearerHeaders(),
     multipart: {
       nombre: `${MARCA_E2E} Producto modificable`,
       descripcion: "Producto de prueba automatizada E2E. Permite modificaciones. Ignorar.",
@@ -224,9 +218,7 @@ export async function obtenerDiaDisponibleFuturo(request: APIRequestContext): Pr
 
   const dia = body.dias.find((d) => d.disponible && d.fecha >= body.min_fecha);
   if (!dia) {
-    throw new Error(
-      `No hay ningún día disponible en ${anio}-${pad2(mes)} para la prueba real.`,
-    );
+    throw new Error(`No hay ningún día disponible en ${anio}-${pad2(mes)} para la prueba real.`);
   }
   return dia.fecha;
 }
@@ -289,9 +281,7 @@ export async function elegirDiaDisponibleProximoMes(
   // el clic auto-espera a que sea accionable (no deshabilitado).
   await page.getByRole("button", { name: fecha, exact: true }).click();
 
-  await expect(
-    page.getByText("¡Disponible! Continúa para revisar el resumen."),
-  ).toBeVisible();
+  await expect(page.getByText("¡Disponible! Continúa para revisar el resumen.")).toBeVisible();
   return fecha;
 }
 
@@ -319,18 +309,11 @@ const leerJsonAdminOk = async <T>(res: APIResponse, operacion: string): Promise<
   return leerJsonOk<T>(res, operacion);
 };
 
-/** Verifica pronto que el backend exponga las rutas admin de emergencias. */
-export async function assertEmergenciasAdminEnabled(
-  request: APIRequestContext,
-): Promise<void> {
-  await listarEmergencias(request);
-}
-
 /** Lista emergencias reales, incluyendo las retiradas lógicamente. */
-export async function listarEmergencias(
-  request: APIRequestContext,
-): Promise<EmergenciaListaE2E[]> {
-  const res = await request.get(`${API_BASE}/api/agenda/emergencias`);
+export async function listarEmergencias(request: APIRequestContext): Promise<EmergenciaListaE2E[]> {
+  const res = await request.get(`${API_BASE}/api/agenda/emergencias`, {
+    headers: realBearerHeaders(),
+  });
   const body = await leerJsonAdminOk<unknown>(res, "GET /api/agenda/emergencias");
   if (!Array.isArray(body)) throw new Error("La lista real de emergencias no es un arreglo.");
   return body as EmergenciaListaE2E[];
@@ -344,7 +327,10 @@ export async function crearEmergenciaReal(
   if (!datos.motivo.startsWith(MARCA_E2E)) {
     throw new Error(`El motivo de emergencia debe comenzar con ${MARCA_E2E}.`);
   }
-  const res = await request.post(`${API_BASE}/api/agenda/emergencias`, { data: datos });
+  const res = await request.post(`${API_BASE}/api/agenda/emergencias`, {
+    headers: realBearerHeaders(),
+    data: datos,
+  });
   return leerJsonAdminOk<EmergenciaDetalleE2E>(res, "POST /api/agenda/emergencias");
 }
 
@@ -353,11 +339,10 @@ export async function obtenerEmergenciaReal(
   request: APIRequestContext,
   emergenciaId: number,
 ): Promise<EmergenciaDetalleE2E> {
-  const res = await request.get(`${API_BASE}/api/agenda/emergencias/${emergenciaId}`);
-  return leerJsonAdminOk<EmergenciaDetalleE2E>(
-    res,
-    `GET /api/agenda/emergencias/${emergenciaId}`,
-  );
+  const res = await request.get(`${API_BASE}/api/agenda/emergencias/${emergenciaId}`, {
+    headers: realBearerHeaders(),
+  });
+  return leerJsonAdminOk<EmergenciaDetalleE2E>(res, `GET /api/agenda/emergencias/${emergenciaId}`);
 }
 
 /** Espera a que la emergencia creada por la UI aparezca en la lista real. */
@@ -411,20 +396,16 @@ export async function crearPedidoConfirmadoE2E(
     data: {
       cliente_nuevo: { nombre: clienteNombre, telefono },
       fecha_entrega_solicitada: fechaEntrega,
-      productos: [
-        { producto_id: producto.id, origen: "catalogo", es_modificacion: false },
-      ],
+      productos: [{ producto_id: producto.id, origen: "catalogo", es_modificacion: false }],
     },
   });
-  const creado = await leerJsonOk<PedidoDetalleMinimoE2E>(
-    creadoRes,
-    "POST /api/pedidos/solicitud",
-  );
+  const creado = await leerJsonOk<PedidoDetalleMinimoE2E>(creadoRes, "POST /api/pedidos/solicitud");
   expect(creado.id).toBeGreaterThan(0);
   expect(creado.referencia_publica).toBeTruthy();
   expect(creado.seguimiento_token_publico).toBeTruthy();
 
   const confirmadoRes = await request.post(`${API_BASE}/api/pedidos/${creado.id}/confirmar`, {
+    headers: realBearerHeaders(),
     data: { fecha_entrega_acordada: fechaEntrega },
   });
   const confirmado = await leerJsonOk<PedidoDetalleMinimoE2E>(
@@ -436,11 +417,10 @@ export async function crearPedidoConfirmadoE2E(
 
   let detalle = confirmado;
   if (!detalle.productos?.length) {
-    const detalleRes = await request.get(`${API_BASE}/api/pedidos/${creado.id}`);
-    detalle = await leerJsonOk<PedidoDetalleMinimoE2E>(
-      detalleRes,
-      `GET /api/pedidos/${creado.id}`,
-    );
+    const detalleRes = await request.get(`${API_BASE}/api/pedidos/${creado.id}`, {
+      headers: realBearerHeaders(),
+    });
+    detalle = await leerJsonOk<PedidoDetalleMinimoE2E>(detalleRes, `GET /api/pedidos/${creado.id}`);
   }
   const tiempos = detalle.productos?.map((linea) => linea.tiempo_total_estimado_minutos);
   const tiemposNumericos = tiempos?.filter(
@@ -472,7 +452,7 @@ export async function marcarContactadoEmergencia(
 ): Promise<PedidoAfectadoE2E> {
   const res = await request.patch(
     `${API_BASE}/api/agenda/emergencias/${emergenciaId}/afectados/${afectadoId}/contactado`,
-    { data: { contactado } },
+    { headers: realBearerHeaders(), data: { contactado } },
   );
   return leerJsonAdminOk<PedidoAfectadoE2E>(
     res,
@@ -488,7 +468,7 @@ export async function resolverAfectadoCanceladoEmergencia(
 ): Promise<APIResponse> {
   return request.post(
     `${API_BASE}/api/agenda/emergencias/${emergenciaId}/afectados/${afectadoId}/resolver`,
-    { data: { resolucion: "CANCELADO" } },
+    { headers: realBearerHeaders(), data: { resolucion: "CANCELADO" } },
   );
 }
 
@@ -497,7 +477,9 @@ export async function retirarEmergenciaReal(
   request: APIRequestContext,
   emergenciaId: number,
 ): Promise<EmergenciaDetalleE2E> {
-  const res = await request.post(`${API_BASE}/api/agenda/emergencias/${emergenciaId}/retirar`);
+  const res = await request.post(`${API_BASE}/api/agenda/emergencias/${emergenciaId}/retirar`, {
+    headers: realBearerHeaders(),
+  });
   return leerJsonAdminOk<EmergenciaDetalleE2E>(
     res,
     `POST /api/agenda/emergencias/${emergenciaId}/retirar`,
@@ -509,11 +491,6 @@ export async function obtenerSeguimientoPublico(
   request: APIRequestContext,
   token: string,
 ): Promise<SeguimientoPublicoE2E> {
-  const res = await request.get(
-    `${API_BASE}/api/pedidos/seguimiento/${encodeURIComponent(token)}`,
-  );
-  return leerJsonOk<SeguimientoPublicoE2E>(
-    res,
-    "GET /api/pedidos/seguimiento/:token",
-  );
+  const res = await request.get(`${API_BASE}/api/pedidos/seguimiento/${encodeURIComponent(token)}`);
+  return leerJsonOk<SeguimientoPublicoE2E>(res, "GET /api/pedidos/seguimiento/:token");
 }

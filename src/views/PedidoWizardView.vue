@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed, watch } from "vue";
 import { useRouter } from "vue-router";
 import { toast } from "vue-sonner";
 import ProductLayout from "@/layouts/ProductLayout.vue";
@@ -12,15 +13,39 @@ import PasoResumen from "@/components/pedido/PasoResumen.vue";
 import PasoConfirmar from "@/components/pedido/PasoConfirmar.vue";
 import { usePedidoCliente } from "@/composables/pedido/usePedidoCliente";
 import { usePedidoWizard } from "@/composables/pedido/usePedidoWizard";
+import { usePedidoMinutosPedido } from "@/composables/pedido/usePedidoMinutosPedido";
 import { usePedidoClienteStore } from "@/stores/pedidoClienteStore";
+import { useAuthStore } from "@/stores/authStore";
 import { useLoadingButton } from "@/composables/useLoadingButton";
 import { OrdersApi } from "@/services/orders/ordersApi";
 
 const router = useRouter();
 const ordersApi = new OrdersApi();
 const store = usePedidoClienteStore();
+const authStore = useAuthStore();
 const cliente = usePedidoCliente();
 const wizard = usePedidoWizard();
+const minutosPedido = usePedidoMinutosPedido(cliente.lineas);
+
+const minutosFecha = computed(() => {
+  const total = minutosPedido.minutosTotales.value;
+  return typeof total === "number" && Number.isFinite(total) && total > 0 ? total : null;
+});
+
+watch(
+  () => [
+    cliente.hayModificaciones.value,
+    cliente.lineas.value.map((linea) => `${linea.uid}:${linea.producto_id}`).join("|"),
+  ],
+  ([hayModificaciones]) => {
+    if (hayModificaciones || cliente.estaVacio.value) {
+      minutosPedido.limpiar();
+      return;
+    }
+    void minutosPedido.hidratar();
+  },
+  { immediate: true },
+);
 
 const { status, message, execute } = useLoadingButton({ successDuration: 2500 });
 
@@ -51,7 +76,9 @@ const enviar = async () => {
     // Fase 1: crear la solicitud (JSON).
     let detalle;
     try {
-      detalle = await ordersApi.createOrderPublico(payload);
+      detalle = authStore.authenticated
+        ? await ordersApi.createOrderPublicoAutenticado(payload)
+        : await ordersApi.createOrderPublico(payload);
     } catch (e) {
       const mensaje = e instanceof Error ? e.message : "No se pudo enviar la solicitud.";
       toast.error(mensaje);
@@ -108,13 +135,40 @@ const enviar = async () => {
     <section v-else class="mx-auto max-w-3xl py-6">
       <h1 class="text-text-page mb-6 text-2xl font-bold">Tu pedido</h1>
 
-      <Stepper :pasos="wizard.stepperPasos.value" :paso-actual="wizard.pasoActual.value" navegable
-        class="mb-8" @seleccionar-paso="wizard.irAPaso" />
+      <Stepper
+        :pasos="wizard.stepperPasos.value"
+        :paso-actual="wizard.pasoActual.value"
+        navegable
+        class="mb-8"
+        @seleccionar-paso="wizard.irAPaso"
+      />
 
-      <div class="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
+      <div
+        class="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900"
+      >
         <PasoContacto v-if="wizard.pasoActualId.value === 'contacto'" />
         <PasoDireccion v-else-if="wizard.pasoActualId.value === 'direccion'" />
-        <PasoFecha v-else-if="wizard.pasoActualId.value === 'fecha'" />
+        <template v-else-if="wizard.pasoActualId.value === 'fecha'">
+          <div
+            v-if="minutosPedido.cargando.value"
+            class="text-text-page2 py-8 text-center text-sm"
+            role="status"
+            aria-live="polite"
+          >
+            Calculando el tiempo necesario para revisar la disponibilidad...
+          </div>
+          <div
+            v-else-if="minutosPedido.error.value || minutosFecha === null"
+            class="space-y-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200"
+            role="alert"
+          >
+            <p>{{ minutosPedido.error.value || "No pudimos calcular el tiempo del pedido." }}</p>
+            <Button variant="outline" type="button" @click="minutosPedido.reintentar">
+              Reintentar cálculo
+            </Button>
+          </div>
+          <PasoFecha v-else :minutos-totales="minutosFecha" />
+        </template>
         <PasoResumen v-else-if="wizard.pasoActualId.value === 'resumen'" />
         <PasoConfirmar v-else-if="wizard.pasoActualId.value === 'confirmar'" />
 
@@ -142,7 +196,13 @@ const enviar = async () => {
           </Button>
         </div>
 
-        <Button v-if="!wizard.esUltimoPaso.value" @click="continuar">Continuar</Button>
+        <Button
+          v-if="!wizard.esUltimoPaso.value"
+          :disabled="wizard.pasoActualId.value === 'fecha' && minutosFecha === null"
+          @click="continuar"
+        >
+          Continuar
+        </Button>
         <LoadingButton
           v-else
           :loading="status === 'loading'"

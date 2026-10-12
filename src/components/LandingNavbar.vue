@@ -2,10 +2,12 @@
 import { ref, computed } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { useDarkMode } from "@/composables/useDarkMode";
+import { ADMIN_ROLES, useAuthStore } from "@/stores/authStore";
 
 const route = useRoute();
 const showAll = ref(false);
 const { isDark, toggle: toggleDark } = useDarkMode();
+const authStore = useAuthStore();
 
 const services = [
   { name: "Inicio", href: "/" },
@@ -15,7 +17,14 @@ const services = [
   { name: "Postres", href: "/categoria/postres" },
 ];
 
-const isAdmin = computed(() => true);
+const isAuthenticated = computed(() => authStore.authenticated);
+const isAdmin = computed(
+  () => isAuthenticated.value && authStore.hasAnyRole(ADMIN_ROLES),
+);
+
+const handleLogout = () => {
+  void authStore.signout();
+};
 
 // En móvil mostramos los primeros 2 y el botón "Otros"
 const visibleServicesMobile = computed(() => {
@@ -143,6 +152,28 @@ const toggleOthers = () => {
         >
           Admin
         </RouterLink>
+        <template v-if="!isAuthenticated">
+          <RouterLink
+            to="/login"
+            class="text-text-page font-medium hover:opacity-70 transition-opacity whitespace-nowrap"
+          >
+            Iniciar sesión
+          </RouterLink>
+          <RouterLink
+            to="/register"
+            class="text-text-page font-medium hover:opacity-70 transition-opacity whitespace-nowrap"
+          >
+            Registrarse
+          </RouterLink>
+        </template>
+        <button
+          v-else
+          type="button"
+          class="text-text-page font-medium hover:opacity-70 transition-opacity whitespace-nowrap"
+          @click="handleLogout"
+        >
+          Cerrar sesión
+        </button>
         <button
           @click="toggleDark"
           class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -293,6 +324,28 @@ const toggleOthers = () => {
           >
             Admin
           </RouterLink>
+          <template v-if="!isAuthenticated">
+            <RouterLink
+              to="/login"
+              class="text-text-page font-medium text-sm whitespace-nowrap"
+            >
+              Iniciar sesión
+            </RouterLink>
+            <RouterLink
+              to="/register"
+              class="text-text-page font-medium text-sm whitespace-nowrap"
+            >
+              Registrarse
+            </RouterLink>
+          </template>
+          <button
+            v-else
+            type="button"
+            class="text-text-page font-medium text-sm whitespace-nowrap"
+            @click="handleLogout"
+          >
+            Cerrar sesión
+          </button>
           <button
             @click="toggleDark"
             class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"

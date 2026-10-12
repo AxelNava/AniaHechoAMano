@@ -1,7 +1,7 @@
 import { computed } from "vue";
 import { storeToRefs } from "pinia";
 import { usePedidoClienteStore } from "@/stores/pedidoClienteStore";
-import type { ProductoInfoPedidoDto } from "@/types/orders/createOrderDto";
+import type { ProductoOpcionesPedidoPublicoDto } from "@/types/products/ProductoOpcionesPedidoPublicoDto";
 import type { CreatePedidoEntregaInput } from "@/types/orders/entregaDto";
 import type { CreatePedidoPublicoDto } from "@/types/orders/createPedidoPublicoDto";
 import type { PedidoClienteLinea, ResumenPedidoEnviado } from "@/types/orders/pedidoCliente";
@@ -37,7 +37,7 @@ interface AgregarLineaOpciones {
 
 /**
  * API del "carrito" del cliente final. Es la capa de lógica sobre
- * `pedidoClienteStore`: agrega/quita líneas, calcula totales y minutos, y
+ * `pedidoClienteStore`: agrega/quita líneas, calcula totales seguros y
  * construye el `CreatePedidoPublicoDto` que consume `ordersApi.createOrderPublico`.
  *
  * Adapta la idea de `useOrderForm` (multi-producto) al flujo público, añadiendo
@@ -48,9 +48,7 @@ export function usePedidoCliente() {
   const { lineas, contacto, entrega, fechaSolicitada, mapsUrlOmitida, fotosPorLinea } =
     storeToRefs(store);
 
-  const hayModificaciones = computed(() =>
-    lineas.value.some((linea) => linea.es_modificacion),
-  );
+  const hayModificaciones = computed(() => lineas.value.some((linea) => linea.es_modificacion));
 
   const requiereAnticipo = computed(() =>
     lineas.value.some((linea) => linea.info.requiere_anticipo),
@@ -58,16 +56,14 @@ export function usePedidoCliente() {
 
   const estaVacio = computed(() => lineas.value.length === 0);
 
-  /** Suma de minutos estimados de las líneas — alimenta a disponibilidad. */
-  const minutosTotales = computed(() =>
-    lineas.value.reduce((total, linea) => total + linea.info.tiempo_total_estimado_minutos, 0),
-  );
-
   const precioTotalSugerido = computed(() =>
     lineas.value.reduce((total, linea) => total + linea.info.precio_base, 0),
   );
 
-  const agregarLinea = (info: ProductoInfoPedidoDto, opciones: AgregarLineaOpciones = {}) => {
+  const agregarLinea = (
+    info: ProductoOpcionesPedidoPublicoDto,
+    opciones: AgregarLineaOpciones = {},
+  ) => {
     const uid = generarUid();
     const esModificacion = opciones.esModificacion ?? false;
 
@@ -80,9 +76,6 @@ export function usePedidoCliente() {
       info: {
         nombre: info.nombre,
         precio_base: info.precio_base,
-        tiempo_total_estimado_minutos: info.tiempo_total_estimado_minutos,
-        categoria_id: info.categoria_id,
-        categoria: info.categoria,
         permite_modificaciones: info.permite_modificaciones,
         requiere_anticipo: info.requiere_anticipo,
       },
@@ -166,7 +159,6 @@ export function usePedidoCliente() {
     hayModificaciones,
     requiereAnticipo,
     estaVacio,
-    minutosTotales,
     precioTotalSugerido,
     // Acciones
     agregarLinea,

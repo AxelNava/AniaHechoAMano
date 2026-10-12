@@ -38,5 +38,9 @@ __screenshots__/
 # Local Pi runtime state
 .atl/
 
-#playwright
-playwright-report/
+# Playwright
+/playwright-report/
+/test-results/
+/playwright/.auth/
+/e2e/credentials.json
+/e2e/identityserver-admin.json

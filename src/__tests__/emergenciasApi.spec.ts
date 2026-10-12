@@ -1,7 +1,13 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { authService } from "@/auth/authService";
 import { ApiError, type ProblemDetails, type ProblemDetailsCode } from "@/services/http/apiClient";
 import { EmergenciasApi } from "@/services/disponibilidad/emergenciasApi";
 
+vi.mock("@/auth/authService", () => ({
+  authService: { getAccessToken: vi.fn() },
+}));
+
+const tokenMock = vi.mocked(authService.getAccessToken);
 const createDto = { desde: "2026-08-20", hasta: "2026-08-22", motivo: "Cierre" };
 const contactadoDto = { contactado: true };
 const resolverCanceladoDto = { resolucion: "CANCELADO" } as const;
@@ -29,6 +35,8 @@ const captureApiError = async (request: Promise<unknown>): Promise<ApiError> => 
 };
 
 describe("EmergenciasApi", () => {
+  beforeEach(() => tokenMock.mockResolvedValue("agenda-token"));
+
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
@@ -41,7 +49,10 @@ describe("EmergenciasApi", () => {
     await expect(new EmergenciasApi().createEmergencia(createDto)).resolves.toBe(detalle);
     expect(fetchMock).toHaveBeenCalledWith(expect.stringMatching(/\/api\/agenda\/emergencias$/), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        Authorization: "Bearer agenda-token",
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(createDto),
     });
   });
@@ -53,6 +64,7 @@ describe("EmergenciasApi", () => {
     await expect(new EmergenciasApi().getEmergencias()).resolves.toBe(lista);
     expect(fetchMock).toHaveBeenCalledWith(expect.stringMatching(/\/api\/agenda\/emergencias$/), {
       method: "GET",
+      headers: { Authorization: "Bearer agenda-token" },
     });
   });
 
@@ -63,7 +75,7 @@ describe("EmergenciasApi", () => {
     await expect(new EmergenciasApi().getEmergencia(23)).resolves.toBe(detalle);
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringMatching(/\/api\/agenda\/emergencias\/23$/),
-      { method: "GET" },
+      { method: "GET", headers: { Authorization: "Bearer agenda-token" } },
     );
   });
 
@@ -78,7 +90,10 @@ describe("EmergenciasApi", () => {
       expect.stringMatching(/\/api\/agenda\/emergencias\/23\/afectados\/41\/contactado$/),
       {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          Authorization: "Bearer agenda-token",
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(contactadoDto),
       },
     );
@@ -96,7 +111,10 @@ describe("EmergenciasApi", () => {
       expect.stringMatching(/\/api\/agenda\/emergencias\/23\/afectados\/41\/resolver$/),
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          Authorization: "Bearer agenda-token",
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(dto),
       },
     );
@@ -109,7 +127,7 @@ describe("EmergenciasApi", () => {
     await expect(new EmergenciasApi().retirarEmergencia(23)).resolves.toBe(detalle);
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringMatching(/\/api\/agenda\/emergencias\/23\/retirar$/),
-      { method: "POST" },
+      { method: "POST", headers: { Authorization: "Bearer agenda-token" } },
     );
   });
 

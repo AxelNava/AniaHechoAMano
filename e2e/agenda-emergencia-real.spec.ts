@@ -1,7 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./helpers/realTest";
 import {
   MARCA_E2E,
-  assertEmergenciasAdminEnabled,
   crearPedidoConfirmadoE2E,
   esperarDetalleEmergencia,
   esperarEmergenciaPorMotivo,
@@ -16,12 +15,10 @@ import {
 } from "./helpers/real";
 
 // E2E REAL, sin mocks ni interceptores. Requisitos:
-//   E2E_REAL=1; backend + DB en :3001 (o E2E_API_URL); backend con
-//   EMERGENCIAS_ADMIN_ENABLED=true; frontend con VITE_VUE_APP_DOMAIN apuntando
-//   al backend real. El webServer de Playwright mantiene la UI en :5173.
-// Ejemplo: EMERGENCIAS_ADMIN_ENABLED=true E2E_REAL=1 bunx playwright test agenda-emergencia-real
-const CORRER_REAL = process.env.E2E_REAL === "1";
-
+//   frontend, backend + DB e IdentityServer levantados manualmente;
+//   backend + DB en :3001 (o E2E_API_URL), con EMERGENCIAS_ADMIN_ENABLED=true;
+//   frontend con VITE_API_BASE_URL apuntando al backend real.
+//   Playwright solo conecta con E2E_BASE_URL (por defecto http://localhost:5173).
 const fechaVisible = (fecha: string): string =>
   new Intl.DateTimeFormat("es-MX", {
     weekday: "long",
@@ -32,22 +29,13 @@ const fechaVisible = (fecha: string): string =>
 
 test.describe("Integración real — agenda de emergencias", () => {
   test.describe.configure({ mode: "serial" });
-  test.skip(
-    !CORRER_REAL,
-    "E2E real deshabilitado. Requiere E2E_REAL=1, backend/DB y frontend reales.",
-  );
   test.slow();
 
-  test("crea, consulta, marca contacto y sigue un pedido afectado", async ({
-    page,
-    request,
-  }) => {
+  test("crea, consulta, marca contacto y sigue un pedido afectado", async ({ page, request }) => {
     let emergenciaId: number | undefined;
     let afectadoId: number | undefined;
 
     try {
-      // Falla de forma explícita si el backend no tiene habilitado el guard admin.
-      await assertEmergenciasAdminEnabled(request);
       const fecha = await obtenerDiaDisponibleFuturo(request);
       const pedido = await crearPedidoConfirmadoE2E(request, fecha);
       const runId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -107,7 +95,9 @@ test.describe("Integración real — agenda de emergencias", () => {
       });
 
       await tarjeta.getByRole("button", { name: "Resolver", exact: true }).click();
-      await expect(page.getByRole("heading", { name: "Resolver pedido", exact: true })).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Resolver pedido", exact: true }),
+      ).toBeVisible();
       await page.getByRole("button", { name: "Cancelar pedido", exact: true }).click();
       await expect(
         page.getByText("¿Confirmas la cancelación de este pedido?", { exact: true }),
@@ -115,9 +105,7 @@ test.describe("Integración real — agenda de emergencias", () => {
       await page.getByRole("button", { name: "Confirmar cancelación", exact: true }).click();
       await expect(tarjeta.getByText("Cancelado", { exact: true }).last()).toBeVisible();
       const persistidaCancelada = await esperarDetalleEmergencia(request, emergenciaId, (detalle) =>
-        detalle.afectados.some(
-          (item) => item.id === afectadoId && item.resolucion === "CANCELADO",
-        ),
+        detalle.afectados.some((item) => item.id === afectadoId && item.resolucion === "CANCELADO"),
       );
       const afectadoCancelado = persistidaCancelada.afectados.find(
         (item) => item.id === afectadoId,
@@ -134,7 +122,9 @@ test.describe("Integración real — agenda de emergencias", () => {
       expect(segundaResolucion.status()).toBe(409);
 
       await page.getByRole("button", { name: "Retirar emergencia", exact: true }).click();
-      await expect(page.getByRole("heading", { name: "Retirar emergencia", exact: true })).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Retirar emergencia", exact: true }),
+      ).toBeVisible();
       await page.getByRole("button", { name: "Confirmar retirada", exact: true }).click();
       await expect(
         page.locator("section").first().getByText("Retirada", { exact: true }).first(),
@@ -152,7 +142,9 @@ test.describe("Integración real — agenda de emergencias", () => {
       expect(seguimiento.fecha_entrega_solicitada?.slice(0, 10)).toBe(fecha);
       expect(seguimiento.fecha_entrega_acordada?.slice(0, 10)).toBe(fecha);
 
-      await page.goto(`/pedido/seguimiento/${encodeURIComponent(pedido.seguimiento_token_publico)}`);
+      await page.goto(
+        `/pedido/seguimiento/${encodeURIComponent(pedido.seguimiento_token_publico)}`,
+      );
       await expect(page.getByRole("heading", { name: "Seguimiento de tu pedido" })).toBeVisible();
       await expect(page.getByText(pedido.referencia_publica, { exact: true })).toBeVisible();
       await expect(page.getByText("Cancelado", { exact: true })).toBeVisible();
@@ -171,7 +163,8 @@ test.describe("Integración real — agenda de emergencias", () => {
           await esperarDetalleEmergencia(
             request,
             emergenciaId,
-            (actual) => !actual.afectados.some((item) => item.id === afectado.id && item.contactado),
+            (actual) =>
+              !actual.afectados.some((item) => item.id === afectado.id && item.contactado),
           );
         }
         if (detalle.activo) {
@@ -187,7 +180,6 @@ test.describe("Integración real — agenda de emergencias", () => {
     let motivo = "";
 
     try {
-      await assertEmergenciasAdminEnabled(request);
       const fechaOriginal = await obtenerDiaDisponibleFuturo(request);
       const pedido = await crearPedidoConfirmadoE2E(request, fechaOriginal);
       const fechaNueva = await obtenerDiaDisponiblePosterior(
@@ -239,7 +231,9 @@ test.describe("Integración real — agenda de emergencias", () => {
       );
 
       await tarjeta.getByRole("button", { name: "Resolver", exact: true }).click();
-      await expect(page.getByRole("heading", { name: "Resolver pedido", exact: true })).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Resolver pedido", exact: true }),
+      ).toBeVisible();
       await page.getByRole("button", { name: "Desplazar entrega", exact: true }).click();
 
       for (let intento = 0; intento < 12; intento += 1) {
@@ -279,11 +273,15 @@ test.describe("Integración real — agenda de emergencias", () => {
       });
       expect(seguimiento.fecha_entrega_acordada?.slice(0, 10)).toBe(fechaNueva);
 
-      await page.goto(`/pedido/seguimiento/${encodeURIComponent(pedido.seguimiento_token_publico)}`);
+      await page.goto(
+        `/pedido/seguimiento/${encodeURIComponent(pedido.seguimiento_token_publico)}`,
+      );
       await expect(page.getByRole("heading", { name: "Seguimiento de tu pedido" })).toBeVisible();
       await expect(page.getByText("Retrasado", { exact: true })).toBeVisible();
       await expect(
-        page.getByRole("status").filter({ hasText: "Tu pedido tiene un retraso, lamentamos la demora" }),
+        page
+          .getByRole("status")
+          .filter({ hasText: "Tu pedido tiene un retraso, lamentamos la demora" }),
       ).toBeVisible();
       const fechas = page.locator("dl > div");
       await expect(fechas.nth(1)).toContainText(fechaVisible(fechaNueva));
@@ -303,7 +301,8 @@ test.describe("Integración real — agenda de emergencias", () => {
           await esperarDetalleEmergencia(
             request,
             emergenciaId,
-            (actual) => !actual.afectados.some((item) => item.id === afectado.id && item.contactado),
+            (actual) =>
+              !actual.afectados.some((item) => item.id === afectado.id && item.contactado),
           );
         }
         if (detalle.activo) await retirarEmergenciaReal(request, emergenciaId);

@@ -2,6 +2,7 @@ import { type APIRequestContext, type Locator, type Page, expect } from "@playwr
 import { fileURLToPath } from "node:url";
 import { readdirSync, readFileSync } from "node:fs";
 import { basename } from "node:path";
+import { realBearerHeaders } from "./oidc";
 import { API_BASE, MARCA_E2E } from "./real";
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -57,8 +58,7 @@ export function fotosDePrueba(minimo = 1): string[] {
 // El gestor vive dentro de un <aside> tanto en Crear como en Editar producto.
 
 /** Input oculto de AGREGAR (multiple). Acepta varias fotos de una vez. */
-const inputAgregar = (page: Page): Locator =>
-  page.locator('aside input[type="file"][multiple]');
+const inputAgregar = (page: Page): Locator => page.locator('aside input[type="file"][multiple]');
 
 /** Tarjetas de imagen actualmente en el gestor. */
 const tarjetasImagen = (page: Page): Locator => page.locator("aside article");
@@ -94,11 +94,7 @@ export async function agregarFotoYAnotar(
  * REEMPLAZA la foto de la tarjeta i-ésima por otra. NO toca la descripción
  * (por diseño: los cambios no se anotan). La cantidad de fotos no varía.
  */
-export async function cambiarFotoSinAnotar(
-  page: Page,
-  index: number,
-  ruta: string,
-): Promise<void> {
+export async function cambiarFotoSinAnotar(page: Page, index: number, ruta: string): Promise<void> {
   const antes = await contarFotos(page);
   await inputCambiar(page, index).setInputFiles(ruta);
   await expect(tarjetasImagen(page)).toHaveCount(antes);
@@ -180,7 +176,9 @@ export interface ComponenteApi {
 
 /** GET /api/productos/componentes — lista plana de componentes reales. */
 export async function listarComponentes(request: APIRequestContext): Promise<ComponenteApi[]> {
-  const res = await request.get(`${API_BASE}/api/productos/componentes`);
+  const res = await request.get(`${API_BASE}/api/productos/componentes`, {
+    headers: realBearerHeaders(),
+  });
   expect(res.ok(), `GET /api/productos/componentes falló (${res.status()})`).toBeTruthy();
   return (await res.json()) as ComponenteApi[];
 }
@@ -210,6 +208,7 @@ export async function asegurarComponente(
   if (existente) return existente;
 
   const res = await request.post(`${API_BASE}/api/productos/componentes/new`, {
+    headers: realBearerHeaders(),
     data: {
       tipo: "MATERIAL",
       nombre,
@@ -238,6 +237,7 @@ export async function crearProductoConReceta(
 ): Promise<ProductoDetalleApi> {
   const categoriaId = await idCategoria(request, categoria);
   const res = await request.post(`${API_BASE}/api/productos/new`, {
+    headers: realBearerHeaders(),
     multipart: {
       nombre,
       descripcion: "Producto de prueba E2E para el gestor de componentes. Ignorar.",
@@ -288,6 +288,7 @@ export async function asegurarProductoEditableConFoto(
 
   const categoriaId = await idCategoria(request, categoria);
   const creado = await request.post(`${API_BASE}/api/productos/new`, {
+    headers: realBearerHeaders(),
     multipart: {
       nombre: NOMBRE_PRODUCTO_EDITABLE,
       descripcion: "Producto de prueba E2E para editar imágenes. Ignorar.",

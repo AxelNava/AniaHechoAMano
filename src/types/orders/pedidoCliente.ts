@@ -1,30 +1,19 @@
 import type { OrigenProductoPedido } from "@/types/orders/createOrderDto";
 import type { TipoRedSocial } from "@/types/orders/createPedidoPublicoDto";
+import type { ProductoOpcionesPedidoPublicoDto } from "@/types/products/ProductoOpcionesPedidoPublicoDto";
 
 // ────────────────────────────────────────────────────────────────────────────
 // VIEW-MODELS DEL FLUJO PÚBLICO DE PEDIDO (solo frontend).
 //
 // Estos tipos NO son espejo de ningún DTO del backend: modelan el "carrito" del
 // cliente en el navegador (store `pedidoClienteStore` + composable
-// `usePedidoCliente`). Solo la porción serializable se persiste a localStorage;
-// las fotos `File[]` viven aparte, en memoria. El payload real hacia el backend
+// `usePedidoCliente`). El borrador serializable se limita a sessionStorage;
+// fotos y resumen de confirmación viven aparte, en memoria. El payload al backend
 // se construye con `CreatePedidoPublicoDto` (ese sí es el contrato).
 // ────────────────────────────────────────────────────────────────────────────
 
-/**
- * Snapshot de datos del producto capturado al agregar la línea (desde
- * `ProductoInfoPedidoDto`). Sirve para el resumen y para sumar los minutos que
- * alimentan la disponibilidad, sin necesidad de volver a consultar el backend.
- */
-export interface PedidoClienteLineaInfo {
-  nombre: string;
-  precio_base: number;
-  tiempo_total_estimado_minutos: number;
-  categoria_id: number | null;
-  categoria: string;
-  permite_modificaciones: boolean;
-  requiere_anticipo: boolean;
-}
+/** Snapshot persistible limitado a las opciones públicas seguras del producto. */
+export type PedidoClienteLineaInfo = Omit<ProductoOpcionesPedidoPublicoDto, "id">;
 
 /** Línea del carrito del cliente. `uid` es local (para mapear fotos y v-for). */
 export interface PedidoClienteLinea {
@@ -44,11 +33,7 @@ export interface ContactoClienteInput {
   url_perfil: string;
 }
 
-/**
- * Snapshot serializable de un pedido ya enviado, para que la pantalla de
- * confirmación muestre el resumen aunque el carrito activo ya se haya vaciado
- * (sobrevive incluso a un reload porque se persiste).
- */
+/** Línea del resumen de confirmación, conservado solo en memoria. */
 export interface ResumenLineaEnviada {
   nombre: string;
   es_modificacion: boolean;

@@ -1,4 +1,5 @@
-import { test, expect, type Page, type APIRequestContext } from "@playwright/test";
+import type { Page, APIRequestContext } from "@playwright/test";
+import { test, expect } from "./helpers/realTest";
 import { CATEGORIA_PINATAS, MARCA_E2E } from "./helpers/real";
 import {
   asegurarComponente,
@@ -13,8 +14,7 @@ import {
 // ────────────────────────────────────────────────────────────────────────────
 // E2E de INTEGRACIÓN REAL del gestor "Componentes del producto" (receta) en
 // /admin/products/edit/:id (front :5173 + backend :3001 + Neon). Igual que
-// `productos-imagenes-real.spec.ts`: NADA de mocks, ESCRIBEN en la BD real,
-// van desactivados por defecto y solo corren con `E2E_REAL=1`.
+// `productos-imagenes-real.spec.ts`: NADA de mocks, ESCRIBEN en la BD real.
 //
 // ── Qué validan ─────────────────────────────────────────────────────────────
 //   • La receta persistida (GET /api/productos/:id → `componentes`) tras cada
@@ -38,11 +38,9 @@ import {
 //
 // ── Cómo levantarlos ────────────────────────────────────────────────────────
 //   1. Backend NestJS en :3001 con la BD Neon.
-//   2. Frontend :5173 (webServer de playwright.config.ts, reuseExistingServer).
-//   3. Ejecuta:  E2E_REAL=1 bunx playwright test productos-componentes-real
+//   2. Frontend e IdentityServer levantados manualmente; Playwright conecta con
+//      E2E_BASE_URL (por defecto :5173).
 // ────────────────────────────────────────────────────────────────────────────
-
-const CORRER_REAL = process.env.E2E_REAL === "1";
 
 const NOMBRE_COMPONENTE_A = `${MARCA_E2E} Componente receta A`;
 const NOMBRE_COMPONENTE_B = `${MARCA_E2E} Componente receta B`;
@@ -89,11 +87,18 @@ async function asegurarProductoConReceta(
   request: APIRequestContext,
   escenario: string,
   runId: number,
-  receta: (componenteA: ComponenteApi, componenteB: ComponenteApi) => {
+  receta: (
+    componenteA: ComponenteApi,
+    componenteB: ComponenteApi,
+  ) => {
     componente_id: number;
     cantidad: number;
   }[],
-): Promise<{ producto: ProductoDetalleApi; componenteA: ComponenteApi; componenteB: ComponenteApi }> {
+): Promise<{
+  producto: ProductoDetalleApi;
+  componenteA: ComponenteApi;
+  componenteB: ComponenteApi;
+}> {
   const componenteA = await asegurarComponente(request, NOMBRE_COMPONENTE_A, {
     unidad_medida: "pieza",
   });
@@ -110,11 +115,6 @@ async function asegurarProductoConReceta(
 }
 
 test.describe("Integración real — receta de componentes del producto (admin)", () => {
-  test.skip(
-    !CORRER_REAL,
-    "Integración real deshabilitada. Correr con E2E_REAL=1 y el stack (backend :3001 + Neon) levantado.",
-  );
-
   // Siembra por API + varias lecturas/escrituras a la BD real: más margen.
   test.slow();
 
@@ -184,12 +184,8 @@ test.describe("Integración real — receta de componentes del producto (admin)"
     await cantidadFila(page, 1).fill("1.5");
 
     // Edge case: un componente ya usado queda deshabilitado en la OTRA fila.
-    await expect(
-      selectFila(page, 2).locator(`option[value="${componenteA.id}"]`),
-    ).toBeDisabled();
-    await expect(
-      selectFila(page, 1).locator(`option[value="${componenteB.id}"]`),
-    ).toBeDisabled();
+    await expect(selectFila(page, 2).locator(`option[value="${componenteA.id}"]`)).toBeDisabled();
+    await expect(selectFila(page, 1).locator(`option[value="${componenteB.id}"]`)).toBeDisabled();
 
     await guardarProducto(page);
 
@@ -325,9 +321,7 @@ test.describe("Integración real — receta de componentes del producto (admin)"
     await expect(dialogo).toBeHidden();
 
     // Verificación cruzada: la copia existe en el backend con el campo editado.
-    const copia = (await listarComponentes(request)).find(
-      (c) => c.nombre === nombreEsperadoCopia,
-    );
+    const copia = (await listarComponentes(request)).find((c) => c.nombre === nombreEsperadoCopia);
     expect(copia, `No se creó el componente copia "${nombreEsperadoCopia}"`).toBeTruthy();
     expect(copia!.unidad_medida).toBe(unidadCopia);
 
@@ -373,9 +367,7 @@ test.describe("Integración real — receta de componentes del producto (admin)"
     await dialogo.getByRole("button", { name: "Continuar" }).click();
 
     await dialogo.getByRole("button", { name: "Editar componente global" }).click();
-    await expect(
-      page.getByText("Componente actualizado para todos los productos"),
-    ).toBeVisible();
+    await expect(page.getByText("Componente actualizado para todos los productos")).toBeVisible();
     await expect(dialogo).toBeHidden();
 
     // Verificación cruzada: el componente ORIGINAL quedó modificado (mismo id).
@@ -393,9 +385,7 @@ test.describe("Integración real — receta de componentes del producto (admin)"
     // ...y guardar conserva la receta con el id original y su cantidad.
     await guardarProducto(page);
     const persistido = await obtenerProductoDetalle(request, producto.id);
-    expect(persistido.componentes).toEqual([
-      { componente_id: componenteGlobal.id, cantidad: 4 },
-    ]);
+    expect(persistido.componentes).toEqual([{ componente_id: componenteGlobal.id, cantidad: 4 }]);
   });
 
   test("CANCELAR: cerrar el modal en cualquiera de los 2 pasos no cambia ni el componente ni la receta", async ({

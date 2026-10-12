@@ -1,101 +1,92 @@
 <script setup lang="ts">
-import InputError from '@/components/input-error.vue'
-import TextLink from '@/components/text-link.vue'
-import { Button, Input, Label } from '@/components/ui'
-import AuthLayout from '@/layouts/AuthLayout.vue'
-import { LoaderCircle } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { computed, shallowRef, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { REGISTER_RETURN_URL, sanitizeReturnUrl } from "@/auth/authService";
+import { useAuthStore } from "@/stores/authStore";
 
-const name = ref('')
-const email = ref('')
-const password = ref('')
-const password_confirmation = ref('')
-const errors = ref<{ name?: string; email?: string; password?: string; password_confirmation?: string }>({})
-const processing = ref(false)
+const authEntryPaths = new Set([
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/auth/callback",
+  "/auth/logout-callback",
+]);
+const route = useRoute();
+const router = useRouter();
+const authStore = useAuthStore();
+const redirectStarted = shallowRef(false);
+const sessionRedirectStarted = shallowRef(false);
+const redirectError = shallowRef<string | null>(null);
 
-const submit = () => {
-  processing.value = true
-  errors.value = {}
-  
-  setTimeout(() => {
-    processing.value = false
-  }, 1000)
+const safeReturnUrl = computed(() => {
+  const localUrl = sanitizeReturnUrl(route.query.returnUrl, REGISTER_RETURN_URL);
+  const [pathname] = localUrl.split(/[?#]/);
+  return authEntryPaths.has(pathname) ? REGISTER_RETURN_URL : localUrl;
+});
+
+const errorMessage = computed(() => authStore.error ?? redirectError.value);
+const statusMessage = computed(() => {
+  if (authStore.loading) {
+    return redirectStarted.value ? "Redirigiendo al registro de IdentityServer…" : "Comprobando tu sesión…";
+  }
+
+  return "Redirigiendo al registro seguro…";
+});
+
+async function startRegistration(): Promise<void> {
+  if (redirectStarted.value || authStore.authenticated || authStore.loading) return;
+
+  redirectStarted.value = true;
+  redirectError.value = null;
+
+  try {
+    await authStore.register(safeReturnUrl.value);
+  } catch {
+    redirectError.value = "No se pudo abrir el registro. Inténtalo de nuevo.";
+  }
 }
+
+function redirectAuthenticatedSession(): void {
+  if (sessionRedirectStarted.value) return;
+
+  sessionRedirectStarted.value = true;
+  void router.replace(safeReturnUrl.value);
+}
+
+function retryRegistration(): void {
+  redirectStarted.value = false;
+  void startRegistration();
+}
+
+watch(
+  () => [authStore.loading, authStore.authenticated] as const,
+  ([loading, authenticated]) => {
+    if (loading) return;
+    if (authenticated) {
+      redirectAuthenticatedSession();
+      return;
+    }
+
+    void startRegistration();
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
-  <AuthLayout title="Create an account" description="Enter your details below to create your account">
-    <form @submit.prevent="submit" class="flex flex-col gap-6">
-      <div class="grid gap-6">
-        <div class="grid gap-2">
-          <Label for="name">Name</Label>
-          <Input
-            id="name"
-            type="text"
-            v-model="name"
-            required
-            autofocus
-            tabindex="1"
-            autocomplete="name"
-            placeholder="Full name"
-          />
-          <InputError :message="errors.name" />
-        </div>
-
-        <div class="grid gap-2">
-          <Label for="email">Email address</Label>
-          <Input
-            id="email"
-            type="email"
-            v-model="email"
-            required
-            tabindex="2"
-            autocomplete="email"
-            placeholder="email@example.com"
-          />
-          <InputError :message="errors.email" />
-        </div>
-
-        <div class="grid gap-2">
-          <Label for="password">Password</Label>
-          <Input
-            id="password"
-            type="password"
-            v-model="password"
-            required
-            tabindex="3"
-            autocomplete="new-password"
-            placeholder="Password"
-          />
-          <InputError :message="errors.password" />
-        </div>
-
-        <div class="grid gap-2">
-          <Label for="password_confirmation">Confirm password</Label>
-          <Input
-            id="password_confirmation"
-            type="password"
-            v-model="password_confirmation"
-            required
-            tabindex="4"
-            autocomplete="new-password"
-            placeholder="Confirm password"
-          />
-          <InputError :message="errors.password_confirmation" />
-        </div>
-
-        <Button type="submit" class="mt-2 w-full" tabindex="5" :disabled="processing">
-          <LoaderCircle v-if="processing" class="h-4 w-4 animate-spin" />
-          Create account
-        </Button>
-      </div>
-
-      <div class="text-center text-sm text-muted-foreground">
-        Already have an account?
-        <TextLink href="/login" tabindex="6">
-          Log in
-        </TextLink>
-      </div>
-    </form>
-  </AuthLayout>
+  <main class="grid min-h-svh place-items-center bg-background p-6 text-center">
+    <section class="max-w-md space-y-4" aria-live="polite">
+      <h1 class="text-2xl font-semibold">Registro seguro</h1>
+      <p v-if="errorMessage" role="alert" class="text-muted-foreground">{{ errorMessage }}</p>
+      <p v-else role="status" class="text-muted-foreground">{{ statusMessage }}</p>
+      <button
+        v-if="errorMessage"
+        type="button"
+        class="rounded-md border border-gray-300 px-4 py-2 font-medium dark:border-gray-700"
+        @click="retryRegistration"
+      >
+        Reintentar
+      </button>
+    </section>
+  </main>
 </template>

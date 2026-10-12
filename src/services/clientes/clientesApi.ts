@@ -6,6 +6,7 @@ export class ClientesApi {
     const query = search ? `?search=${encodeURIComponent(search)}` : "";
     const result = await useFetch<ClienteListItemDto[]>(`clientes${query}`, {
       method: "GET",
+      auth: "required",
     });
     return result || [];
   }

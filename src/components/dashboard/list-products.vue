@@ -95,13 +95,21 @@ onMounted(async () => {
     <section class="bg-white rounded-lg shadow mb-8">
       <section class="px-4 py-3 border-b bg-gray-50 flex items-center justify-between gap-3">
         <h2 class="font-semibold text-gray-700">Lista de Productos</h2>
-        <router-link
-          to="/admin/products/new"
-          class="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
-          style="view-transition-name: add-product-cta"
-        >
-          Añadir producto
-        </router-link>
+        <div class="flex flex-wrap items-center justify-end gap-2">
+          <router-link
+            to="/admin/products/import"
+            class="inline-flex items-center rounded-md border border-blue-200 px-3 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-50"
+          >
+            Importar catálogo
+          </router-link>
+          <router-link
+            to="/admin/products/new"
+            class="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+            style="view-transition-name: add-product-cta"
+          >
+            Añadir producto
+          </router-link>
+        </div>
       </section>
       <DataTable
         :rows="products"

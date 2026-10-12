@@ -1,5 +1,5 @@
 import { useFetch } from "@/composables/useFetch";
-import { requestJson } from "@/services/http/apiClient";
+import { request } from "@/services/http/apiClient";
 import type { ConfirmarPedidoDto } from "@/types/orders/confirmarPedidoDto";
 import type { CotizarPedidoDto } from "@/types/orders/cotizarPedidoDto";
 import type { CreateOrderDto } from "@/types/orders/createOrderDto";
@@ -12,9 +12,6 @@ import type {
   PedidoHistorialQueryDto,
   PedidoProductoImagenDto,
 } from "@/types/orders/orderHistoryDto";
-
-const apiBackend = import.meta.env.VITE_VUE_APP_DOMAIN || "http://localhost:5001";
-const api = `${apiBackend}/api`;
 
 const seguimientoPath = (token: string): `/pedidos/seguimiento/${string}` =>
   `/pedidos/seguimiento/${encodeURIComponent(token)}`;
@@ -43,7 +40,7 @@ export class OrdersApi {
     const queryString = toQueryString(query as Record<string, unknown>);
     const result = await useFetch<
       PaginatedResponseDto<PedidoHistorialListItemDto> | PedidoHistorialListItemDto[]
-    >(`pedidos${queryString}`, { method: "GET" });
+    >(`pedidos${queryString}`, { method: "GET", auth: "required" });
 
     if (Array.isArray(result)) {
       return {
@@ -66,27 +63,18 @@ export class OrdersApi {
   }
 
   async getSeguimiento(token: string): Promise<PedidoSeguimientoDto> {
-    return requestJson<PedidoSeguimientoDto>(seguimientoPath(token), { method: "GET" });
+    return request<PedidoSeguimientoDto>(seguimientoPath(token), {
+      method: "GET",
+      auth: "none",
+    });
   }
 
   async createOrder(payload: CreateOrderDto): Promise<PedidoDetalleDto> {
-    const response = await fetch(`${api}/pedidos`, {
+    return request<PedidoDetalleDto>("/pedidos", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      auth: "required",
+      body: payload,
     });
-
-    const body = await response.json().catch(() => null);
-
-    if (!response.ok) {
-      const detail =
-        body && typeof body === "object" && "detail" in body
-          ? String((body as { detail: unknown }).detail)
-          : `Error ${response.status} al registrar el pedido`;
-      throw new Error(detail);
-    }
-
-    return body as PedidoDetalleDto;
   }
 
   /**
@@ -94,28 +82,28 @@ export class OrdersApi {
    * `POST /api/pedidos/solicitud`. El backend congela la receta server-side,
    * genera la `referencia_publica` y devuelve el detalle (con los ids de línea
    * necesarios para subir fotos en la fase 2).
-   *
-   * Usa `fetch` crudo + `response.ok` (patrón `createOrder`): con `useFetch` un
-   * `ProblemDetails` de error llegaría como éxito porque no chequea el estado.
    */
   async createOrderPublico(payload: CreatePedidoPublicoDto): Promise<PedidoDetalleDto> {
-    const response = await fetch(`${api}/pedidos/solicitud`, {
+    return request<PedidoDetalleDto>("/pedidos/solicitud", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      auth: "none",
+      body: payload,
     });
+  }
 
-    const body = await response.json().catch(() => null);
-
-    if (!response.ok) {
-      const detail =
-        body && typeof body === "object" && "detail" in body
-          ? String((body as { detail: unknown }).detail)
-          : `Error ${response.status} al enviar la solicitud de pedido`;
-      throw new Error(detail);
-    }
-
-    return body as PedidoDetalleDto;
+  /**
+   * Crea una solicitud de pedido usando la identidad OIDC vigente.
+   * `POST /api/pedidos/solicitud-autenticada` deriva el cliente vinculado en el
+   * backend; el navegador no envía ni el token ni un `cliente_id`.
+   */
+  async createOrderPublicoAutenticado(
+    payload: CreatePedidoPublicoDto,
+  ): Promise<PedidoDetalleDto> {
+    return request<PedidoDetalleDto>("/pedidos/solicitud-autenticada", {
+      method: "POST",
+      auth: "required",
+      body: payload,
+    });
   }
 
   /**
@@ -123,9 +111,7 @@ export class OrdersApi {
    * `POST /api/pedidos/:pedidoId/productos/:pedidoProductoId/imagenes`.
    *
    * Envía `FormData` con el campo `imagenes` (multipart) — NO fija
-   * `Content-Type`: el navegador añade el boundary automáticamente. Usa `fetch`
-   * crudo + `response.ok` para poder distinguir el fallo parcial (fase 2) del
-   * éxito de la creación (fase 1).
+   * `Content-Type`: el navegador añade el boundary automáticamente.
    */
   async uploadModificacionImagenes(
     pedidoId: number,
@@ -135,22 +121,10 @@ export class OrdersApi {
     const formData = new FormData();
     files.forEach((file) => formData.append("imagenes", file));
 
-    const response = await fetch(
-      `${api}/pedidos/${pedidoId}/productos/${pedidoProductoId}/imagenes`,
-      { method: "POST", body: formData },
+    return request<PedidoProductoImagenDto[]>(
+      `/pedidos/${pedidoId}/productos/${pedidoProductoId}/imagenes`,
+      { method: "POST", auth: "required", body: formData },
     );
-
-    const body = await response.json().catch(() => null);
-
-    if (!response.ok) {
-      const detail =
-        body && typeof body === "object" && "detail" in body
-          ? String((body as { detail: unknown }).detail)
-          : `Error ${response.status} al subir las fotos de la modificación`;
-      throw new Error(detail);
-    }
-
-    return (body as PedidoProductoImagenDto[]) ?? [];
   }
 
   /**
@@ -159,31 +133,13 @@ export class OrdersApi {
    * disponibilidad de la fecha (la solicitada o la `fecha_entrega_acordada`
    * ajustada que se envíe), fija la fecha y transiciona a
    * `ESPERANDO_ANTICIPO`/`CONFIRMADO`. Devuelve el detalle actualizado.
-   *
-   * Usa `fetch` crudo + `response.ok` (no `useFetch`): un `409` (fecha no
-   * disponible / transición inválida) es un `ProblemDetails` que hay que surtir.
    */
-  async confirmarPedido(
-    pedidoId: number,
-    dto: ConfirmarPedidoDto = {},
-  ): Promise<PedidoDetalleDto> {
-    const response = await fetch(`${api}/pedidos/${pedidoId}/confirmar`, {
+  async confirmarPedido(pedidoId: number, dto: ConfirmarPedidoDto = {}): Promise<PedidoDetalleDto> {
+    return request<PedidoDetalleDto>(`/pedidos/${pedidoId}/confirmar`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(dto),
+      auth: "required",
+      body: dto,
     });
-
-    const body = await response.json().catch(() => null);
-
-    if (!response.ok) {
-      const detail =
-        body && typeof body === "object" && "detail" in body
-          ? String((body as { detail: unknown }).detail)
-          : `Error ${response.status} al confirmar el pedido`;
-      throw new Error(detail);
-    }
-
-    return body as PedidoDetalleDto;
   }
 
   /**
@@ -191,26 +147,12 @@ export class OrdersApi {
    * `POST /api/pedidos/:id/cotizar` (admin, aislado). Fija precio/tiempo por
    * línea, re-valida y fija la fecha acordada, y avanza el estado. Devuelve el
    * detalle actualizado.
-   *
-   * Usa `fetch` crudo + `response.ok` por la misma razón que `confirmarPedido`.
    */
   async cotizarPedido(pedidoId: number, dto: CotizarPedidoDto): Promise<PedidoDetalleDto> {
-    const response = await fetch(`${api}/pedidos/${pedidoId}/cotizar`, {
+    return request<PedidoDetalleDto>(`/pedidos/${pedidoId}/cotizar`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(dto),
+      auth: "required",
+      body: dto,
     });
-
-    const body = await response.json().catch(() => null);
-
-    if (!response.ok) {
-      const detail =
-        body && typeof body === "object" && "detail" in body
-          ? String((body as { detail: unknown }).detail)
-          : `Error ${response.status} al cotizar el pedido`;
-      throw new Error(detail);
-    }
-
-    return body as PedidoDetalleDto;
   }
 }

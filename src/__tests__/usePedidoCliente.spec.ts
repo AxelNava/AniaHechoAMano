@@ -2,54 +2,55 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { nextTick } from "vue";
 import { createPinia, setActivePinia } from "pinia";
 import { usePedidoCliente } from "@/composables/pedido/usePedidoCliente";
-import type { ProductoInfoPedidoDto } from "@/types/orders/createOrderDto";
+import type { ProductoOpcionesPedidoPublicoDto } from "@/types/products/ProductoOpcionesPedidoPublicoDto";
 
-const infoFija = (): ProductoInfoPedidoDto => ({
+const opcionesFijas = (): ProductoOpcionesPedidoPublicoDto => ({
   id: 1,
   nombre: "Piñata dinosaurio",
-  descripcion: "Piñata artesanal",
   precio_base: 250,
-  categoria_id: 3,
-  categoria: "Piñatas",
   permite_modificaciones: true,
   requiere_anticipo: false,
-  tiempo_total_estimado_minutos: 120,
-  componentes: [],
 });
 
-const infoAnticipo = (): ProductoInfoPedidoDto => ({
-  ...infoFija(),
+const opcionesAnticipo = (): ProductoOpcionesPedidoPublicoDto => ({
+  ...opcionesFijas(),
   id: 2,
   nombre: "Pastel personalizado",
   precio_base: 500,
   requiere_anticipo: true,
-  tiempo_total_estimado_minutos: 90,
 });
 
 describe("usePedidoCliente — carrito del cliente", () => {
   beforeEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
     setActivePinia(createPinia());
   });
 
-  it("agrega una línea fija y calcula minutos/precio totales", () => {
+  it("agrega solo el snapshot público seguro y calcula el precio total", () => {
     const cliente = usePedidoCliente();
 
-    cliente.agregarLinea(infoFija());
-    cliente.agregarLinea(infoAnticipo());
+    cliente.agregarLinea(opcionesFijas());
+    cliente.agregarLinea(opcionesAnticipo());
 
     expect(cliente.lineas.value).toHaveLength(2);
     expect(cliente.hayModificaciones.value).toBe(false);
     expect(cliente.requiereAnticipo.value).toBe(true);
-    expect(cliente.minutosTotales.value).toBe(210);
     expect(cliente.precioTotalSugerido.value).toBe(750);
+    expect(cliente.lineas.value[0].info).toEqual({
+      nombre: "Piñata dinosaurio",
+      precio_base: 250,
+      permite_modificaciones: true,
+      requiere_anticipo: false,
+    });
+    expect("minutosTotales" in cliente).toBe(false);
   });
 
   it("marca hayModificaciones y guarda las fotos por línea", () => {
     const cliente = usePedidoCliente();
     const foto = new File(["x"], "ref.png", { type: "image/png" });
 
-    const uid = cliente.agregarLinea(infoFija(), {
+    const uid = cliente.agregarLinea(opcionesFijas(), {
       esModificacion: true,
       descripcion: "En tonos verdes",
       fotos: [foto],
@@ -64,7 +65,7 @@ describe("usePedidoCliente — carrito del cliente", () => {
     cliente.contacto.value.nombre = "Ana";
     cliente.contacto.value.url_perfil = "facebook.com/ana";
     cliente.fechaSolicitada.value = "2026-08-20";
-    cliente.agregarLinea(infoFija());
+    cliente.agregarLinea(opcionesFijas());
 
     const payload = cliente.construirPayload();
 
@@ -82,7 +83,7 @@ describe("usePedidoCliente — carrito del cliente", () => {
     const cliente = usePedidoCliente();
     cliente.contacto.value.nombre = "Ana";
     cliente.fechaSolicitada.value = "2026-08-20";
-    cliente.agregarLinea(infoFija(), { esModificacion: true, descripcion: "Cambios" });
+    cliente.agregarLinea(opcionesFijas(), { esModificacion: true, descripcion: "Cambios" });
 
     const payload = cliente.construirPayload();
 
@@ -91,17 +92,19 @@ describe("usePedidoCliente — carrito del cliente", () => {
     expect(payload.productos[0].descripcion_cliente).toBe("Cambios");
   });
 
-  it("persiste solo datos serializables en localStorage (sin las fotos File)", async () => {
+  it("persiste una línea segura sin fotos ni claves internas", async () => {
     const cliente = usePedidoCliente();
     const foto = new File(["x"], "ref.png", { type: "image/png" });
-    cliente.agregarLinea(infoFija(), { esModificacion: true, fotos: [foto] });
+    cliente.agregarLinea(opcionesFijas(), { esModificacion: true, fotos: [foto] });
 
-    // El watcher del store persiste en el siguiente tick, no de forma síncrona.
     await nextTick();
-    const guardado = JSON.parse(localStorage.getItem("ania_pedido_cliente") ?? "{}");
+    const guardado = JSON.parse(sessionStorage.getItem("ania_pedido_cliente") ?? "{}");
+    const lineaSerializada = JSON.stringify(guardado.lineas[0]);
 
-    expect(guardado.lineas).toHaveLength(1);
     expect(guardado.lineas[0].producto_id).toBe(1);
-    expect(JSON.stringify(guardado)).not.toContain("ref.png");
+    expect(lineaSerializada).not.toContain("ref.png");
+    for (const claveSensible of ["categoria", "componentes", "costo", "tiempo", "minutos"]) {
+      expect(lineaSerializada).not.toContain(claveSensible);
+    }
   });
 });

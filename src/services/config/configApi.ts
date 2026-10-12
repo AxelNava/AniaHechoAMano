@@ -8,7 +8,7 @@ import type { ContactoConfigDto } from "@/types/config/contactoDto";
  */
 export class ConfigApi {
   async getContacto(): Promise<ContactoConfigDto | null> {
-    return useFetch<ContactoConfigDto>("config/contacto", { method: "GET" });
+    return useFetch<ContactoConfigDto>("config/contacto", { method: "GET", auth: "none" });
   }
 }
 

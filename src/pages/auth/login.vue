@@ -1,93 +1,92 @@
 <script setup lang="ts">
-import InputError from '@/components/input-error.vue'
-import TextLink from '@/components/text-link.vue'
-import { Button, Checkbox, Input, Label } from '@/components/ui'
-import AuthLayout from '@/layouts/AuthLayout.vue'
-import { LoaderCircle } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { computed, shallowRef, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { ADMIN_RETURN_URL, sanitizeReturnUrl } from "@/auth/authService";
+import { useAuthStore } from "@/stores/authStore";
 
-defineProps<{
-  status?: string
-  canResetPassword?: boolean
-}>()
+const authEntryPaths = new Set([
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/auth/callback",
+  "/auth/logout-callback",
+]);
+const route = useRoute();
+const router = useRouter();
+const authStore = useAuthStore();
+const redirectStarted = shallowRef(false);
+const sessionRedirectStarted = shallowRef(false);
+const redirectError = shallowRef<string | null>(null);
 
-const email = ref('')
-const password = ref('')
-const remember = ref(false)
-const errors = ref<{ email?: string; password?: string }>({})
-const processing = ref(false)
+const safeReturnUrl = computed(() => {
+  const localUrl = sanitizeReturnUrl(route.query.returnUrl);
+  const [pathname] = localUrl.split(/[?#]/);
+  return authEntryPaths.has(pathname) ? ADMIN_RETURN_URL : localUrl;
+});
 
-const submit = () => {
-  processing.value = true
-  errors.value = {}
-  
-  setTimeout(() => {
-    processing.value = false
-  }, 1000)
+const errorMessage = computed(() => authStore.error ?? redirectError.value);
+const statusMessage = computed(() => {
+  if (authStore.loading) {
+    return redirectStarted.value ? "Redirigiendo a IdentityServer…" : "Comprobando tu sesión…";
+  }
+
+  return "Redirigiendo al inicio de sesión seguro…";
+});
+
+async function startSignin(): Promise<void> {
+  if (redirectStarted.value || authStore.authenticated || authStore.loading) return;
+
+  redirectStarted.value = true;
+  redirectError.value = null;
+
+  try {
+    await authStore.signin(safeReturnUrl.value);
+  } catch {
+    redirectError.value = "No se pudo iniciar sesión. Inténtalo de nuevo.";
+  }
 }
+
+function redirectAuthenticatedSession(): void {
+  if (sessionRedirectStarted.value) return;
+
+  sessionRedirectStarted.value = true;
+  void router.replace(safeReturnUrl.value);
+}
+
+function retrySignin(): void {
+  redirectStarted.value = false;
+  void startSignin();
+}
+
+watch(
+  () => [authStore.loading, authStore.authenticated] as const,
+  ([loading, authenticated]) => {
+    if (loading) return;
+    if (authenticated) {
+      redirectAuthenticatedSession();
+      return;
+    }
+
+    void startSignin();
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
-  <AuthLayout title="Log in to your account" description="Enter your email and password below to log in">
-    <form @submit.prevent="submit" class="flex flex-col gap-6">
-      <div class="grid gap-6">
-        <div class="grid gap-2">
-          <Label for="email">Email address</Label>
-          <Input
-            id="email"
-            type="email"
-            name="email"
-            v-model="email"
-            required
-            autofocus
-            tabindex="1"
-            autocomplete="email"
-            placeholder="email@example.com"
-          />
-          <InputError :message="errors.email" />
-        </div>
-
-        <div class="grid gap-2">
-          <div class="flex items-center">
-            <Label for="password">Password</Label>
-            <TextLink v-if="canResetPassword" href="/forgot-password" class="ml-auto text-sm" tabindex="5">
-              Forgot password?
-            </TextLink>
-          </div>
-          <Input
-            id="password"
-            type="password"
-            name="password"
-            v-model="password"
-            required
-            tabindex="2"
-            autocomplete="current-password"
-            placeholder="Password"
-          />
-          <InputError :message="errors.password" />
-        </div>
-
-        <div class="flex items-center space-x-3">
-          <Checkbox id="remember" name="remember" v-model:checked="remember" tabindex="3" />
-          <Label for="remember">Remember me</Label>
-        </div>
-
-        <Button type="submit" class="mt-4 w-full" tabindex="4" :disabled="processing">
-          <LoaderCircle v-if="processing" class="h-4 w-4 animate-spin" />
-          Log in
-        </Button>
-      </div>
-
-      <div class="text-center text-sm text-muted-foreground">
-        Don't have an account?
-        <TextLink href="/register" tabindex="5">
-          Sign up
-        </TextLink>
-      </div>
-    </form>
-
-    <div v-if="status" class="mb-4 text-center text-sm font-medium text-green-600">
-      {{ status }}
-    </div>
-  </AuthLayout>
+  <main class="grid min-h-svh place-items-center bg-background p-6 text-center">
+    <section class="max-w-md space-y-4" aria-live="polite">
+      <h1 class="text-2xl font-semibold">Inicio de sesión seguro</h1>
+      <p v-if="errorMessage" role="alert" class="text-muted-foreground">{{ errorMessage }}</p>
+      <p v-else role="status" class="text-muted-foreground">{{ statusMessage }}</p>
+      <button
+        v-if="errorMessage"
+        type="button"
+        class="rounded-md border border-gray-300 px-4 py-2 font-medium dark:border-gray-700"
+        @click="retrySignin"
+      >
+        Reintentar
+      </button>
+    </section>
+  </main>
 </template>

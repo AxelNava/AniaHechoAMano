@@ -1,8 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { authService } from "@/auth/authService";
 import { ApiError, type ProblemDetails } from "@/services/http/apiClient";
 import { OrdersApi } from "@/services/orders/ordersApi";
 import type { CreatePedidoPublicoDto } from "@/types/orders/createPedidoPublicoDto";
 import type { PedidoSeguimientoDto } from "@/types/orders/seguimientoDto";
+
+vi.mock("@/auth/authService", () => ({
+  authService: { getAccessToken: vi.fn() },
+}));
+
+const tokenMock = vi.mocked(authService.getAccessToken);
 
 const payload: CreatePedidoPublicoDto = {
   cliente_nuevo: { nombre: "Ana" },
@@ -12,6 +19,7 @@ const payload: CreatePedidoPublicoDto = {
 describe("OrdersApi.createOrderPublico — manejo de ProblemDetails", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("devuelve el detalle del pedido cuando la respuesta es OK", async () => {
@@ -27,13 +35,39 @@ describe("OrdersApi.createOrderPublico — manejo de ProblemDetails", () => {
     expect(resultado.referencia_publica).toBe("AHM-2026-0001");
   });
 
+  it("crea la solicitud autenticada con el Bearer vigente", async () => {
+    tokenMock.mockResolvedValue("buyer-token");
+    const detalle = { id: 8, referencia_publica: "AHM-2026-0002", productos: [] };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      json: async () => detalle,
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(new OrdersApi().createOrderPublicoAutenticado(payload)).resolves.toBe(detalle);
+
+    const [url, options] = fetchMock.mock.calls[0];
+    expect(String(url)).toContain("/api/pedidos/solicitud-autenticada");
+    expect(options.method).toBe("POST");
+    expect(new Headers(options.headers).get("Authorization")).toBe("Bearer buyer-token");
+    expect(new Headers(options.headers).get("Content-Type")).toBe("application/json");
+    expect(options.body).toBe(JSON.stringify(payload));
+  });
+
   it("lanza con el `detail` del ProblemDetails cuando la respuesta NO es OK", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
         ok: false,
         status: 409,
-        json: async () => ({ status: 409, title: "Conflicto", detail: "La fecha no está disponible" }),
+        json: async () => ({
+          type: "https://ania.test/problems/CONFLICT",
+          status: 409,
+          title: "Conflicto",
+          detail: "La fecha no está disponible",
+          code: "CONFLICT",
+        }),
       }),
     );
 
@@ -94,23 +128,20 @@ describe("OrdersApi.getSeguimiento", () => {
     [429, "RATE_LIMITED"],
   ];
 
-  it.each(problemCases)(
-    "preserva ProblemDetails HTTP %i con código %s",
-    async (status, code) => {
-      const problem: ProblemDetails = {
-        type: `https://ania.test/problems/${code}`,
-        title: "Error controlado",
-        status,
-        detail: `Detalle HTTP ${status}`,
-        code,
-      };
-      stubJson(problem, status);
+  it.each(problemCases)("preserva ProblemDetails HTTP %i con código %s", async (status, code) => {
+    const problem: ProblemDetails = {
+      type: `https://ania.test/problems/${code}`,
+      title: "Error controlado",
+      status,
+      detail: `Detalle HTTP ${status}`,
+      code,
+    };
+    stubJson(problem, status);
 
-      const error = await captureApiError(new OrdersApi().getSeguimiento("token-invalido"));
+    const error = await captureApiError(new OrdersApi().getSeguimiento("token-invalido"));
 
-      expect(error.status).toBe(status);
-      expect(error.problem).toBe(problem);
-      expect(error.problem?.code).toBe(code);
-    },
-  );
+    expect(error.status).toBe(status);
+    expect(error.problem).toBe(problem);
+    expect(error.problem?.code).toBe(code);
+  });
 });

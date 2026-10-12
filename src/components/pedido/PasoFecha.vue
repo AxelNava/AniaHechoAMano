@@ -1,13 +1,20 @@
 <script setup lang="ts">
-import { watch } from "vue";
+import { toRef, watch } from "vue";
 import { DisponibilidadCalendar } from "@/components/ui/calendar";
 import { usePedidoCliente } from "@/composables/pedido/usePedidoCliente";
 import { useDisponibilidad } from "@/composables/pedido/useDisponibilidad";
 import { formatDiaISO } from "@/utils/orderDisplay";
 
-// Paso "Fecha" (solo pedidos 100% fijos). Alimenta el DisponibilidadCalendar
-// controlado con la disponibilidad real y evalúa la fecha elegida.
-const { fechaSolicitada, minutosTotales } = usePedidoCliente();
+// Paso "Fecha" (solo pedidos 100% fijos). Solo se monta después de hidratar
+// un total positivo dentro del wizard autenticado.
+const props = defineProps({
+  minutosTotales: {
+    type: Number,
+    required: true,
+    validator: (valor: number) => Number.isFinite(valor) && valor > 0,
+  },
+});
+const { fechaSolicitada } = usePedidoCliente();
 
 const {
   mesVisible,
@@ -18,7 +25,7 @@ const {
   evaluacion,
   evaluando,
   evaluarFecha,
-} = useDisponibilidad(minutosTotales);
+} = useDisponibilidad(toRef(props, "minutosTotales"));
 
 // Reevalúa la fecha (motivos/sugerencias) cada vez que cambia la selección.
 watch(fechaSolicitada, (fecha) => void evaluarFecha(fecha), { immediate: true });
@@ -33,8 +40,7 @@ const seleccionarSugerencia = (dia: string) => {
     <div>
       <h2 class="text-text-page text-lg font-semibold">¿Para cuándo la quieres?</h2>
       <p class="text-text-page2 text-sm">
-        Solo puedes elegir días con disponibilidad. La fecha se confirma cuando
-        aceptamos el pedido.
+        Solo puedes elegir días con disponibilidad. La fecha se confirma cuando aceptamos el pedido.
       </p>
     </div>
 
@@ -92,9 +98,7 @@ const seleccionarSugerencia = (dia: string) => {
           </p>
         </div>
 
-        <p v-else class="text-text-page2 text-sm">
-          Selecciona un día resaltado en el calendario.
-        </p>
+        <p v-else class="text-text-page2 text-sm">Selecciona un día resaltado en el calendario.</p>
       </div>
     </div>
   </div>

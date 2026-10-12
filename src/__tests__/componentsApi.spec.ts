@@ -1,7 +1,13 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { authService } from "@/auth/authService";
 import { ComponentsApi } from "@/services/products/componentsApi";
 import type { ComponenteDto } from "@/types/products/ComponenteDto";
 
+vi.mock("@/auth/authService", () => ({
+  authService: { getAccessToken: vi.fn() },
+}));
+
+const tokenMock = vi.mocked(authService.getAccessToken);
 const componente: ComponenteDto = {
   id: 5,
   tipo: "MATERIAL",
@@ -19,6 +25,8 @@ const stubFetchJson = (data: unknown) => {
 };
 
 describe("ComponentsApi", () => {
+  beforeEach(() => tokenMock.mockReset().mockResolvedValue("admin-token"));
+
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
@@ -35,6 +43,7 @@ describe("ComponentsApi", () => {
       const [url, options] = fetchMock.mock.calls[0];
       expect(String(url)).toMatch(/\/api\/productos\/componentes\/5$/);
       expect(options.method).toBe("PATCH");
+      expect(new Headers(options.headers).get("Content-Type")).toBe("application/json");
       expect(JSON.parse(options.body as string)).toEqual({
         nombre: "Papel Metálico",
         unidad_medida: "metro",

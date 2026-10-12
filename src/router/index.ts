@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import WelcomePage from "../views/WelcomeView.vue";
+import { ADMIN_ROLES, BUYER_ROLE } from "@/stores/authStore";
+import { createAuthGuard } from "./authGuard";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -14,15 +16,17 @@ const router = createRouter({
       name: "admin",
       component: () => import("@/pages/admin/AdminDashboardLayout.vue"),
       redirect: "/admin/products",
+      meta: { requiresAuth: true, roles: ADMIN_ROLES },
       children: [
-        {
-          path: "",
-          redirect: "/admin/products",
-        },
         {
           path: "products",
           name: "admin-products",
           component: () => import("@/components/dashboard/list-products.vue"),
+        },
+        {
+          path: "products/import",
+          name: "admin-products-import",
+          component: () => import("@/views/ProductImportView.vue"),
         },
         {
           path: "products/edit/:id",
@@ -105,6 +109,13 @@ const router = createRouter({
       path: "/pedido",
       name: "pedido-wizard",
       component: () => import("@/views/PedidoWizardView.vue"),
+      // El wizard acepta pedidos públicos, pero conserva el rol de comprador
+      // (y el acceso administrativo) cuando la sesión sí está autenticada.
+      meta: {
+        requiresAuth: true,
+        allowAnonymous: true,
+        roles: [BUYER_ROLE, ...ADMIN_ROLES],
+      },
     },
     {
       path: "/pedido/seguimiento/:token",
@@ -127,41 +138,58 @@ const router = createRouter({
       component: () => import("@/pages/auth/login.vue"),
     },
     {
+      path: "/auth/callback",
+      name: "auth-callback",
+      component: () => import("@/pages/auth/callback.vue"),
+    },
+    {
+      path: "/auth/logout-callback",
+      name: "auth-logout-callback",
+      component: () => import("@/pages/auth/logout-callback.vue"),
+    },
+    {
+      path: "/sin-permisos",
+      name: "forbidden",
+      component: () => import("@/pages/auth/forbidden.vue"),
+    },
+    {
       path: "/register",
       name: "register",
       component: () => import("@/pages/auth/register.vue"),
     },
-    {
-      path: "/forgot-password",
-      name: "forgot-password",
-      component: () => import("@/pages/auth/forgot-password.vue"),
-    },
+    { path: "/forgot-password", redirect: { name: "login" } },
     {
       path: "/admin/dashboard",
       name: "dashboard",
       component: () => import("@/pages/dashboard.vue"),
+      meta: { requiresAuth: true, roles: ADMIN_ROLES },
     },
     {
       path: "/settings/profile",
       name: "profile",
       component: () => import("@/pages/settings/profile.vue"),
+      meta: { requiresAuth: true, roles: ADMIN_ROLES },
     },
   ],
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(createAuthGuard());
+
+export const viewTransitionGuard = (
+  to: { path: string },
+  from: { path: string },
+): true | Promise<true> => {
   const doc = document as Document & {
     startViewTransition?: (callback: () => Promise<void> | void) => void;
   };
 
-  if (!doc.startViewTransition || to.path === from.path) {
-    next();
-    return;
-  }
+  if (!doc.startViewTransition || to.path === from.path) return true;
 
-  doc.startViewTransition(async () => {
-    next();
+  return new Promise((resolve) => {
+    doc.startViewTransition?.(() => resolve(true));
   });
-});
+};
+
+router.beforeEach(viewTransitionGuard);
 
 export default router;
