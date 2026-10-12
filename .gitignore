@@ -37,8 +37,13 @@ coverage
 __screenshots__/
 # Local Pi runtime state
 .atl/
+/.gentle-ai-default-agent.json
+
+# Local Windows artifacts
+/NUL
 
 # Playwright
+/.playwright-mcp/
 /playwright-report/
 /test-results/
 /playwright/.auth/
