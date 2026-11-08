@@ -1,6 +1,6 @@
 import { flushPromises, mount } from "@vue/test-utils";
 import { nextTick, reactive } from "vue";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import RegisterPage from "./register.vue";
 
 const mocks = vi.hoisted(() => ({

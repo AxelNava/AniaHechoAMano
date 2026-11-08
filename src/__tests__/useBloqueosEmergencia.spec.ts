@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { toRaw } from "vue";
 import { ApiError } from "@/services/http/apiClient";
 import type {

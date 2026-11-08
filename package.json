@@ -3,22 +3,23 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "packageManager": "bun@1.4.3",
   "engines": {
-    "node": "^20.19.0 || >=22.12.0"
+    "node": "^22.18.0 || ^24.11.0 || >=26.0.0"
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "vp dev",
     "build": "bun run type-check && bun run build-only",
-    "preview": "vite preview",
-    "test:unit": "vitest",
+    "preview": "vp preview",
+    "test:unit": "vp test",
     "test:e2e": "playwright test",
-    "build-only": "vite build",
+    "build-only": "vp build",
     "type-check": "vue-tsc --noEmit",
     "backend:inspect": "bun tools/backend-contract/cli.ts",
     "backend:inspect:check": "bun run backend:inspect -- --check",
     "backend:contract:type-check": "bunx tsc -p tsconfig.backend-contract.json --noEmit",
-    "test:backend-contract": "vitest run tools/backend-contract --environment node",
-    "lint:oxlint": "oxlint . --fix -D correctness --ignore-path .gitignore",
+    "test:backend-contract": "vp test run tools/backend-contract --environment node",
+    "lint:oxlint": "vp lint . --fix -D correctness --ignore-path .gitignore",
     "lint:eslint": "eslint . --fix --cache",
     "lint": "bun run lint:oxlint && bun run lint:eslint",
     "format": "prettier --write src/"
@@ -53,15 +54,19 @@
     "eslint-plugin-oxlint": "1.71.0",
     "eslint-plugin-playwright": "2.3.0",
     "eslint-plugin-vue": "10.6.2",
-    "oxlint": "1.71.0",
+    "jsdom": "27.2.0",
     "prettier": "3.6.2",
     "tailwindcss": "4.2.4",
     "tree-sitter-typescript": "0.23.2",
     "typescript": "6.0.3",
-    "vite": "8.0.5",
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.3.0",
     "vite-plugin-vue-devtools": "8.1.5",
-    "vitest": "4.1.0",
+    "vite-plus": "1.3.0",
     "vue-tsc": "3.3.5",
     "web-tree-sitter": "0.25.10"
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.3.0",
+    "vitest": "5.0.5"
   }
 }

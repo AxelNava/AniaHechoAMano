@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { authService } from "@/auth/authService";
 import { CategoriesApi } from "@/services/categories/categoriesApi";
 import { ClientesApi } from "@/services/clientes/clientesApi";

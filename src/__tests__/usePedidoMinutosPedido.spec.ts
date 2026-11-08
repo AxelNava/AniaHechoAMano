@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { ref } from "vue";
 import { usePedidoMinutosPedido } from "@/composables/pedido/usePedidoMinutosPedido";
 import type { PedidoClienteLinea } from "@/types/orders/pedidoCliente";

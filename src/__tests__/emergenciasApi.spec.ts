@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { authService } from "@/auth/authService";
 import { ApiError, type ProblemDetails, type ProblemDetailsCode } from "@/services/http/apiClient";
 import { EmergenciasApi } from "@/services/disponibilidad/emergenciasApi";

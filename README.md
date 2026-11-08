@@ -1,6 +1,6 @@
 # web-app
 
-This template should help get you started developing with Vue 3 in Vite.
+Frontend Vue 3 con Vite+ y Bun como gestor de paquetes.
 
 ## Recommended IDE Setup
 
@@ -25,15 +25,75 @@ See [Vite Configuration Reference](https://vite.dev/config/).
 
 ## Project Setup
 
+Requiere Bun 1.4.3 y Node.js 22.18+, 24.11+ o 26+ (según la versión mayor).
+Bun sigue gestionando las dependencias mediante `bun.lock`; no se necesita instalar
+Vite+ globalmente ni usar otro gestor de paquetes.
+
 ```sh
 bun install
 ```
+
+### Herramientas Vite+
+
+Los comandos habituales de Bun usan el ejecutable local `vp` de Vite+:
+
+| Comando | Función |
+| --- | --- |
+| `bun run dev` | Desarrollo con recarga en caliente (`vp dev`) |
+| `bun run build` | Tipos de Vue y build de producción (`vue-tsc` + `vp build`) |
+| `bun run preview` | Vista previa del build (`vp preview`) |
+| `bun run test:unit --run` | Suite unitaria con el runner incluido (`vp test`) |
+| `bun run test:backend-contract` | Pruebas de las herramientas de contratos |
+| `bun lint` | Oxlint incluido en Vite+ y ESLint con reglas de Vue |
+| `bun run format` | Formato con Prettier, sin reformateo global durante la migración |
+
+La configuración de Vite+ está en `vite.config.ts` y la de pruebas en
+`vitest.config.ts`. Se conservan Vue, Tailwind, Vue DevTools y el alias `@`.
+`vue-tsc` sigue comprobando los componentes `.vue`; `vp check` no lo sustituye
+ni ejecuta Prettier o las reglas adicionales de ESLint.
+
+Para instalaciones reproducibles, usa `bun install --frozen-lockfile`.
+Las pruebas unitarias excluyen E2E y artefactos de `test-results/` y
+`playwright-report/`; Playwright sigue ejecutándose por separado.
 
 ### Compile and Hot-Reload for Development
 
 ```sh
 bun dev
 ```
+
+### Terminales de desarrollo con herdr (Windows)
+
+Desde una terminal de **herdr**, en la carpeta del frontend, ejecuta con PowerShell 7:
+
+```powershell
+pwsh -File .\tools\abrir-ania.ps1
+```
+
+Abre y enfoca una pestaña nueva `Ania`: frontend arriba, backend abajo a la izquierda
+e IdentityServer abajo a la derecha. Mantiene las terminales interactivas y no toca
+los paneles existentes.
+
+| Panel | Carpeta relativa al directorio padre del frontend | Comando |
+| --- | --- | --- |
+| Frontend | `AniaHechoAMano` | `bun run dev` |
+| Backend | `AniaHechoAManoBackend` | `bun run dev` |
+| Identity | `identityServer/AniaIdentityAdmin/AniaIdentityAdmin/src/AniaIdentityAdmin.STS.Identity` | `dotnet run --launch-profile AniaIdentityAdmin.AspNetIdentity` |
+
+Requiere `herdr`, `bun`, el SDK .NET 10 y los proyectos con sus dependencias/configuración
+local ya preparadas. No instala dependencias ni comprueba que los servicios hayan arrancado:
+revisa la salida de cada panel. `Ctrl+C` detiene el proceso y conserva su terminal.
+Cada ejecución crea otra pestaña; no detiene servicios previos.
+
+Para abrir solo las terminales, sin iniciar servicios (por ejemplo, si ya están activos):
+
+```powershell
+pwsh -File .\tools\abrir-ania.ps1 -SoloTerminales
+```
+
+La ayuda completa está disponible con `Get-Help .\tools\abrir-ania.ps1 -Full`.
+Si herdr falla, el script se detiene sin reintentar; puede quedar una pestaña parcialmente
+creada para que la revises manualmente.
 
 ### Type-Check, Compile and Minify for Production
 

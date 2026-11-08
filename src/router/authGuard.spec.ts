@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vite-plus/test";
 import { ADMIN_ROLES, BUYER_ROLE } from "@/stores/authStore";
 import { createAuthGuard, initializeAuth } from "./authGuard";
 import router, { viewTransitionGuard } from "./index";

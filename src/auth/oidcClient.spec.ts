@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vite-plus/test";
 import { WebStorageStateStore } from "oidc-client-ts";
 import { buildManageUrl, createOidcSettings, readFrontendEnvironment } from "@/auth/oidcClient";
 

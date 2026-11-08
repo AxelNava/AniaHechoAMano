@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
 import type { ComponenteDto } from "@/types/products/ComponenteDto";
 import type { DatosEdicionComponente } from "@/composables/products/useProductComponents";

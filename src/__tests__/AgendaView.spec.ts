@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { flushPromises, mount } from "@vue/test-utils";
 import { computed, reactive, ref } from "vue";
 import type { ImpactoBloqueoDto } from "@/types/disponibilidad/agendaDto";

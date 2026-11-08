@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vite-plus/test";
 import { analyzeBackend } from "./analyzer";
 import { runCli } from "./cli";
 import { generateContractFiles } from "./generator";

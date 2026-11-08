@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { nextTick, ref } from "vue";
 import type { DiasDisponibilidadResponseDto } from "@/types/disponibilidad/disponibilidadDto";
 

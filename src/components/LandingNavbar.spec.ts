@@ -1,6 +1,6 @@
 import { h, defineComponent } from "vue";
 import { mount } from "@vue/test-utils";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import LandingNavbar from "./LandingNavbar.vue";
 
 const authStore = vi.hoisted(() => ({

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { flushPromises, mount } from "@vue/test-utils";
 import { ApiError } from "@/services/http/apiClient";
 import type { PedidoSeguimientoDto } from "@/types/orders/seguimientoDto";

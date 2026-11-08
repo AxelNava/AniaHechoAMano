@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { request } from "@/services/http/apiClient";
 import { ProductImportApi } from "@/services/products/productImportApi";
 import type { ProductImportPreviewDto } from "@/types/products/productImportDto";

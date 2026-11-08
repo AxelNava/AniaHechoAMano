@@ -1,7 +1,7 @@
 import type { App } from "vue";
 import type { Pinia } from "pinia";
 import type { Router } from "vue-router";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vite-plus/test";
 import { bootstrapApplication } from "@/bootstrap";
 
 const deferred = <T>() => {

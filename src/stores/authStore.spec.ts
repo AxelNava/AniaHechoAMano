@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
 import type { User, UserProfile } from "oidc-client-ts";
 import type { AuthEventHandlers, AuthServicePort } from "@/auth/authService";
