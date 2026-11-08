@@ -262,10 +262,10 @@ export function marcarContactado(params: { path: { id: number; afectadoId: numbe
   });
 }
 
-export function updateProduct(params: { path: { id: number }; body: FormData }): Promise<BackendContract.ProductDto> {
+export function updateProduct(params: { path: { id: number }; body: FormData }): Promise<BackendContract.ProductAdminDto> {
   const path = replacePathParameters("/productos/:id", params.path);
   const query = "";
-  return request<BackendContract.ProductDto>(`${path}${query}`, {
+  return request<BackendContract.ProductAdminDto>(`${path}${query}`, {
     method: "PATCH",
     auth: "required",
     body: params.body
@@ -431,10 +431,10 @@ export function previsualizar(params: { body: FormData }): Promise<BackendContra
   });
 }
 
-export function createProduct(params: { body: FormData }): Promise<BackendContract.ProductDto> {
+export function createProduct(params: { body: FormData }): Promise<BackendContract.ProductAdminDto> {
   const path = "/productos/new";
   const query = "";
-  return request<BackendContract.ProductDto>(`${path}${query}`, {
+  return request<BackendContract.ProductAdminDto>(`${path}${query}`, {
     method: "POST",
     auth: "required",
     body: params.body

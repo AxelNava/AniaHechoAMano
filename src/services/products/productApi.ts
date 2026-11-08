@@ -1,4 +1,5 @@
 import { IProductApi } from "@/services/interfaces/IProductApi";
+import { getOpcionesPedidoPublicas, getProductoInfoPedido } from "@/generated/backend-contract/api";
 import { API_BASE_URL, API_ORIGIN, request } from "@/services/http/apiClient";
 import { ProductDto } from "@/types/products/ProductDto";
 import { useFetch } from "@/composables/useFetch";
@@ -106,17 +107,21 @@ export class ProductApi implements IProductApi {
   public async getProductOrderOptions(
     id: number,
   ): Promise<ProductoOpcionesPedidoPublicoDto | null> {
-    return useFetch<ProductoOpcionesPedidoPublicoDto>(`productos/${id}/opciones-pedido`, {
-      method: "GET",
-      auth: "none",
-    });
+    try {
+      return await getOpcionesPedidoPublicas({ path: { id } });
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      return null;
+    }
   }
 
   public async getProductOrderInfo(id: number): Promise<ProductoInfoPedidoDto | null> {
-    return useFetch<ProductoInfoPedidoDto>(`productos/${id}/info-pedido`, {
-      method: "GET",
-      auth: "required",
-    });
+    try {
+      return await getProductoInfoPedido({ path: { id } });
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      return null;
+    }
   }
 
   public async createProduct(

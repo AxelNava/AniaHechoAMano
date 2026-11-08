@@ -217,6 +217,7 @@ export interface CreateProductoDto {
   nombre: string;
   descripcion?: string;
   precio_base: number;
+  margen_ganancia_porcentaje?: number | null;
   categoria_id: number;
   activo?: boolean;
   permite_modificaciones?: boolean;
@@ -416,6 +417,8 @@ export interface PedidoSeguimientoDto {
   fecha_entrega_acordada: string | null;
 }
 
+export type ProductAdminDto = ProductDto & { margen_ganancia_porcentaje: number | null; };
+
 export type ProductComponenteDto = { componente_id: number; cantidad: number; };
 
 export type ProductDto = { id: number; nombre: string; descripcion: string; precio_base: number; activo: boolean; permite_modificaciones: boolean; requiere_anticipo: boolean; fecha_creacion: string; tiene_historial: boolean; categoria_id: number | null; categoria: string; tags_por_producto: Array<string>; componentes: Array<ProductComponenteDto>; imagenes?: Array<ProductImageDto>; };
@@ -444,6 +447,11 @@ export interface ProductoInfoPedidoDto {
   nombre: string;
   descripcion: string;
   precio_base: number;
+  margen_ganancia_porcentaje: number | null;
+  costo_total_componentes: number;
+  precio_sugerido: number;
+  costos_incompletos: boolean;
+  componentes_incompletos: Array<number>;
   categoria_id: number | null;
   categoria: string;
   permite_modificaciones: boolean;
@@ -480,6 +488,7 @@ export interface UpdateProductoDto {
   nombre: string;
   descripcion?: string;
   precio_base: number;
+  margen_ganancia_porcentaje?: number | null;
   categoria_id: number;
   activo?: boolean;
   permite_modificaciones?: boolean;

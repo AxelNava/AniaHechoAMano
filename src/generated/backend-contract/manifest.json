@@ -6,7 +6,7 @@
     "framework": "nestjs",
     "parser": "tree-sitter-typescript"
   },
-  "sourceHash": "3be594624646aaa91ddfa3d81cb7a91139bff05c9a567450dc3770506e10fc29",
+  "sourceHash": "2b546ca7531f63e99a8c9fb8fa866f95dc960e7606ba9392e9200aa40c2ff71e",
   "declarations": [
     {
       "name": "AgendaConfigClient",
@@ -1850,7 +1850,7 @@
       "kind": "interface",
       "source": {
         "file": "src/costeo/dto/costeo.dto.ts",
-        "line": 48,
+        "line": 54,
         "column": 8
       },
       "typeParameters": [],
@@ -2081,7 +2081,7 @@
       "kind": "class",
       "source": {
         "file": "src/productos/dto/create-producto.dto.ts",
-        "line": 33,
+        "line": 34,
         "column": 8
       },
       "typeParameters": [],
@@ -2468,6 +2468,27 @@
           }
         },
         {
+          "name": "margen_ganancia_porcentaje",
+          "optional": false,
+          "type": {
+            "kind": "union",
+            "variants": [
+              {
+                "kind": "primitive",
+                "name": "number",
+                "sourceText": "number"
+              },
+              {
+                "kind": "literal",
+                "value": null,
+                "sourceText": "null"
+              }
+            ],
+            "nullable": true,
+            "sourceText": "number | null"
+          }
+        },
+        {
           "name": "categoria_id",
           "optional": false,
           "type": {
@@ -2534,6 +2555,37 @@
           }
         },
         {
+          "name": "precio_sugerido",
+          "optional": false,
+          "type": {
+            "kind": "primitive",
+            "name": "number",
+            "sourceText": "number"
+          }
+        },
+        {
+          "name": "costos_incompletos",
+          "optional": false,
+          "type": {
+            "kind": "primitive",
+            "name": "boolean",
+            "sourceText": "boolean"
+          }
+        },
+        {
+          "name": "componentes_incompletos",
+          "optional": false,
+          "type": {
+            "kind": "array",
+            "element": {
+              "kind": "primitive",
+              "name": "number",
+              "sourceText": "number"
+            },
+            "sourceText": "number[]"
+          }
+        },
+        {
           "name": "componentes",
           "optional": false,
           "type": {
@@ -2554,7 +2606,7 @@
       "kind": "class",
       "source": {
         "file": "src/costeo/costeo.service.ts",
-        "line": 21,
+        "line": 22,
         "column": 8
       },
       "typeParameters": [],
@@ -3184,7 +3236,7 @@
       "kind": "class",
       "source": {
         "file": "src/productos/dto/create-producto.dto.ts",
-        "line": 53,
+        "line": 54,
         "column": 8
       },
       "typeParameters": [],
@@ -3214,6 +3266,27 @@
             "kind": "primitive",
             "name": "number",
             "sourceText": "number"
+          }
+        },
+        {
+          "name": "margen_ganancia_porcentaje",
+          "optional": true,
+          "type": {
+            "kind": "union",
+            "variants": [
+              {
+                "kind": "primitive",
+                "name": "number",
+                "sourceText": "number"
+              },
+              {
+                "kind": "literal",
+                "value": null,
+                "sourceText": "null"
+              }
+            ],
+            "nullable": true,
+            "sourceText": "number | null"
           }
         },
         {
@@ -3903,7 +3976,7 @@
       "kind": "interface",
       "source": {
         "file": "src/productos/importacion/importacion.service.ts",
-        "line": 25,
+        "line": 29,
         "column": 1
       },
       "typeParameters": [],
@@ -3943,7 +4016,7 @@
       "kind": "interface",
       "source": {
         "file": "src/productos/importacion/importacion.service.ts",
-        "line": 31,
+        "line": 35,
         "column": 1
       },
       "typeParameters": [],
@@ -4351,7 +4424,7 @@
       "kind": "class",
       "source": {
         "file": "src/productos/importacion/importacion.service.ts",
-        "line": 129,
+        "line": 133,
         "column": 8
       },
       "typeParameters": [],
@@ -6659,6 +6732,56 @@
       "extends": []
     },
     {
+      "name": "ProductAdminDto",
+      "kind": "type",
+      "source": {
+        "file": "src/productos/dto/products-dto-out.ts",
+        "line": 24,
+        "column": 8
+      },
+      "typeParameters": [],
+      "fields": [],
+      "alias": {
+        "kind": "intersection",
+        "variants": [
+          {
+            "kind": "reference",
+            "name": "ProductDto",
+            "sourceText": "ProductDto"
+          },
+          {
+            "kind": "object",
+            "properties": [
+              {
+                "name": "margen_ganancia_porcentaje",
+                "optional": false,
+                "type": {
+                  "kind": "union",
+                  "variants": [
+                    {
+                      "kind": "primitive",
+                      "name": "number",
+                      "sourceText": "number"
+                    },
+                    {
+                      "kind": "literal",
+                      "value": null,
+                      "sourceText": "null"
+                    }
+                  ],
+                  "nullable": true,
+                  "sourceText": "number | null"
+                }
+              }
+            ],
+            "sourceText": "{\n  margen_ganancia_porcentaje: number | null;\n}"
+          }
+        ],
+        "nullable": false,
+        "sourceText": "ProductDto & {\n  margen_ganancia_porcentaje: number | null;\n}"
+      }
+    },
+    {
       "name": "ProductComponenteDto",
       "kind": "type",
       "source": {
@@ -6690,7 +6813,7 @@
             }
           }
         ],
-        "sourceText": "{\r\n  componente_id: number;\r\n  cantidad: number;\r\n}"
+        "sourceText": "{\n  componente_id: number;\n  cantidad: number;\n}"
       }
     },
     {
@@ -6857,7 +6980,7 @@
             }
           }
         ],
-        "sourceText": "{\r\n  id: number;\r\n  nombre: string;\r\n  descripcion: string;\r\n  precio_base: number;\r\n  activo: boolean;\r\n  permite_modificaciones: boolean;\r\n  requiere_anticipo: boolean;\r\n  fecha_creacion: Date;\r\n  tiene_historial: boolean;\r\n  categoria_id: number | null;\r\n  categoria: string;\r\n  tags_por_producto: string[];\r\n  componentes: ProductComponenteDto[];\r\n  imagenes?: ProductImageDto[];\r\n}"
+        "sourceText": "{\n  id: number;\n  nombre: string;\n  descripcion: string;\n  precio_base: number;\n  activo: boolean;\n  permite_modificaciones: boolean;\n  requiere_anticipo: boolean;\n  fecha_creacion: Date;\n  tiene_historial: boolean;\n  categoria_id: number | null;\n  categoria: string;\n  tags_por_producto: string[];\n  componentes: ProductComponenteDto[];\n  imagenes?: ProductImageDto[];\n}"
       }
     },
     {
@@ -6914,7 +7037,7 @@
       "kind": "type",
       "source": {
         "file": "src/productos/dto/products-dto-out.ts",
-        "line": 23,
+        "line": 28,
         "column": 8
       },
       "typeParameters": [],
@@ -7076,7 +7199,7 @@
             }
           }
         ],
-        "sourceText": "{\r\n  id: number;\r\n  url: string;\r\n  imagen: string;\r\n  binario_url: string;\r\n  nombre: string;\r\n  ruta: string;\r\n  public_id?: string | null;\r\n  proveedor?: string | null;\r\n  alt?: string | null;\r\n  orden: number;\r\n  es_portada: boolean;\r\n  created_at?: Date;\r\n  updated_at?: Date;\r\n}"
+        "sourceText": "{\n  id: number;\n  url: string;\n  imagen: string;\n  binario_url: string;\n  nombre: string;\n  ruta: string;\n  public_id?: string | null;\n  proveedor?: string | null;\n  alt?: string | null;\n  orden: number;\n  es_portada: boolean;\n  created_at?: Date;\n  updated_at?: Date;\n}"
       }
     },
     {
@@ -7213,7 +7336,7 @@
       "kind": "type",
       "source": {
         "file": "src/productos/productos.service.ts",
-        "line": 45,
+        "line": 46,
         "column": 1
       },
       "typeParameters": [],
@@ -7312,7 +7435,7 @@
       "kind": "interface",
       "source": {
         "file": "src/costeo/dto/costeo.dto.ts",
-        "line": 59,
+        "line": 65,
         "column": 8
       },
       "typeParameters": [],
@@ -7342,6 +7465,27 @@
             "kind": "primitive",
             "name": "number",
             "sourceText": "number"
+          }
+        },
+        {
+          "name": "margen_ganancia_porcentaje",
+          "optional": false,
+          "type": {
+            "kind": "union",
+            "variants": [
+              {
+                "kind": "primitive",
+                "name": "number",
+                "sourceText": "number"
+              },
+              {
+                "kind": "literal",
+                "value": null,
+                "sourceText": "null"
+              }
+            ],
+            "nullable": true,
+            "sourceText": "number | null"
           }
         },
         {
@@ -7390,6 +7534,15 @@
             "kind": "primitive",
             "name": "number",
             "sourceText": "number"
+          }
+        },
+        {
+          "name": "costos_incompletos",
+          "optional": false,
+          "type": {
+            "kind": "primitive",
+            "name": "boolean",
+            "sourceText": "boolean"
           }
         },
         {
@@ -7604,6 +7757,67 @@
           }
         },
         {
+          "name": "margen_ganancia_porcentaje",
+          "optional": false,
+          "type": {
+            "kind": "union",
+            "variants": [
+              {
+                "kind": "primitive",
+                "name": "number",
+                "sourceText": "number"
+              },
+              {
+                "kind": "literal",
+                "value": null,
+                "sourceText": "null"
+              }
+            ],
+            "nullable": true,
+            "sourceText": "number | null"
+          }
+        },
+        {
+          "name": "costo_total_componentes",
+          "optional": false,
+          "type": {
+            "kind": "primitive",
+            "name": "number",
+            "sourceText": "number"
+          }
+        },
+        {
+          "name": "precio_sugerido",
+          "optional": false,
+          "type": {
+            "kind": "primitive",
+            "name": "number",
+            "sourceText": "number"
+          }
+        },
+        {
+          "name": "costos_incompletos",
+          "optional": false,
+          "type": {
+            "kind": "primitive",
+            "name": "boolean",
+            "sourceText": "boolean"
+          }
+        },
+        {
+          "name": "componentes_incompletos",
+          "optional": false,
+          "type": {
+            "kind": "array",
+            "element": {
+              "kind": "primitive",
+              "name": "number",
+              "sourceText": "number"
+            },
+            "sourceText": "number[]"
+          }
+        },
+        {
           "name": "categoria_id",
           "optional": false,
           "type": {
@@ -7784,7 +7998,7 @@
       "kind": "class",
       "source": {
         "file": "src/productos/productos.service.ts",
-        "line": 56,
+        "line": 57,
         "column": 8
       },
       "typeParameters": [],
@@ -7805,7 +8019,7 @@
       "kind": "type",
       "source": {
         "file": "src/productos/dto/products-dto-out.ts",
-        "line": 39,
+        "line": 44,
         "column": 8
       },
       "typeParameters": [],
@@ -9208,7 +9422,7 @@
             },
             "source": {
               "file": "src/productos/productos.controller.ts",
-              "line": 215,
+              "line": 227,
               "column": 21
             }
           }
@@ -9233,7 +9447,7 @@
       },
       "source": {
         "file": "src/productos/productos.controller.ts",
-        "line": 215,
+        "line": 227,
         "column": 3
       },
       "warnings": []
@@ -9264,7 +9478,7 @@
             "field": "id",
             "source": {
               "file": "src/productos/productos.controller.ts",
-              "line": 375,
+              "line": 446,
               "column": 5
             }
           }
@@ -9283,7 +9497,7 @@
       },
       "source": {
         "file": "src/productos/productos.controller.ts",
-        "line": 374,
+        "line": 445,
         "column": 3
       },
       "warnings": []
@@ -9314,7 +9528,7 @@
             "field": "id",
             "source": {
               "file": "src/productos/productos.controller.ts",
-              "line": 307,
+              "line": 319,
               "column": 5
             }
           }
@@ -9368,7 +9582,7 @@
       },
       "source": {
         "file": "src/productos/productos.controller.ts",
-        "line": 306,
+        "line": 318,
         "column": 3
       },
       "warnings": []
@@ -9399,7 +9613,7 @@
             "field": "id",
             "source": {
               "file": "src/productos/productos.controller.ts",
-              "line": 332,
+              "line": 344,
               "column": 5
             }
           },
@@ -9415,7 +9629,7 @@
             "field": "imageId",
             "source": {
               "file": "src/productos/productos.controller.ts",
-              "line": 333,
+              "line": 345,
               "column": 5
             }
           }
@@ -9432,7 +9646,7 @@
       },
       "source": {
         "file": "src/productos/productos.controller.ts",
-        "line": 331,
+        "line": 343,
         "column": 3
       },
       "warnings": []
@@ -9463,7 +9677,7 @@
             "field": "id",
             "source": {
               "file": "src/productos/productos.controller.ts",
-              "line": 359,
+              "line": 430,
               "column": 5
             }
           }
@@ -9477,11 +9691,12 @@
           "name": "ProductoInfoPedidoDto",
           "sourceText": "ProductoInfoPedidoDto"
         },
-        "source": "service"
+        "source": "service",
+        "description": "Costeo administrativo y sugerencia parcial o completa; sin margen, precio_sugerido conserva precio_base."
       },
       "source": {
         "file": "src/productos/productos.controller.ts",
-        "line": 358,
+        "line": 429,
         "column": 3
       },
       "warnings": []
@@ -9512,7 +9727,7 @@
             "field": "id",
             "source": {
               "file": "src/productos/productos.controller.ts",
-              "line": 238,
+              "line": 250,
               "column": 5
             }
           }
@@ -9531,7 +9746,7 @@
       },
       "source": {
         "file": "src/productos/productos.controller.ts",
-        "line": 237,
+        "line": 249,
         "column": 3
       },
       "warnings": []
@@ -9630,7 +9845,7 @@
       },
       "source": {
         "file": "src/productos/productos.controller.ts",
-        "line": 181,
+        "line": 193,
         "column": 3
       },
       "warnings": [
@@ -9772,7 +9987,7 @@
             "field": "id",
             "source": {
               "file": "src/productos/productos.controller.ts",
-              "line": 167,
+              "line": 179,
               "column": 5
             }
           },
@@ -9787,7 +10002,7 @@
             },
             "source": {
               "file": "src/productos/productos.controller.ts",
-              "line": 168,
+              "line": 180,
               "column": 5
             }
           },
@@ -9804,7 +10019,7 @@
             "field": "imagenes",
             "source": {
               "file": "src/productos/productos.controller.ts",
-              "line": 169,
+              "line": 181,
               "column": 5
             }
           }
@@ -9815,15 +10030,15 @@
         "contentType": "application/json",
         "type": {
           "kind": "reference",
-          "name": "ProductDto",
-          "sourceText": "ProductDto"
+          "name": "ProductAdminDto",
+          "sourceText": "ProductAdminDto"
         },
         "source": "service",
-        "description": "Producto actualizado con imágenes reordenadas y su receta en `componentes` ([{ componente_id, cantidad }])."
+        "description": "Producto actualizado con imágenes reordenadas, receta en `componentes` ([{ componente_id, cantidad }]) y margen_ganancia_porcentaje (number | null), solo administrativo."
       },
       "source": {
         "file": "src/productos/productos.controller.ts",
-        "line": 166,
+        "line": 178,
         "column": 3
       },
       "warnings": []
@@ -9854,7 +10069,7 @@
             "field": "id",
             "source": {
               "file": "src/productos/productos.controller.ts",
-              "line": 201,
+              "line": 213,
               "column": 5
             }
           },
@@ -9869,7 +10084,7 @@
             },
             "source": {
               "file": "src/productos/productos.controller.ts",
-              "line": 202,
+              "line": 214,
               "column": 5
             }
           }
@@ -9886,7 +10101,7 @@
       },
       "source": {
         "file": "src/productos/productos.controller.ts",
-        "line": 200,
+        "line": 212,
         "column": 3
       },
       "warnings": [
@@ -10601,7 +10816,7 @@
             },
             "source": {
               "file": "src/productos/productos.controller.ts",
-              "line": 190,
+              "line": 202,
               "column": 5
             }
           }
@@ -10618,7 +10833,7 @@
       },
       "source": {
         "file": "src/productos/productos.controller.ts",
-        "line": 189,
+        "line": 201,
         "column": 3
       },
       "warnings": [
@@ -10750,7 +10965,7 @@
             },
             "source": {
               "file": "src/productos/productos.controller.ts",
-              "line": 94,
+              "line": 100,
               "column": 5
             }
           },
@@ -10767,7 +10982,7 @@
             "field": "imagenes",
             "source": {
               "file": "src/productos/productos.controller.ts",
-              "line": 95,
+              "line": 101,
               "column": 5
             }
           }
@@ -10778,15 +10993,15 @@
         "contentType": "application/json",
         "type": {
           "kind": "reference",
-          "name": "ProductDto",
-          "sourceText": "ProductDto"
+          "name": "ProductAdminDto",
+          "sourceText": "ProductAdminDto"
         },
         "source": "service",
-        "description": "Producto creado con imágenes ordenadas y su receta en `componentes` ([{ componente_id, cantidad }])."
+        "description": "Producto creado con imágenes ordenadas, receta en `componentes` ([{ componente_id, cantidad }]) y margen_ganancia_porcentaje (number | null), solo administrativo."
       },
       "source": {
         "file": "src/productos/productos.controller.ts",
-        "line": 93,
+        "line": 99,
         "column": 3
       },
       "warnings": []

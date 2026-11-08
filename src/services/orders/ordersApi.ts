@@ -1,4 +1,12 @@
 import { useFetch } from "@/composables/useFetch";
+import {
+  confirmar,
+  cotizar,
+  crearSolicitud,
+  crearSolicitudAutenticada,
+  createPedido,
+  subirImagenesLinea,
+} from "@/generated/backend-contract/api";
 import { request } from "@/services/http/apiClient";
 import type { ConfirmarPedidoDto } from "@/types/orders/confirmarPedidoDto";
 import type { CotizarPedidoDto } from "@/types/orders/cotizarPedidoDto";
@@ -70,11 +78,7 @@ export class OrdersApi {
   }
 
   async createOrder(payload: CreateOrderDto): Promise<PedidoDetalleDto> {
-    return request<PedidoDetalleDto>("/pedidos", {
-      method: "POST",
-      auth: "required",
-      body: payload,
-    });
+    return createPedido({ body: payload });
   }
 
   /**
@@ -84,11 +88,7 @@ export class OrdersApi {
    * necesarios para subir fotos en la fase 2).
    */
   async createOrderPublico(payload: CreatePedidoPublicoDto): Promise<PedidoDetalleDto> {
-    return request<PedidoDetalleDto>("/pedidos/solicitud", {
-      method: "POST",
-      auth: "none",
-      body: payload,
-    });
+    return crearSolicitud({ body: payload });
   }
 
   /**
@@ -96,14 +96,8 @@ export class OrdersApi {
    * `POST /api/pedidos/solicitud-autenticada` deriva el cliente vinculado en el
    * backend; el navegador no envía ni el token ni un `cliente_id`.
    */
-  async createOrderPublicoAutenticado(
-    payload: CreatePedidoPublicoDto,
-  ): Promise<PedidoDetalleDto> {
-    return request<PedidoDetalleDto>("/pedidos/solicitud-autenticada", {
-      method: "POST",
-      auth: "required",
-      body: payload,
-    });
+  async createOrderPublicoAutenticado(payload: CreatePedidoPublicoDto): Promise<PedidoDetalleDto> {
+    return crearSolicitudAutenticada({ body: payload });
   }
 
   /**
@@ -121,10 +115,10 @@ export class OrdersApi {
     const formData = new FormData();
     files.forEach((file) => formData.append("imagenes", file));
 
-    return request<PedidoProductoImagenDto[]>(
-      `/pedidos/${pedidoId}/productos/${pedidoProductoId}/imagenes`,
-      { method: "POST", auth: "required", body: formData },
-    );
+    return subirImagenesLinea({
+      path: { pedidoId, pedidoProductoId },
+      body: formData,
+    });
   }
 
   /**
@@ -135,11 +129,7 @@ export class OrdersApi {
    * `ESPERANDO_ANTICIPO`/`CONFIRMADO`. Devuelve el detalle actualizado.
    */
   async confirmarPedido(pedidoId: number, dto: ConfirmarPedidoDto = {}): Promise<PedidoDetalleDto> {
-    return request<PedidoDetalleDto>(`/pedidos/${pedidoId}/confirmar`, {
-      method: "POST",
-      auth: "required",
-      body: dto,
-    });
+    return confirmar({ path: { pedidoId }, body: dto });
   }
 
   /**
@@ -149,10 +139,6 @@ export class OrdersApi {
    * detalle actualizado.
    */
   async cotizarPedido(pedidoId: number, dto: CotizarPedidoDto): Promise<PedidoDetalleDto> {
-    return request<PedidoDetalleDto>(`/pedidos/${pedidoId}/cotizar`, {
-      method: "POST",
-      auth: "required",
-      body: dto,
-    });
+    return cotizar({ path: { pedidoId }, body: dto });
   }
 }
