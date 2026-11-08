@@ -232,6 +232,19 @@ bun run backend:inspect -- --probe GET /api/productos/:id \
   --path-params '{"id":1}'
 ```
 
-The generated files are `manifest.json`, `types.ts`, `api.ts`, and `index.ts`. They are intentionally separate from hand-written `src/types/` and `src/services/` files. The manifest is static evidence; a runtime probe is needed for data-dependent branches.
+The generated files are `manifest.json`, `types.ts`, `api.ts`, and `index.ts`; never edit them manually. `ProductApi` now uses the generated calls for public order options and admin order information. `OrdersApi` uses them for admin creation, public/authenticated requests, confirmation, quotation, and line-image uploads. Requests and responses are checked against the parsed backend types, while the existing service signatures, error handling, and multipart uploads stay compatible with their callers.
+
+After the backend publishes an endpoint or DTO change, synchronize and validate the pilot:
+
+```sh
+bun run backend:inspect
+bun run backend:inspect:check
+bun run type-check
+bun run test:unit --run src/__tests__/backendContractPilot.spec.ts
+```
+
+The pilot does not migrate product CRUD, legacy list pagination, or public tracking. Those retain their adapters: the generated product category is nullable, `/productos/all` is not in the parsed routes, and the tracking state remains `unknown`. Do not hide these differences with casts. Hand-written view/form types remain separate compatibility boundaries, not a replacement for the generated API contract.
+
+Frontend and backend can implement in parallel once the endpoints and DTOs have been declared; parsing cannot generate an endpoint or field that does not exist yet. Regenerate after the backend contract is stable, not while its source files are being edited. The manifest is static evidence, not runtime validation; tests or a safe probe are needed for data-dependent behavior. Synchronization does not send requests to another agent session or implement missing backend functionality.
 
 GET is the only probe method allowed by default. A mutating request requires both `--allow-mutations` and `--confirm-mutation`. Protected endpoints read a token only from `BACKEND_ACCESS_TOKEN` (or the variable passed with `--token-env`) and never print it. Use `--save-response <path>` to persist a probe result locally. The route parser accepts both `/api/...` and `api/...`; in Git Bash, use the latter or set `MSYS_NO_PATHCONV=1` to avoid automatic path conversion.
