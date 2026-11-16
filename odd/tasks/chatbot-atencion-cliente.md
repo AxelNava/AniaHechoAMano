@@ -282,3 +282,16 @@ noche, decisión del usuario: «sí, adaptala»):
   forma de lanzar el backend (o confiar el cert a nivel de sistema).
 - E2E tras el fix: `--project=real-comprador` 3/3, `--project=real-admin` (test de role access) 2/2.
   Lint y type-check OK. Sin cambios de código de aplicación.
+
+L12 — Revisión nativa de la adaptación (`198ba64`) cerrada aprobada (2026-11-16):
+- Linaje `review-59f96f69dd1b98d8`, tier medium, lente reliability, 3 archivos / 371 líneas,
+  presupuesto 186 (sin uso). Forecast de 1 corrida (pi_host_relay) autorizado por el humano; el
+  reviewer corrió (~154 s) y el estado pasó a `approved`. `acknowledge-approved` quemó la autoridad
+  (`gentle-ai.review-acknowledged/v1`); la entrega sigue bajo política ordinaria del repositorio.
+- 2 hallazgos informativos NO bloqueantes (follow-ups, no reabren la revisión):
+  - `R3-narrow-request-absence-window` (WARNING): la aserción negativa de «no hay request protegida»
+    tiene una ventana de carrera — una request en vuelo que aterrice después de la aserción de URL
+    sería invisible; sugerido re-chequear el array tras la aserción de sesión.
+  - `R3-oidc-token-parse-swallow` (SUGGESTION): el lector de token colapsa tres modos de fallo en
+    `null` y traga el error de parseo; el test sigue sin poder pasar en silencio, pero el diagnóstico
+    se debilita; sugerido relanzar el error de parseo por separado.
