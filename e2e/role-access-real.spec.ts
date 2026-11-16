@@ -7,8 +7,10 @@ const PROTECTED_ORDERS_PATH = "/api/pedidos";
 const apiPath = (request: Request): string => new URL(request.url()).pathname;
 const isPublicCatalogRequest = (request: Request): boolean =>
   request.method() === "GET" && PUBLIC_CATALOG_PATHS.has(apiPath(request));
+const isProtectedOrdersRequest = (request: Request): boolean =>
+  request.method() === "GET" && apiPath(request) === PROTECTED_ORDERS_PATH;
 const isProtectedOrdersResponse = (response: Response): boolean =>
-  response.request().method() === "GET" && apiPath(response.request()) === PROTECTED_ORDERS_PATH;
+  isProtectedOrdersRequest(response.request());
 
 const expectNoAuthorization = (request: Request): void => {
   expect(request.headers()["authorization"]).toBeUndefined();
@@ -39,6 +41,22 @@ const hasOidcSession = (page: Page): Promise<boolean> =>
         }
       }),
   );
+
+const oidcAccessToken = (page: Page): Promise<string | null> =>
+  page.evaluate(() => {
+    const entry = Object.entries(window.localStorage).find(([name]) =>
+      name.startsWith("oidc.user:"),
+    );
+    if (!entry) return null;
+    try {
+      const user = JSON.parse(entry[1]) as { access_token?: unknown };
+      return typeof user.access_token === "string" && user.access_token.length > 0
+        ? user.access_token
+        : null;
+    } catch {
+      return null;
+    }
+  });
 
 test.describe("Real navigation and role access matrix", () => {
   test("anonymous visitors keep public access and receive a safe login return URL", async ({
@@ -74,7 +92,7 @@ test.describe("Real navigation and role access matrix", () => {
     page,
     e2eRole,
   }) => {
-    await expectSuccessfulPublicNavigation(page, "/");
+    const publicRequest = await expectSuccessfulPublicNavigation(page, "/");
     await expect(page).toHaveURL("/");
 
     if (e2eRole === "admin") {
@@ -85,14 +103,11 @@ test.describe("Real navigation and role access matrix", () => {
       await page.goto("/pedido");
       await expect(page).toHaveURL("/pedido");
       await expect(page.getByRole("heading", { name: /Tu pedido/ })).toBeVisible();
-    }
 
-    const protectedResponsePromise = page.waitForResponse(isProtectedOrdersResponse);
-    await page.goto("/admin/solicitudes");
-    const protectedResponse = await protectedResponsePromise;
-    expect(protectedResponse.request().headers()["authorization"]).toMatch(/^Bearer\s+\S+$/);
-
-    if (e2eRole === "admin") {
+      const protectedResponsePromise = page.waitForResponse(isProtectedOrdersResponse);
+      await page.goto("/admin/solicitudes");
+      const protectedResponse = await protectedResponsePromise;
+      expect(protectedResponse.request().headers()["authorization"]).toMatch(/^Bearer\s+\S+$/);
       expect(protectedResponse.status()).toBeGreaterThanOrEqual(200);
       expect(protectedResponse.status()).toBeLessThan(300);
       await expect(page).toHaveURL("/admin/solicitudes");
@@ -100,8 +115,25 @@ test.describe("Real navigation and role access matrix", () => {
       return;
     }
 
-    expect(protectedResponse.status()).toBe(403);
+    // El guard del SPA niega la ruta admin antes de montar la página: la
+    // navegación del comprador no dispara la request protegida del API.
+    const navigationRequests: Request[] = [];
+    page.on("request", (request) => {
+      if (isProtectedOrdersRequest(request)) navigationRequests.push(request);
+    });
+    await page.goto("/admin/solicitudes");
     await expect(page).toHaveURL("/sin-permisos");
+    expect(navigationRequests).toHaveLength(0);
+
+    // La denegación server-side del recurso protegido se conserva: una llamada
+    // directa con el token del comprador recibe 403 del API.
+    const accessToken = await oidcAccessToken(page);
+    expect(accessToken).toBeTruthy();
+    const apiOrigin = new URL(publicRequest.url()).origin;
+    const denied = await page.request.get(`${apiOrigin}${PROTECTED_ORDERS_PATH}`, {
+      headers: { authorization: `Bearer ${accessToken}` },
+    });
+    expect(denied.status()).toBe(403);
     await expect(hasOidcSession(page)).resolves.toBe(true);
   });
 });
