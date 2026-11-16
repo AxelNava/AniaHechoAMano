@@ -361,3 +361,36 @@ L14 — Base compartida reconciliada y `VITE_*` inyectadas desde el AppHost (202
 - Desajuste de baseline detectado: `main` conserva la spec vieja de `role-access-real`; la adaptación
   de L11 (`198ba64`) vive sólo en `feature/chatbot-atencion-cliente`, así que el fallo de comprador
   visto al principio era `main` sin esa corrección, no una regresión.
+
+L15 — Flags de entorno de los E2E reales y fin del secuestro global por 403 (2026-11-16):
+- Diagnóstico de los 3 fallos que quedaban en `real-admin`, con evidencia y no por suposición:
+  1. `agenda-emergencia-real` caía en `/sin-permisos`. Con un token admin real (`role: admin`) los
+     endpoints de la pantalla respondían `config` 200, `bloqueos` 200 y **`emergencias` 403**: el
+     `EmergenciasAdminGuard` sólo deja pasar con `EMERGENCIAS_ADMIN_ENABLED === 'true'`, y la
+     variable no estaba definida (documentado en `docs/PLAN-bloqueos-emergencia.md:58`).
+  2. `pedidos-integracion-real:107` no mostraba «Contactar por Facebook» porque
+     `/api/config/contacto` devolvía `facebook_page_url` vacío: el backend lo lee de
+     `FACEBOOK_PAGE_URL`/`FACEBOOK_PAGE_ID` (`contacto.service.ts:16-17`), no de la base.
+  3. `pedidos-integracion-real:39` y `:145` NO son flakiness: corridos aislados fallan igual. El
+     wizard público no llega al paso de la fecha y, tras enviar, se queda en `/pedido` sin
+     confirmación. Queda como trabajo abierto.
+- Flags habilitados en el recurso `api` del AppHost (decisión del humano): `EMERGENCIAS_ADMIN_ENABLED=true`
+  y `FACEBOOK_PAGE_URL=https://www.facebook.com/AniaHechoAMano`. `FACEBOOK_PAGE_ID` se deja sin
+  definir a propósito: alimenta la plantilla de Messenger y un id inventado rompería el enlace.
+  Verificado en vivo: `/api/agenda/emergencias` 200 y `facebook_page_url` poblado; `agenda-emergencia-real`
+  pasó a verde en el re-run.
+- Defecto real corregido: `src/services/http/apiClient.ts:177` publica la señal `forbidden` ante
+  CUALQUIER 403 y `src/main.ts` navegaba incondicionalmente a `/sin-permisos`, desalojando una ruta
+  que el guard del router sí había autorizado (un endpoint negado por feature flag tiraba toda la
+  pantalla). Ahora la decisión vive en `shouldNavigateToForbidden` (`src/services/http/forbiddenNavigation.ts`)
+  y sólo navega cuando la ruta exige de verdad un rol que la sesión no tiene.
+- Deduplicación propia de esa unidad: el contrato de roles de ruta estaba en dos lugares (guard y nueva
+  decisión), así que se extrajo a `src/auth/routeRoles.ts` y ambos lo consumen desde ahí. Sin cambios
+  de comportamiento en el guard.
+- Verificación: test-first con RED observado, luego `8/8` en el spec nuevo; suite completa `340 passed
+  | 3 skipped` (44 archivos); `type-check` OK; `lint` OK.
+- Revisión nativa: linaje `review-e2cf75ef0b06c0d1`, tier **high** (`hot_path` con señal `auth`),
+  lente `risk`, 5 archivos / 211 líneas, presupuesto 106 sin uso → **approved** y acuse quemado
+  (`gentle-ai.review-acknowledged/v1`). El START rechazó el set de tres lentes como `lenses-invalid`
+  y aceptó sólo `risk`, que es la pertinente para este cambio.
+- Commits: `1901c2b` (front, pusheado) y el del AppHost con los flags.
