@@ -6,6 +6,7 @@ import { createPinia } from "pinia";
 import App from "./App.vue";
 import router from "./router";
 import { bootstrapApplication } from "./bootstrap";
+import { shouldNavigateToForbidden } from "./services/http/forbiddenNavigation";
 import { subscribeHttpAuthSignal } from "./services/http/httpAuthSignal";
 import { useAuthStore } from "./stores/authStore";
 
@@ -15,7 +16,9 @@ const pinia = createPinia();
 const authStore = useAuthStore(pinia);
 const unsubscribeHttpAuth = subscribeHttpAuthSignal(async (signal) => {
   if (signal === "forbidden") {
-    if (router.currentRoute.value.name !== "forbidden") await router.replace({ name: "forbidden" });
+    if (shouldNavigateToForbidden(router.currentRoute.value, authStore)) {
+      await router.replace({ name: "forbidden" });
+    }
     return;
   }
 

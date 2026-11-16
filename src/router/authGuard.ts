@@ -1,4 +1,5 @@
 import type { NavigationGuard, RouteLocationNormalized } from "vue-router";
+import { routeRequiredRoles } from "@/auth/routeRoles";
 import { useAuthStore } from "@/stores/authStore";
 
 export interface AuthState {
@@ -27,17 +28,6 @@ export function initializeAuth(store: AuthState = useAuthStore()): Promise<void>
 
   return initialization;
 }
-
-const routeRequiredRoles = (
-  to: RouteLocationNormalized,
-): readonly string[] | undefined => {
-  const configuredRoles = to.meta.roles ?? to.meta.requiredRoles;
-  if (!Array.isArray(configuredRoles)) return undefined;
-
-  return configuredRoles.filter(
-    (role): role is string => typeof role === "string" && role.trim().length > 0,
-  );
-};
 
 export function createAuthGuard(
   store?: AuthState,
