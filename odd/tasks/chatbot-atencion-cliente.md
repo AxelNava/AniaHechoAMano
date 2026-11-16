@@ -295,3 +295,26 @@ L12 — Revisión nativa de la adaptación (`198ba64`) cerrada aprobada (2026-11
   - `R3-oidc-token-parse-swallow` (SUGGESTION): el lector de token colapsa tres modos de fallo en
     `null` y traga el error de parseo; el test sigue sin poder pasar en silencio, pero el diagnóstico
     se debilita; sugerido relanzar el error de parseo por separado.
+
+L13 — Confianza TLS resuelta por Aspire; quedan base de datos y `.env` del frontend (2026-11-16,
+madrugada, coordinación con la sesión de Aspire):
+- Mecanismo definitivo sin código casero: el AppHost de Aspire YA inyecta `NODE_EXTRA_CA_CERTS` al
+  proceso `api` con su propio PEM del dev-cert de ASP.NET Core (el cert del STS ES ese dev-cert,
+mismo fingerprint) y quedó explícito `.WithCertificateTrustScope(CertificateTrustScope.Append)`
+  en `AppHost.cs` (default documentado, ahora escrito). Verificado: handshake a Neon sigue
+  authorized=true (no pisa CAs públicas). Mis scripts con la variable en `package.json` quedaron
+  revertidos a `nest start` planos por Aspire — decisión correcta; standalone fuera de Aspire
+  requiere exportar la variable a mano.
+- Puertos: sin cambios necesarios (front 5173 y api 3001 con `isProxied:false`; identity
+  44310/44302/7127 desde el launch profile). Stack dejado levantado y verificado: los 5 puertos
+  responden; API sin token → 401.
+- JWT ya se valida: token fresco del STS pasa autenticación y llega al handler. La confianza del
+  dev-cert quedó RESUELTA. Falta observar 200/403: ambos roles reciben
+  `500 DATABASE_ERROR "Unable to synchronize the authenticated identity"` porque la base apuntada
+  por `DATABASE_URL` del backend tiene historial de migraciones divergente
+  (`20261012000000_margen_ganancia_producto` existe en la base pero no en el repo local). Migrar o
+  repuntar muta un datastore → decisión del humano (posible base compartida con otro checkout).
+- Bloqueo frontend: el `.env` local (gitignored) perdió las 6 variables `VITE_*` (queda sólo
+  `VITE_VUE_APP_DOMAIN`); `readFrontendEnvironment` tira antes de redirigir y `auth-setup` no ve el
+  formulario del STS. Restaurarlas (valores públicos, los mismos de L10) y reiniciar el recurso
+  `front` de Aspire (Vite lee env al arrancar).
