@@ -260,3 +260,25 @@ L10 — Baseline de main, STS operativo y usuario de pruebas (2026-11-15):
   `admin` la configuró el usuario. Mientras no se provea, las suites reales quedan gated y la
   verificación de login se hizo con la sonda Playwright descrita arriba.
 - Siguiente tarea del plan: T3 (motor de rangos, backend, worker).
+
+L11 — Adaptación de `role-access-real` y reparación de la confianza TLS STS↔backend (2026-11-15,
+noche, decisión del usuario: «sí, adaptala»):
+- El usuario registró en `playwright/.auth/users.json` la credencial admin (`AniaHechoAMano`) y se
+  generó `playwright/.auth/credentials.json` (gitignored) con roles admin+comprador; `auth-setup`
+  corre verde (login real de ambos roles contra el STS).
+- Adaptación de la spec (`e2e/role-access-real.spec.ts`, test «authenticated role follows its
+  public and protected access policy»): la suposición original (que `/admin/solicitudes` montaba y
+  disparaba `GET /api/pedidos` para recibir el 403 del backend) quedó desactualizada: el guard del
+  SPA niega ANTES y redirige a `/sin-permisos` sin montar la página, y `waitForResponse` expiraba.
+  La variante comprador ahora aserta: (a) redirect del guard a `/sin-permisos`, (b) que la navegación
+  NO dispara la request protegida, y (c) conserva la denegación server-side con una llamada directa
+  al API con el token comprador esperando 403. La variante admin mantiene su flujo original.
+- Hallazgo real detrás del rojo: el backend rechazaba TODOS los JWT con 401 — el certificado
+  autofirmado del STS hacía fallar el fetch del JWKS en Node (`DEPTH_ZERO_SELF_SIGNED_CERT`),
+  aunque `src/auth/local-jwks-fetch.ts` ya está preparado para usar los CAs del sistema + extras.
+  Fix de entorno: extraer el cert dev del STS a `playwright/.auth/sts-dev-cert.crt` (público,
+  gitignored) y reiniciar el backend con `NODE_EXTRA_CA_CERTS` apuntándolo. Verificado con curl:
+  admin → 200, comprador → 403. Pendiente de decisión del usuario: persistir la variable en su
+  forma de lanzar el backend (o confiar el cert a nivel de sistema).
+- E2E tras el fix: `--project=real-comprador` 3/3, `--project=real-admin` (test de role access) 2/2.
+  Lint y type-check OK. Sin cambios de código de aplicación.
