@@ -318,3 +318,46 @@ mismo fingerprint) y quedó explícito `.WithCertificateTrustScope(CertificateTr
   `VITE_VUE_APP_DOMAIN`); `readFrontendEnvironment` tira antes de redirigir y `auth-setup` no ve el
   formulario del STS. Restaurarlas (valores públicos, los mismos de L10) y reiniciar el recurso
   `front` de Aspire (Vite lee env al arrancar).
+
+L14 — Base compartida reconciliada y `VITE_*` inyectadas desde el AppHost (2026-11-16):
+- Decisiones del humano: «Adaptar la migración actual, a lo que hay en neon, o sea marcarla como
+  aplicada» y, para el entorno del front, «Inyectarlas desde AppHost.cs».
+- La divergencia no era la que se creía: `prisma migrate status` listaba 5 migraciones pendientes que
+  estaban VACÍAS en disco y sin trackear (restos de un `migrate dev` fallido) → eliminadas. Las
+  migraciones reales del repo son 2 (`20260827_init_external_identities`,
+  `20260918141803_bulk_import_keys`). `prisma migrate diff` (comparación autoritativa) mostró sólo dos
+  diferencias entre `schema.prisma` y `neondb`: `productos.margen_ganancia_porcentaje` existía en la
+  base y no en el repo (la migración fantasma `20261012000000_margen_ganancia_producto`), y los 4
+  defaults `@default(dbgenerated(...))` de `codigo_importacion` estaban en el repo y no en la base.
+- Reconstruida `prisma/migrations/20261012000000_margen_ganancia_producto` con el DDL equivalente y
+  agregada la columna a `schema.prisma`; la base ya la tenía registrada (P3008), así que no hubo
+  `resolve --applied`. Sin `db push` y sin dropear la columna: nada destructivo.
+- Nueva migración aditiva `20261116000000_codigo_importacion_defaults` (cuatro
+  `SET DEFAULT gen_random_uuid()::text`, reversibles con `DROP DEFAULT`), aplicada con
+  `migrate deploy`. `migrate diff` seguía listándolos porque Postgres normaliza la expresión a
+  `(gen_random_uuid())::text`; alineado `schema.prisma` a esa forma → diff vacío y
+  `migrate status` «Database schema is up to date». `prisma generate` regenerado.
+- El 500 no era de lectura: `/api/config/contacto`, `/api/categories` y `/api/productos` respondían
+  200 contra la misma base, así que el fallo vivía en el camino de escritura.
+- El entorno del front ya no depende de un archivo local: las 6 `VITE_*` se inyectan en el recurso
+  `front` desde `AppHost.cs` (constantes + `.WithEnvironment`), con valores públicos verificados
+  contra `identityserverdata.json` (client `client_acc8fe2608a830b8125e7705cdf71fc5`, scopes
+  `openid profile roles ania.api.admin`, redirects `:5173/auth/callback` y `/auth/logout-callback`,
+  API `http://localhost:3001/api`). Vite aplica `process.env` por encima de los archivos `.env`.
+- Stack reiniciado con `dotnet run` (el AppHost no recarga solo): front 5173 → 200, api 3001 → 401 sin
+  token, STS 44310 → 200, Admin API 44302 y panel 7127 arriba; los 6 nombres `VITE_*` verificados en
+  el entorno del proceso `vite`.
+- E2E real sobre la rama: `auth-setup` 1/1 (1.1m) y `real-comprador` 3/3 verdes. `real-admin` 17/21
+  con 3 fallos que no provienen de este cambio y quedan como trabajo abierto:
+  1. `agenda-emergencia-real` — la primera navegación admin de la corrida cae en `/sin-permisos`
+     (Error 403) aunque el resto de rutas admin del mismo run funcionan: falta diagnosticar la
+     sesión/inicialización en ese primer acceso.
+  2. `pedidos-integracion-real:107` — sin enlace «Contactar por Facebook» porque
+     `/api/config/contacto` devuelve `facebook_page_url` vacío: el backend lo lee de
+     `FACEBOOK_PAGE_URL`/`FACEBOOK_PAGE_ID` del entorno, que no están definidas.
+  3. `pedidos-integracion-real:39` — el wizard no mostró «¿Para cuándo la quieres?»; pasó en la
+     primera corrida y falló en la segunda, dependiente de los datos que las propias suites escriben
+     en la base compartida.
+- Desajuste de baseline detectado: `main` conserva la spec vieja de `role-access-real`; la adaptación
+  de L11 (`198ba64`) vive sólo en `feature/chatbot-atencion-cliente`, así que el fallo de comprador
+  visto al principio era `main` sin esa corrección, no una regresión.
